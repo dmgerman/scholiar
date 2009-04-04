@@ -624,3 +624,10 @@ on_toolsReco_activate                  (GtkMenuItem     *menuitem,
 void
 on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+void
+on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data);
+
+void
+on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data);

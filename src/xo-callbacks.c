@@ -3502,3 +3502,65 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
   update_mappings_menu();
 }
 
+void
+open_relative_journal(int nextprev)
+{
+  const gchar *curname;
+  gchar *curdir, *ourname, *tmpname = NULL, *filename = NULL;
+  GDir *dirh;
+  curdir = g_path_get_dirname(ui.filename);
+  set_cursor_busy(TRUE);
+  dirh = g_dir_open(curdir, 0, NULL);
+  if (!dirh) {
+    g_free(curdir);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  ourname = g_path_get_basename(ui.filename);
+  while ((curname = g_dir_read_name(dirh))) {
+    if (g_strcmp0(curname, ourname) == nextprev) {
+      if (NULL == tmpname || g_strcmp0(curname, tmpname) == -nextprev) {
+        tmpname = g_strdup(curname);
+      }
+    }
+  }
+  g_dir_close(dirh);
+  g_free(ourname);
+
+  if (NULL == tmpname) {
+    g_free(curdir);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  filename = g_build_filename(curdir, tmpname, NULL);
+  g_free(curdir);
+  g_free(tmpname);
+
+  end_text();
+  reset_focus();
+  if (!ok_to_close()) {
+    g_free(filename);
+    set_cursor_busy(FALSE);
+    return;
+  }
+
+  open_journal(filename);
+  set_cursor_busy(FALSE);
+
+  g_free(filename);
+}
+
+void
+on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data)
+{
+  open_relative_journal(-1);
+}
+
+void
+on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data)
+{
+  open_relative_journal(1);
+}
+

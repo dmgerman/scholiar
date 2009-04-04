@@ -2223,6 +2223,55 @@
 	  </child>
 
 	  <child>
+	    <widget class="GtkToolItem" id="toolitem22">
+	      <property name="visible">True</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+
+	      <child>
+		<widget class="GtkVSeparator" id="vseparator11">
+		  <property name="visible">True</property>
+		</widget>
+	      </child>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">False</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkToolButton" id="buttonPrevFile">
+	      <property name="visible">True</property>
+	      <property name="stock_id">gtk-media-previous</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	      <signal name="clicked" handler="on_buttonPrevFile_clicked" last_modification_time="Sat, 04 Apr 2009 04:37:50 GMT"/>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkToolButton" id="buttonNextFile">
+	      <property name="visible">True</property>
+	      <property name="stock_id">gtk-media-next</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	      <signal name="clicked" handler="on_buttonNextFile_clicked" last_modification_time="Sat, 04 Apr 2009 04:37:56 GMT"/>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+
+	  <child>
 	    <widget class="GtkToolItem" id="toolitem14">
 	      <property name="visible">True</property>
 	      <property name="visible_horizontal">True</property>

@@ -274,6 +274,10 @@ create_winMain (void)
   GtkWidget *buttonPreviousPage;
   GtkWidget *buttonNextPage;
   GtkWidget *buttonLastPage;
+  GtkWidget *toolitem22;
+  GtkWidget *vseparator11;
+  GtkWidget *buttonPrevFile;
+  GtkWidget *buttonNextFile;
   GtkWidget *toolitem14;
   GtkWidget *vseparator4;
   GtkWidget *buttonZoomOut;
@@ -1497,6 +1501,22 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonLastPage);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonLastPage), tooltips, "Last Page", NULL);
 
+  toolitem22 = (GtkWidget*) gtk_tool_item_new ();
+  gtk_widget_show (toolitem22);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), toolitem22);
+
+  vseparator11 = gtk_vseparator_new ();
+  gtk_widget_show (vseparator11);
+  gtk_container_add (GTK_CONTAINER (toolitem22), vseparator11);
+
+  buttonPrevFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-previous");
+  gtk_widget_show (buttonPrevFile);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPrevFile);
+
+  buttonNextFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-next");
+  gtk_widget_show (buttonNextFile);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNextFile);
+
   toolitem14 = (GtkWidget*) gtk_tool_item_new ();
   gtk_widget_show (toolitem14);
   gtk_container_add (GTK_CONTAINER (toolbarMain), toolitem14);
@@ -2387,6 +2407,12 @@ create_winMain (void)
   g_signal_connect ((gpointer) buttonLastPage, "clicked",
                     G_CALLBACK (on_viewLastPage_activate),
                     NULL);
+  g_signal_connect ((gpointer) buttonPrevFile, "clicked",
+                    G_CALLBACK (on_buttonPrevFile_clicked),
+                    NULL);
+  g_signal_connect ((gpointer) buttonNextFile, "clicked",
+                    G_CALLBACK (on_buttonNextFile_clicked),
+                    NULL);
   g_signal_connect ((gpointer) buttonZoomOut, "clicked",
                     G_CALLBACK (on_viewZoomOut_activate),
                     NULL);
@@ -2725,6 +2751,10 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, buttonPreviousPage, "buttonPreviousPage");
   GLADE_HOOKUP_OBJECT (winMain, buttonNextPage, "buttonNextPage");
   GLADE_HOOKUP_OBJECT (winMain, buttonLastPage, "buttonLastPage");
+  GLADE_HOOKUP_OBJECT (winMain, toolitem22, "toolitem22");
+  GLADE_HOOKUP_OBJECT (winMain, vseparator11, "vseparator11");
+  GLADE_HOOKUP_OBJECT (winMain, buttonPrevFile, "buttonPrevFile");
+  GLADE_HOOKUP_OBJECT (winMain, buttonNextFile, "buttonNextFile");
   GLADE_HOOKUP_OBJECT (winMain, toolitem14, "toolitem14");
   GLADE_HOOKUP_OBJECT (winMain, vseparator4, "vseparator4");
   GLADE_HOOKUP_OBJECT (winMain, buttonZoomOut, "buttonZoomOut");
