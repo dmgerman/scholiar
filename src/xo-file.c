@@ -1188,6 +1188,18 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
   bgpdf.create_pages = create_pages;
   bgpdf.has_failed = FALSE;
   add_bgpdf_request(-1, ui.startup_zoom, FALSE); // request all pages
+  // By default name the file by appending .xoj
+  //but only if the file does not exist. Otherwise don't append it
+
+  gchar* filenameXoj = g_strdup_printf("%s.xoj", pdfname);
+  if (g_file_test(filenameXoj, G_FILE_TEST_EXISTS)) {
+    // Don't use this name. it is taken
+    update_file_name(g_strdup(pdfname));
+    g_free(filenameXoj);
+  } else{
+    // The file does not exist, so we are safe
+    update_file_name(filenameXoj);
+  }
   return TRUE;
 }
 
