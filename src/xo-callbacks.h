@@ -631,3 +631,35 @@ on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
 void
 on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
                                         gpointer         user_data);
+
+void
+on_optionsMultipageView_activate       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages2_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages3_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages4_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages5_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages6_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages7_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_pagehiglight_activate               (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);

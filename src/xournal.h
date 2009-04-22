@@ -171,6 +171,8 @@ typedef struct Item {
 #define ITEM_TEXT_ATTRIB 21
 #define ITEM_RESIZESEL 22
 #define ITEM_RECOGNIZER 23
+// Select region is added here. need to be moved above (before ITEM_MOVESEL?)
+#define ITEM_SELECTREGION 24
 
 typedef struct Layer {
   GList *items; // the items on the layer, from bottom to top
@@ -204,7 +206,15 @@ typedef struct Selection {
   GList *items; // the selected items (a list of struct Item)
   int move_pageno, orig_pageno; // if selection moves to a different page
   struct Layer *move_layer;
-  float move_pagedelta;
+  double move_pagedelta;
+  double move_pagehdelta ; 
+
+  GnomeCanvasPathDef  *lassopath ; //  path for lasso selection 
+  GnomeCanvasPathDef  *closedlassopath ; // for drawing lasso shape
+  GnomeCanvasBpath *lasso; // for drawing lasso shape
+  //  ArtSVP *lassosvp  ;  // for selecting object
+  //  GnomeCanvasClipgroup *lassoclip; // for selecting object 
+
 } Selection;
 
 typedef struct UIData {
@@ -234,6 +244,10 @@ typedef struct UIData {
   gboolean discard_corepointer; // discard core pointer events in XInput mode
   gboolean pressure_sensitivity; // use pen pressure to control stroke width?
   double width_minimum_multiplier, width_maximum_multiplier; // calibration for pressure sensitivity
+  gboolean pagehighlight; // current page highlight?
+  GnomeCanvasItem* pagehighlighter ; 
+  gboolean multipage_view; // horizontal multipage view?
+  int multipage_view_num ;
   gboolean is_corestroke; // this stroke is painted with core pointer
   int screen_width, screen_height; // initial screen size, for XInput events
   double hand_refpt[2];
@@ -347,7 +361,6 @@ typedef struct BgPdf {
 
 // the margin between consecutive pages in continuous view
 #define VIEW_CONTINUOUS_SKIP 20.0
-
 
 // GLOBAL VARIABLES
 

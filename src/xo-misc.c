@@ -692,6 +692,57 @@ void rgb_to_gdkcolor(guint rgba, GdkColor *color)
   color->blue = ((rgba>>8)&0xff)*0x101;
 }
 
+// check whether a given point is inside a lasso selection. 
+gboolean hittest_point( ArtSVP* lassosvp, double x, double y ) 
+{
+  int winding; 
+
+  winding = art_svp_point_wind( lassosvp  , x, y ); 
+  return winding % 2 ; // not implement yet 
+}
+
+// check whether a given item is inside a lasso selection.
+gboolean hittest_item( ArtSVP* lassosvp, Item* item)
+{
+  gboolean result = TRUE; 
+
+  if( item->type == ITEM_STROKE ) {
+    int i ; 
+    for( i = 0 ; i < item->path->num_points ; i++ ) {
+      result = result && 
+	hittest_point( lassosvp, 
+		       item->path->coords[2*i], 
+		       item->path->coords[2*i+1] ); 
+    }
+  } 
+  else {
+    double ulx, uly, drx, dry ;
+    ulx = (item->bbox).left; 
+    uly = (item->bbox).top; 
+    drx = (item->bbox).right; 
+    dry = (item->bbox).bottom; 
+
+    result = result && hittest_point( lassosvp, ulx, uly ) &&
+      hittest_point( lassosvp, ulx, dry ) &&
+      hittest_point( lassosvp, drx, uly ) &&
+      hittest_point( lassosvp, drx, dry ) ; 
+  }
+
+  return result ; 
+}
+
+struct BBox bboxadd( struct BBox a, struct BBox b ) 
+{
+  struct BBox result; 
+
+  result.left =  ( a.left < b.left ) ? a.left : b.left ; 
+  result.right = ( a.right> b.right) ? a.right: b.right ; 
+  result.top    =( a.top < b.top ) ? a.top : b.top ; 
+  result.bottom =( a.bottom>b.bottom)? a.bottom : b.bottom ; 
+
+  return result; 
+}
+
 // some interface functions
 
 void update_thickness_buttons(void)
@@ -1169,17 +1220,18 @@ void update_page_stuff(void)
   GtkSpinButton *spin;
   struct Page *pg;
   double vertpos, maxwidth;
+  double horipos, maxheight_single; 
 
   // move the page groups to their rightful locations or hide them
-  if (ui.view_continuous) {
-    vertpos = 0.; 
+  if (ui.view_continuous && !ui.multipage_view ) {
+    vertpos = 0.;
     maxwidth = 0.;
     for (i=0, pglist = journal.pages; pglist!=NULL; i++, pglist = pglist->next) {
       pg = (struct Page *)pglist->data;
       if (pg->group!=NULL) {
         pg->hoffset = 0.; pg->voffset = vertpos;
         gnome_canvas_item_set(GNOME_CANVAS_ITEM(pg->group), 
-            "x", pg->hoffset, "y", pg->voffset, NULL);
+			      "x", pg->hoffset, "y", pg->voffset, NULL);
         gnome_canvas_item_show(GNOME_CANVAS_ITEM(pg->group));
       }
       vertpos += pg->height + VIEW_CONTINUOUS_SKIP;
@@ -1187,7 +1239,44 @@ void update_page_stuff(void)
     }
     vertpos -= VIEW_CONTINUOUS_SKIP;
     gnome_canvas_set_scroll_region(canvas, 0, 0, maxwidth, vertpos);
-  } else {
+  } else if( ui.view_continuous && ui.multipage_view ) {
+    horipos = 0.;
+    vertpos = 0.;
+    maxwidth = 0.;
+    maxheight_single = 0. ; 
+
+    for (i=0, pglist = journal.pages; pglist!=NULL; i++, pglist = pglist->next) {
+      pg = (struct Page *)pglist->data;
+      if (pg->group!=NULL) {
+	pg->hoffset = horipos; 
+	pg->voffset = vertpos;
+        gnome_canvas_item_set(GNOME_CANVAS_ITEM(pg->group), 
+			      "x", pg->hoffset, "y", pg->voffset, NULL);
+        gnome_canvas_item_show(GNOME_CANVAS_ITEM(pg->group));
+      }
+      horipos += pg->width ; 
+
+      if( pg->height > maxheight_single ) 
+	maxheight_single = pg->height; 
+      
+      if( (i+1) % ui.multipage_view_num == 0 || (i+1) >= journal.npages ) {
+	if( horipos > maxwidth ) 
+	  maxwidth = horipos; 
+	horipos = 0.;
+	vertpos += maxheight_single + VIEW_CONTINUOUS_SKIP;
+	maxheight_single = 0; 
+      }
+      else {
+	horipos += VIEW_CONTINUOUS_SKIP;
+      }
+    }
+    if( i % ui.multipage_view_num == 0 || i <= ui.multipage_view_num ) 
+      vertpos -= VIEW_CONTINUOUS_SKIP;
+    else 
+      vertpos += maxheight_single; 
+    gnome_canvas_set_scroll_region(canvas, 0, 0, maxwidth, vertpos);
+  }
+  else {
     for (pglist = journal.pages; pglist!=NULL; pglist = pglist->next) {
       pg = (struct Page *)pglist->data;
       if (pg == ui.cur_page && pg->group!=NULL) {
@@ -1199,8 +1288,27 @@ void update_page_stuff(void)
         if (pg->group!=NULL) gnome_canvas_item_hide(GNOME_CANVAS_ITEM(pg->group));
       }
     }
+
     gnome_canvas_set_scroll_region(canvas, 0, 0, ui.cur_page->width, ui.cur_page->height);
   }
+
+  // draw current page highlighted 
+  if( ui.pagehighlight ) {
+    gnome_canvas_item_set(GNOME_CANVAS_ITEM(ui.pagehighlighter),
+			  "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x00000000,
+			  "x1", ui.cur_page->hoffset-VIEW_CONTINUOUS_SKIP/4.0, 
+			  "x2", ui.cur_page->hoffset+ui.cur_page->width+VIEW_CONTINUOUS_SKIP/2.0, 
+			  "y1", ui.cur_page->voffset-VIEW_CONTINUOUS_SKIP/4.0, 
+			  "y2", ui.cur_page->voffset+ui.cur_page->height+VIEW_CONTINUOUS_SKIP/2.0, 
+			  NULL);
+    gnome_canvas_item_show(GNOME_CANVAS_ITEM(ui.pagehighlighter));
+  }
+  else {
+    gnome_canvas_item_hide(GNOME_CANVAS_ITEM(ui.pagehighlighter));
+  }
+
 
   // update the page / layer info at bottom of screen
 
@@ -1227,7 +1335,7 @@ void update_page_stuff(void)
   }
   gtk_combo_box_set_active(layerbox, ui.cur_page->nlayers-1-ui.layerno);
   ui.in_update_page_stuff = FALSE;
-  
+
   // update the paper-style menu radio buttons
   
   if (ui.view_continuous)
@@ -1614,6 +1722,18 @@ void reset_selection(void)
   if (ui.selection == NULL) return;
   if (ui.selection->canvas_item != NULL) 
     gtk_object_destroy(GTK_OBJECT(ui.selection->canvas_item));
+
+  if( ui.selection->closedlassopath  != NULL )
+    gnome_canvas_path_def_unref(ui.selection->closedlassopath);  
+  if( ui.selection->lassopath  != NULL )
+    gnome_canvas_path_def_unref(ui.selection->lassopath);  
+  if(ui.selection->lasso != NULL ) 
+    gtk_object_destroy(GTK_OBJECT(ui.selection->lasso)); 
+
+  // if(ui.selection->lassoclip != NULL ) 
+  //  gtk_object_destroy(GTK_OBJECT(ui.selection->lassoclip)); 
+
+ 
   g_list_free(ui.selection->items);
   g_free(ui.selection);
   ui.selection = NULL;
@@ -1871,8 +1991,8 @@ void allow_all_accels(void)
       "can-activate-accel", G_CALLBACK(can_accel), NULL);
   g_signal_connect((gpointer) GET_COMPONENT("toolsText"),
       "can-activate-accel", G_CALLBACK(can_accel), NULL);
-/*  g_signal_connect((gpointer) GET_COMPONENT("toolsSelectRegion"),
-      "can-activate-accel", G_CALLBACK(can_accel), NULL);  */
+  g_signal_connect((gpointer) GET_COMPONENT("toolsSelectRegion"),
+      "can-activate-accel", G_CALLBACK(can_accel), NULL);  
   g_signal_connect((gpointer) GET_COMPONENT("toolsSelectRectangle"),
       "can-activate-accel", G_CALLBACK(can_accel), NULL);
   g_signal_connect((gpointer) GET_COMPONENT("toolsVerticalSpace"),
@@ -1933,10 +2053,10 @@ void hide_unimplemented(void)
   gtk_widget_hide(GET_COMPONENT("filePrintOptions"));
   gtk_widget_hide(GET_COMPONENT("journalFlatten"));  
   gtk_widget_hide(GET_COMPONENT("papercolorOther")); 
-  gtk_widget_hide(GET_COMPONENT("toolsSelectRegion"));
-  gtk_widget_hide(GET_COMPONENT("buttonSelectRegion"));
-  gtk_widget_hide(GET_COMPONENT("button2SelectRegion"));
-  gtk_widget_hide(GET_COMPONENT("button3SelectRegion"));
+  //  gtk_widget_hide(GET_COMPONENT("toolsSelectRegion"));
+  //  gtk_widget_hide(GET_COMPONENT("buttonSelectRegion"));
+  //  gtk_widget_hide(GET_COMPONENT("button2SelectRegion"));
+  //  gtk_widget_hide(GET_COMPONENT("button3SelectRegion"));
   gtk_widget_hide(GET_COMPONENT("colorOther"));
   gtk_widget_hide(GET_COMPONENT("helpIndex")); 
 

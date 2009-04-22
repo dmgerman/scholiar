@@ -58,7 +58,7 @@
 		      <signal name="activate" handler="on_fileNewBackground_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image623">
+			<widget class="GtkImage" id="image777">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -203,7 +203,7 @@
 		      <signal name="activate" handler="on_filePrintOptions_activate" last_modification_time="Wed, 30 Nov 2005 18:44:18 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image624">
+			<widget class="GtkImage" id="image778">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-preferences</property>
 			  <property name="icon_size">1</property>
@@ -432,7 +432,7 @@
 			      <accelerator key="equal" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 			      <child internal-child="image">
-				<widget class="GtkImage" id="image625">
+				<widget class="GtkImage" id="image779">
 				  <property name="visible">True</property>
 				  <property name="stock">gtk-zoom-fit</property>
 				  <property name="icon_size">1</property>
@@ -473,7 +473,7 @@
 		      <accelerator key="Home" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image626">
+			<widget class="GtkImage" id="image780">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-goto-first</property>
 			  <property name="icon_size">1</property>
@@ -495,7 +495,7 @@
 		      <accelerator key="Left" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image627">
+			<widget class="GtkImage" id="image781">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-go-back</property>
 			  <property name="icon_size">1</property>
@@ -517,7 +517,7 @@
 		      <accelerator key="Right" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image628">
+			<widget class="GtkImage" id="image782">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-go-forward</property>
 			  <property name="icon_size">1</property>
@@ -539,7 +539,7 @@
 		      <accelerator key="End" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image629">
+			<widget class="GtkImage" id="image783">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-goto-last</property>
 			  <property name="icon_size">1</property>
@@ -566,7 +566,7 @@
 		      <signal name="activate" handler="on_viewShowLayer_activate" last_modification_time="Wed, 30 Nov 2005 19:40:23 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image630">
+			<widget class="GtkImage" id="image784">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-add</property>
 			  <property name="icon_size">1</property>
@@ -587,7 +587,7 @@
 		      <signal name="activate" handler="on_viewHideLayer_activate" last_modification_time="Wed, 30 Nov 2005 19:40:23 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image631">
+			<widget class="GtkImage" id="image785">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-remove</property>
 			  <property name="icon_size">1</property>
@@ -884,7 +884,7 @@
 		      <signal name="activate" handler="on_journalLoadBackground_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image632">
+			<widget class="GtkImage" id="image786">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1065,7 +1065,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">H_and Tool</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
+		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
 		      <signal name="activate" handler="on_toolsHand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
 		      <accelerator key="A" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
@@ -1085,7 +1085,7 @@
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image633">
+			<widget class="GtkImage" id="image787">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-select-color</property>
 			  <property name="icon_size">1</property>
@@ -1453,7 +1453,7 @@
 		      <accelerator key="F" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image634">
+			<widget class="GtkImage" id="image788">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-select-font</property>
 			  <property name="icon_size">1</property>
@@ -1571,6 +1571,105 @@
 		  </child>
 
 		  <child>
+		    <widget class="GtkCheckMenuItem" id="page_highlight">
+		      <property name="visible">True</property>
+		      <property name="tooltip" translatable="yes">Page Highlight</property>
+		      <property name="label" translatable="yes">Page _Highlight</property>
+		      <property name="use_underline">True</property>
+		      <property name="active">False</property>
+		      <signal name="activate" handler="on_pagehiglight_activate" last_modification_time="Fri, 13 Mar 2009 01:07:05 GMT"/>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkCheckMenuItem" id="optionsMultipageView">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">_Multiple page view</property>
+		      <property name="use_underline">True</property>
+		      <property name="active">False</property>
+		      <signal name="activate" handler="on_optionsMultipageView_activate" last_modification_time="Sun, 08 Mar 2009 13:50:36 GMT"/>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkMenuItem" id="Multiple_pages">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">Multiple pages</property>
+		      <property name="use_underline">True</property>
+
+		      <child>
+			<widget class="GtkMenu" id="Multiple_pages_menu">
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="MultiplePages2">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">2 pages</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <signal name="activate" handler="on_MultiplePages2_activate" last_modification_time="Sun, 08 Mar 2009 14:33:20 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="MultiplePages3">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">3 pages</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <property name="group">MultiplePages2</property>
+			      <signal name="activate" handler="on_MultiplePages3_activate" last_modification_time="Sun, 08 Mar 2009 14:33:20 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="MultiplePages4">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">4 pages</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <property name="group">MultiplePages2</property>
+			      <signal name="activate" handler="on_MultiplePages4_activate" last_modification_time="Sun, 08 Mar 2009 14:33:20 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="MultiplePages5">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">5 pages</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <property name="group">MultiplePages2</property>
+			      <signal name="activate" handler="on_MultiplePages5_activate" last_modification_time="Sun, 08 Mar 2009 14:33:20 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="MultiplePages6">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">6 pages</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <property name="group">MultiplePages2</property>
+			      <signal name="activate" handler="on_MultiplePages6_activate" last_modification_time="Sun, 08 Mar 2009 14:33:20 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="MultiplePages7">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">7 pages</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <property name="group">MultiplePages2</property>
+			      <signal name="activate" handler="on_MultiplePages7_activate" last_modification_time="Sun, 08 Mar 2009 14:33:20 GMT"/>
+			    </widget>
+			  </child>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
+
+		  <child>
 		    <widget class="GtkMenuItem" id="button2_mapping">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Button _2 Mapping</property>
@@ -1660,7 +1759,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">H_and Tool</property>
 			      <property name="use_underline">True</property>
-			      <property name="active">False</property>
+			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
 			      <signal name="activate" handler="on_button2Hand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
 			    </widget>
@@ -1796,7 +1895,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">H_and Tool</property>
 			      <property name="use_underline">True</property>
-			      <property name="active">False</property>
+			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
 			      <signal name="activate" handler="on_button3Hand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
 			    </widget>

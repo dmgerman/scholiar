@@ -467,6 +467,125 @@ void make_dashed(GnomeCanvasItem *item)
   gnome_canvas_item_set(item, "dash", &dash, NULL);
 }
 
+void start_selectregion(GdkEvent *event)
+{
+  double pt[2];
+  reset_selection();
+  
+  ui.cur_item_type = ITEM_SELECTREGION;
+  ui.selection = g_new(struct Selection, 1);
+  ui.selection->type = ITEM_SELECTREGION;
+  ui.selection->items = NULL;
+  ui.selection->layer = ui.cur_layer;
+  
+  ui.selection->lassopath = gnome_canvas_path_def_new(); 
+  ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath);
+  ui.selection->lasso = (GnomeCanvasBpath*)
+    gnome_canvas_item_new(ui.cur_layer->group, 
+			  gnome_canvas_bpath_get_type(),
+			  "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x80808040,
+			  "bpath",ui.selection->closedlassopath, 
+			  NULL); 
+  make_dashed((GnomeCanvasItem*)ui.selection->lasso); 
+
+  get_pointer_coords(event, pt);
+  ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
+  ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
+ 
+  ui.selection->canvas_item = 
+    gnome_canvas_item_new(ui.cur_layer->group,
+			  gnome_canvas_rect_get_type(), "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x80808040,
+			  "x1", pt[0], "x2", pt[0], "y1", pt[1], "y2", pt[1], 
+			  NULL);
+
+  gnome_canvas_path_def_moveto( ui.selection->lassopath, pt[0], pt[1] ); 
+
+  update_cursor();
+}
+
+void finalize_selectregion(void) 
+{
+  double x1, x2, y1, y2;
+  GList *itemlist;
+  struct Item *item;
+  ArtBpath *bpath ; 
+  ArtVpath *vpath ; 
+  ArtSVP *lassosvp; 
+  
+  ArtSVPSeg *seg; 
+  int i , j; 
+  ui.cur_item_type = ITEM_NONE;
+  
+  bpath = gnome_canvas_path_def_bpath( ui.selection->closedlassopath ); 
+  vpath = art_bez_path_to_vec( bpath, 0.25) ; 
+  //  art_free(bpath);
+ 
+  lassosvp = art_svp_from_vpath( vpath ); 
+  //  art_free(vpath);
+
+
+  //  for( i = 0 ; i < lassosvp->n_segs; i++ ) {
+ //   seg = &lassosvp->segs[i]; 
+  //
+  //  for( j = 0 ; j < seg->n_points -1 ; j++ ) {
+  //     printf("x y = %f %f \n" , seg->points[j].x , seg->points[j].y ) ; 
+  //    }
+  //  }
+
+//  if (ui.selection->bbox.left > ui.selection->bbox.right) {
+  //   x1 = ui.selection->bbox.right;  x2 = ui.selection->bbox.left;
+  //    ui.selection->bbox.left = x1;   ui.selection->bbox.right = x2;
+  //  } else {
+  //   x1 = ui.selection->bbox.left;  x2 = ui.selection->bbox.right;
+  //  }
+  //
+  //  if (ui.selection->bbox.top > ui.selection->bbox.bottom) {
+  //   y1 = ui.selection->bbox.bottom;  y2 = ui.selection->bbox.top;
+  //   ui.selection->bbox.top = y1;   ui.selection->bbox.bottom = y2;
+  //  } else {
+  //   y1 = ui.selection->bbox.top;  y2 = ui.selection->bbox.bottom;
+  //  }
+  
+
+
+  // hit test in lasso selection.
+  for (itemlist = ui.selection->layer->items; itemlist!=NULL; itemlist = itemlist->next) {
+    item = (struct Item *)itemlist->data;
+    if( hittest_item( lassosvp,  item ) ) {
+      if( g_list_length(ui.selection->items ) == 0 ) {
+	ui.selection->bbox = item->bbox;
+      }
+      else {
+	ui.selection->bbox = bboxadd( ui.selection->bbox, item->bbox ); 
+      }
+      ui.selection->items = g_list_append(ui.selection->items, item); 
+
+      gnome_canvas_item_set(ui.selection->canvas_item,
+			    "x1", ui.selection->bbox.left, 
+			    "y1", ui.selection->bbox.top,
+			    "x2", ui.selection->bbox.right, 
+			    "y2", ui.selection->bbox.bottom, 
+			    NULL); 
+    }
+  }
+  
+  if (ui.selection->items == NULL) 
+    reset_selection();
+  else {
+    make_dashed(ui.selection->canvas_item); 
+    // hide the temporary lasso
+    gnome_canvas_item_hide((GnomeCanvasItem*) ui.selection->lasso); 
+  }
+  update_cursor();
+  update_copy_paste_enabled();
+  update_font_button();
+
+  art_svp_free(lassosvp); 
+}
 
 void start_selectrect(GdkEvent *event)
 {
@@ -478,6 +597,10 @@ void start_selectrect(GdkEvent *event)
   ui.selection->type = ITEM_SELECTRECT;
   ui.selection->items = NULL;
   ui.selection->layer = ui.cur_layer;
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
+  //  ui.selection->lassoclip = NULL ; 
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
@@ -497,7 +620,6 @@ void finalize_selectrect(void)
   GList *itemlist;
   struct Item *item;
 
-  
   ui.cur_item_type = ITEM_NONE;
 
   if (ui.selection->bbox.left > ui.selection->bbox.right) {
@@ -549,7 +671,7 @@ gboolean start_movesel(GdkEvent *event)
   if (ui.cur_layer != ui.selection->layer) return FALSE;
   
   get_pointer_coords(event, pt);
-  if (ui.selection->type == ITEM_SELECTRECT) {
+  if (ui.selection->type == ITEM_SELECTRECT || ui.selection->type == ITEM_SELECTREGION ) {
     if (pt[0]<ui.selection->bbox.left || pt[0]>ui.selection->bbox.right ||
         pt[1]<ui.selection->bbox.top  || pt[1]>ui.selection->bbox.bottom)
       return FALSE;
@@ -576,7 +698,7 @@ gboolean start_resizesel(GdkEvent *event)
 
   get_pointer_coords(event, pt);
 
-  if (ui.selection->type == ITEM_SELECTRECT) {
+  if (ui.selection->type == ITEM_SELECTRECT || ui.selection->type == ITEM_SELECTREGION) {
     resize_margin = RESIZE_MARGIN/ui.zoom;
     hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
     if (hmargin>resize_margin) hmargin = resize_margin;
@@ -627,6 +749,9 @@ void start_vertspace(GdkEvent *event)
   ui.selection->type = ITEM_MOVESEL_VERT;
   ui.selection->items = NULL;
   ui.selection->layer = ui.cur_layer;
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
@@ -660,9 +785,15 @@ void continue_movesel(GdkEvent *event)
   struct Item *item;
   int tmppageno;
   struct Page *tmppage;
-  
+  double origx, origy ;
+
   get_pointer_coords(event, pt);
+
+  origx = pt[0]; origy = pt[1]; 
+
   if (ui.cur_item_type == ITEM_MOVESEL_VERT) pt[0] = 0;
+
+  pt[0] += ui.selection->move_pagehdelta; 
   pt[1] += ui.selection->move_pagedelta;
 
   // check for page jumps
@@ -671,19 +802,56 @@ void continue_movesel(GdkEvent *event)
   else upmargin = VIEW_CONTINUOUS_SKIP;
   tmppageno = ui.selection->move_pageno;
   tmppage = g_list_nth_data(journal.pages, tmppageno);
-  while (ui.view_continuous && (pt[1] < - upmargin)) {
-    if (tmppageno == 0) break;
-    tmppageno--;
-    tmppage = g_list_nth_data(journal.pages, tmppageno);
-    pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
-    ui.selection->move_pagedelta += tmppage->height + VIEW_CONTINUOUS_SKIP;
-  }
-  while (ui.view_continuous && (pt[1] > tmppage->height+VIEW_CONTINUOUS_SKIP)) {
-    if (tmppageno == journal.npages-1) break;
-    pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
-    ui.selection->move_pagedelta -= tmppage->height + VIEW_CONTINUOUS_SKIP;
-    tmppageno++;
-    tmppage = g_list_nth_data(journal.pages, tmppageno);
+
+  if( ui.view_continuous ) { 
+    if( !ui.multipage_view ) {
+      ui.selection->move_pagehdelta = 0 ;
+      while (pt[1] < - upmargin) {
+	if (tmppageno == 0) break;
+	tmppageno--;
+	tmppage = g_list_nth_data(journal.pages, tmppageno);
+	pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
+	ui.selection->move_pagedelta += tmppage->height + VIEW_CONTINUOUS_SKIP;
+      }
+      while (pt[1] > tmppage->height+VIEW_CONTINUOUS_SKIP) {
+	if (tmppageno == journal.npages-1) break;
+	pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+	ui.selection->move_pagedelta -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+	tmppageno++;
+	tmppage = g_list_nth_data(journal.pages, tmppageno);
+      }
+    }
+    else { 
+      GList *pglist ;
+      struct Page* pg;  
+      struct Page* origpg ; 
+
+      origpg = g_list_nth_data(journal.pages, ui.selection->orig_pageno ); 
+    
+      tmppageno = 0 ; 
+      
+      for( pglist = journal.pages ; pglist != NULL ; pglist = pglist->next ) {
+	pg = (struct Page *)pglist->data; 
+
+	if( (origx+ui.cur_page->hoffset >= pg->hoffset) && 
+	    (origx+ui.cur_page->hoffset <= pg->hoffset + pg->width) &&
+	    (origy+ui.cur_page->voffset >= pg->voffset) && 
+	    (origy+ui.cur_page->voffset <= pg->voffset + pg->height)) 
+	  break; 
+	tmppageno ++; 	
+      }
+      if( (tmppageno < journal.npages) && (tmppageno >=0 ) ) {
+	tmppage = g_list_nth_data(journal.pages, tmppageno); 
+	ui.selection->move_pagedelta = origpg->voffset - tmppage->voffset;
+	ui.selection->move_pagehdelta = origpg->hoffset - tmppage->hoffset;
+
+      }
+      else {
+	tmppageno = ui.selection->move_pageno; 
+	tmppage = g_list_nth_data(journal.pages, tmppageno); 
+      }
+	
+    }
   }
   
   if (tmppageno != ui.selection->move_pageno) {
@@ -704,7 +872,7 @@ void continue_movesel(GdkEvent *event)
     gnome_canvas_item_move(GNOME_CANVAS_ITEM(ui.selection->move_layer->group), 0., 0.);
     if (ui.cur_item_type == ITEM_MOVESEL_VERT)
       gnome_canvas_item_set(ui.selection->canvas_item,
-        "x2", tmppage->width+100, 
+			    "x2",  tmppage->width+100, // ui.selection->anchor_x+ui.selection->move_pagedelta,// 
         "y1", ui.selection->anchor_y+ui.selection->move_pagedelta, NULL);
   }
   
@@ -871,6 +1039,7 @@ void selection_delete(void)
     ui.selection->layer->nitems--;
     undo->erasurelist = g_list_prepend(undo->erasurelist, erasure);
   }
+  
   reset_selection();
 
   /* NOTE: the erasurelist is built backwards; this guarantees that,
@@ -989,7 +1158,7 @@ void clipboard_paste(void)
       gdk_atom_intern("_XOURNAL", FALSE));
   ui.cur_item_type = ITEM_NONE;
   if (sel_data == NULL) return; // paste failed
-  
+
   reset_selection();
   
   ui.selection = g_new(struct Selection, 1);
@@ -999,7 +1168,11 @@ void clipboard_paste(void)
   ui.selection->layer = ui.cur_layer;
   g_memmove(&ui.selection->bbox, p, sizeof(struct BBox)); p+= sizeof(struct BBox);
   ui.selection->items = NULL;
-  
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
+ 
+ 
   // find by how much we translate the pasted selection
   gnome_canvas_get_scroll_offsets(canvas, &sx, &sy);
   gdk_window_get_geometry(GTK_WIDGET(canvas)->window, NULL, NULL, &wx, &wy, NULL);

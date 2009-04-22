@@ -134,6 +134,16 @@ void init_stuff (int argc, char *argv[])
   gtk_layout_get_hadjustment(GTK_LAYOUT (canvas))->step_increment = ui.scrollbar_step_increment;
   gtk_layout_get_vadjustment(GTK_LAYOUT (canvas))->step_increment = ui.scrollbar_step_increment;
 
+
+  // set up pagehighlighter
+  ui.pagehighlighter = 
+    gnome_canvas_item_new(gnome_canvas_root(canvas),
+			  gnome_canvas_rect_get_type(), "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x80808040,
+			  "x1", 0, "x2", 0, "y1", 0, "y2", 0, 
+			  NULL);
+
   // set up the page size and canvas size
   update_page_stuff();
 
@@ -183,6 +193,14 @@ void init_stuff (int argc, char *argv[])
     gtk_widget_set_sensitive(GET_COMPONENT("optionsUseXInput"), FALSE);
 
   ui.use_xinput = ui.allow_xinput && can_xinput;
+
+  gtk_check_menu_item_set_active(
+    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsMultipageView")), ui.multipage_view); 
+  if( !ui.multipage_view )
+    gtk_widget_set_sensitive(GET_COMPONENT("Multiple_pages"), FALSE); 
+
+  gtk_check_menu_item_set_active
+    (GTK_CHECK_MENU_ITEM(GET_COMPONENT("MultiplePages2")),TRUE); 
 
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsAntialiasBG")), ui.antialias_bg);
