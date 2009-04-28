@@ -7,6 +7,7 @@
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <gdk/gdkkeysyms.h>
+#include <assert.h>
 
 #include "xournal.h"
 #include "xo-interface.h"
@@ -1442,7 +1443,7 @@ void update_toolbar_and_menu(void)
 
 void update_file_name(char *filename)
 {
-  gchar tmp[100], *p;
+  gchar tmp[FILENAME_MAX], *p;
   if (ui.filename != NULL) g_free(ui.filename);
   ui.filename = filename;
   if (filename == NULL) {
@@ -1450,8 +1451,36 @@ void update_file_name(char *filename)
     return;
   }
   p = g_utf8_strrchr(filename, -1, '/');
-  if (p == NULL) p = filename; 
-  else p = g_utf8_next_char(p);
+  if (p == NULL) {
+    /* No path name */
+    p = filename; 
+    /* Leave ui.default.path unchanged */
+  } 
+  else {
+    int len;
+    gchar tmp2[FILENAME_MAX];
+
+    /* Contains a path name */
+    p = g_utf8_next_char(p);
+    
+    /* Change the default path to the current directory */
+    if (ui.default_path!=NULL) {
+      g_free(ui.default_path);
+    } 
+    len = p - filename ;
+    /* make sure we are doing ok*/
+    assert(len > 0 && len < FILENAME_MAX);
+
+    // printf("the lenght [%d] of the path [%s][%s]\n", len, filename, p);
+    g_free(ui.default_path);
+    /* We copy only the path */
+    strncpy(tmp2, filename, len);
+    /* I don't understand unicode, so I am assuming that a null
+       after the length will be enough to mark its end*/
+    tmp2[len] = '\0';
+    //    printf("the lenght [%d] of the path [%s][%s] [%s]\n", len, filename, p, tmp2);      
+    ui.default_path = g_strdup(tmp2);
+  }
   g_snprintf(tmp, 100, "Xournal - %s", p);
   gtk_window_set_title(GTK_WINDOW (winMain), tmp);
   new_mru_entry(filename);
