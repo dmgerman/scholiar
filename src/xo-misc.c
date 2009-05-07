@@ -1445,7 +1445,6 @@ void update_file_name(char *filename)
 {
   gchar tmp[FILENAME_MAX], *p;
   if (ui.filename != NULL) g_free(ui.filename);
-  printf("hello world\n");
   ui.filename = filename;
   if (filename == NULL) {
     gtk_window_set_title(GTK_WINDOW (winMain), "Xournal");
