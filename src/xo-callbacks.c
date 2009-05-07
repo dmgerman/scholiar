@@ -3764,3 +3764,36 @@ on_pagehiglight_activate               (GtkMenuItem     *menuitem,
   update_page_stuff();
 }
 
+void
+on_swap_with_handtool_activate         (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  static int savedTool=0; 
+  // default current tool for button 0
+  // just make sure we are not in text mode
+  //  printf("Current tool %d Hand tool \n", ui.toolno[0], TOOL_HAND);
+
+  if (ui.toolno[0]==TOOL_TEXT) {
+    on_toolsDefaultText_activate(NULL, NULL);
+    return;
+  }
+  end_text();
+  reset_focus();
+  reset_selection();
+  if (ui.toolno[0]==TOOL_HAND) {
+    // the current tool is a hand, hence set the current one a hand and save it
+    ui.toolno[0] = savedTool;
+  } else {
+    // the current tool is not a hand
+    // then set it hand and save it
+    //    printf("To set hand\n");
+    savedTool = ui.toolno[0];
+    ui.toolno[0] = TOOL_HAND;
+  }
+  update_mapping_linkings(-1);
+  update_tool_buttons();
+  update_tool_menu();
+  update_color_menu();
+  update_cursor();
+}
+

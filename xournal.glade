@@ -944,6 +944,16 @@
 		<widget class="GtkMenu" id="menuTools_menu">
 
 		  <child>
+		    <widget class="GtkImageMenuItem" id="swap_with_handtool">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">_Swap with handtool</property>
+		      <property name="use_underline">True</property>
+		      <signal name="activate" handler="on_swap_with_handtool_activate" last_modification_time="Thu, 07 May 2009 05:28:08 GMT"/>
+		      <accelerator key="Escape" modifiers="0" signal="activate"/>
+		    </widget>
+		  </child>
+
+		  <child>
 		    <widget class="GtkRadioMenuItem" id="toolsPen">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Pen</property>

@@ -663,3 +663,7 @@ on_MultiplePages7_activate             (GtkMenuItem     *menuitem,
 void
 on_pagehiglight_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+
+void
+on_swap_with_handtool_activate         (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);

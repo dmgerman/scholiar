@@ -138,6 +138,7 @@ create_winMain (void)
   GtkWidget *journalSetAsDefault;
   GtkWidget *menuTools;
   GtkWidget *menuTools_menu;
+  GtkWidget *swap_with_handtool;
   GSList *toolsPen_group = NULL;
   GtkWidget *toolsPen;
   GtkWidget *toolsEraser;
@@ -854,6 +855,13 @@ create_winMain (void)
 
   menuTools_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuTools), menuTools_menu);
+
+  swap_with_handtool = gtk_image_menu_item_new_with_mnemonic ("_Swap with handtool");
+  gtk_widget_show (swap_with_handtool);
+  gtk_container_add (GTK_CONTAINER (menuTools_menu), swap_with_handtool);
+  gtk_widget_add_accelerator (swap_with_handtool, "activate", accel_group,
+                              GDK_Escape, (GdkModifierType) 0,
+                              GTK_ACCEL_VISIBLE);
 
   toolsPen = gtk_radio_menu_item_new_with_mnemonic (toolsPen_group, "_Pen");
   toolsPen_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (toolsPen));
@@ -2212,6 +2220,9 @@ create_winMain (void)
   g_signal_connect ((gpointer) journalSetAsDefault, "activate",
                     G_CALLBACK (on_journalSetAsDefault_activate),
                     NULL);
+  g_signal_connect ((gpointer) swap_with_handtool, "activate",
+                    G_CALLBACK (on_swap_with_handtool_activate),
+                    NULL);
   g_signal_connect ((gpointer) toolsPen, "toggled",
                     G_CALLBACK (on_toolsPen_activate),
                     NULL);
@@ -2716,6 +2727,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, journalSetAsDefault, "journalSetAsDefault");
   GLADE_HOOKUP_OBJECT (winMain, menuTools, "menuTools");
   GLADE_HOOKUP_OBJECT (winMain, menuTools_menu, "menuTools_menu");
+  GLADE_HOOKUP_OBJECT (winMain, swap_with_handtool, "swap_with_handtool");
   GLADE_HOOKUP_OBJECT (winMain, toolsPen, "toolsPen");
   GLADE_HOOKUP_OBJECT (winMain, toolsEraser, "toolsEraser");
   GLADE_HOOKUP_OBJECT (winMain, toolsHighlighter, "toolsHighlighter");
