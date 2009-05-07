@@ -1445,6 +1445,7 @@ void update_file_name(char *filename)
 {
   gchar tmp[FILENAME_MAX], *p;
   if (ui.filename != NULL) g_free(ui.filename);
+  printf("hello world\n");
   ui.filename = filename;
   if (filename == NULL) {
     gtk_window_set_title(GTK_WINDOW (winMain), "Xournal");
@@ -1470,9 +1471,7 @@ void update_file_name(char *filename)
     len = p - filename ;
     /* make sure we are doing ok*/
     assert(len > 0 && len < FILENAME_MAX);
-
     // printf("the lenght [%d] of the path [%s][%s]\n", len, filename, p);
-    g_free(ui.default_path);
     /* We copy only the path */
     strncpy(tmp2, filename, len);
     /* I don't understand unicode, so I am assuming that a null
