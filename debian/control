@@ -7,6 +7,6 @@ Standards-Version: 3.6.0
 
 Package: xournal
 Architecture: any
-Depends: maemo
+Depends: 
 Description: xournal application
  Application to take notes over a PDF
