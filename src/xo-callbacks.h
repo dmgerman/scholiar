@@ -93,6 +93,10 @@ on_viewPreviousPage_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_viewNotablePage_activate            (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
 on_viewNextPage_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 

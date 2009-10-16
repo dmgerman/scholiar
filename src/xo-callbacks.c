@@ -1003,6 +1003,28 @@ on_viewPreviousPage_activate           (GtkMenuItem     *menuitem,
 
 
 void
+on_viewNotablePage_activate            (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  int pgn = 0;
+  struct Page *pg;
+  struct Layer *layer;
+  GList *pagelist, *layerlist, *itemlist;
+  for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
+      layer = (struct Layer *)layerlist->data;
+      if (layer->items != NULL && pgn > ui.pageno) {
+	do_switch_page(pgn, TRUE, FALSE);
+	return;
+      };
+    };
+    pgn=pgn+1;
+  };
+}
+
+
+void
 on_viewNextPage_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {

@@ -88,6 +88,8 @@ create_winMain (void)
   GtkWidget *image626;
   GtkWidget *viewPreviousPage;
   GtkWidget *image627;
+  GtkWidget *viewNotablePage;
+  GtkWidget *image635;
   GtkWidget *viewNextPage;
   GtkWidget *image628;
   GtkWidget *viewLastPage;
@@ -272,6 +274,7 @@ create_winMain (void)
   GtkWidget *vseparator3;
   GtkWidget *buttonFirstPage;
   GtkWidget *buttonPreviousPage;
+  GtkWidget *buttonNotablePage;
   GtkWidget *buttonNextPage;
   GtkWidget *buttonLastPage;
   GtkWidget *toolitem14;
@@ -618,6 +621,17 @@ create_winMain (void)
   image627 = gtk_image_new_from_stock ("gtk-go-back", GTK_ICON_SIZE_MENU);
   gtk_widget_show (image627);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewPreviousPage), image627);
+
+  viewNotablePage = gtk_image_menu_item_new_with_mnemonic (_("Next Nota_ble Page"));
+  gtk_widget_show (viewNotablePage);
+  gtk_container_add (GTK_CONTAINER (menuView_menu), viewNotablePage);
+  gtk_widget_add_accelerator (viewNotablePage, "activate", accel_group,
+                              GDK_space, (GdkModifierType) GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
+  image635 = gtk_image_new_from_stock ("gtk-jump-to", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image635);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNotablePage), image635);
 
   viewNextPage = gtk_image_menu_item_new_with_mnemonic (_("_Next Page"));
   gtk_widget_show (viewNextPage);
@@ -1485,6 +1499,11 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPreviousPage);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonPreviousPage), tooltips, _("Previous Page"), NULL);
 
+  buttonNotablePage = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-jump-to");
+  gtk_widget_show (buttonNotablePage);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotablePage);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotablePage), tooltips, _("Next Notable Page"), NULL);
+
   buttonNextPage = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-go-forward");
   gtk_widget_show (buttonNextPage);
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNextPage);
@@ -2051,6 +2070,9 @@ create_winMain (void)
   g_signal_connect ((gpointer) viewPreviousPage, "activate",
                     G_CALLBACK (on_viewPreviousPage_activate),
                     NULL);
+  g_signal_connect ((gpointer) viewNotablePage, "activate",
+                    G_CALLBACK (on_viewNotablePage_activate),
+                    NULL);
   g_signal_connect ((gpointer) viewNextPage, "activate",
                     G_CALLBACK (on_viewNextPage_activate),
                     NULL);
@@ -2390,6 +2412,9 @@ create_winMain (void)
   g_signal_connect ((gpointer) buttonPreviousPage, "clicked",
                     G_CALLBACK (on_viewPreviousPage_activate),
                     NULL);
+  g_signal_connect ((gpointer) buttonNotablePage, "clicked",
+                    G_CALLBACK (on_viewNotablePage_activate),
+                    NULL);
   g_signal_connect ((gpointer) buttonNextPage, "clicked",
                     G_CALLBACK (on_viewNextPage_activate),
                     NULL);
@@ -2564,6 +2589,8 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, image626, "image626");
   GLADE_HOOKUP_OBJECT (winMain, viewPreviousPage, "viewPreviousPage");
   GLADE_HOOKUP_OBJECT (winMain, image627, "image627");
+  GLADE_HOOKUP_OBJECT (winMain, viewNotablePage, "viewNotablePage");
+  GLADE_HOOKUP_OBJECT (winMain, image635, "image635");
   GLADE_HOOKUP_OBJECT (winMain, viewNextPage, "viewNextPage");
   GLADE_HOOKUP_OBJECT (winMain, image628, "image628");
   GLADE_HOOKUP_OBJECT (winMain, viewLastPage, "viewLastPage");
@@ -2735,6 +2762,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, vseparator3, "vseparator3");
   GLADE_HOOKUP_OBJECT (winMain, buttonFirstPage, "buttonFirstPage");
   GLADE_HOOKUP_OBJECT (winMain, buttonPreviousPage, "buttonPreviousPage");
+  GLADE_HOOKUP_OBJECT (winMain, buttonNotablePage, "buttonNotablePage");
   GLADE_HOOKUP_OBJECT (winMain, buttonNextPage, "buttonNextPage");
   GLADE_HOOKUP_OBJECT (winMain, buttonLastPage, "buttonLastPage");
   GLADE_HOOKUP_OBJECT (winMain, toolitem14, "toolitem14");
