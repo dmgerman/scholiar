@@ -976,7 +976,27 @@ void
 on_viewPageWidth_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  ui.zoom = (GTK_WIDGET(canvas))->allocation.width/ui.cur_page->width;
+  double byHeight = 0.0;
+  double byWidth = 0.0;
+
+  /* Implement toogling to zooming fullpage by width and height */
+  byHeight = (GTK_WIDGET(canvas))->allocation.height/ui.cur_page->height;
+  byWidth = (GTK_WIDGET(canvas))->allocation.width/ui.cur_page->width;
+  // If the current zoom is by width then do by height
+  // One small caveat, if the document fully fills the screen (no scrollbar)
+  // the next 'zoom' will include a scrollbar, which will oclude a small section of
+  // the document. This means that the toggle is really a 3 steps one:
+  // Full width (no scrollbar) -> full height (no scrollbar) -> full with (with scrollbar)->...
+
+  printf("Current zoom [%f] byhight [%f] bywidth [%f]\n", 
+         ui.zoom, byHeight, byWidth);
+
+  if (ui.zoom != byWidth) {
+    ui.zoom = byWidth;
+  } else {
+    ui.zoom = byHeight;
+  }
+  
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
   rescale_text_items();
   rescale_bg_pixmaps();
