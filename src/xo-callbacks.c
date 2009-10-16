@@ -7,7 +7,6 @@
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <time.h>
-#include <libgnomeprintui/gnome-print-dialog.h>
 #include <glib/gstdio.h>
 #include <gdk/gdkkeysyms.h>
 
@@ -26,7 +25,6 @@ on_fileNew_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (close_journal()) {
     new_journal();
     ui.zoom = ui.startup_zoom;
@@ -48,18 +46,20 @@ on_fileNewBackground_activate          (GtkMenuItem     *menuitem,
   gboolean success;
   
   end_text();
-  reset_focus();
   if (!ok_to_close()) return; // user aborted on save confirmation
   
-  dialog = gtk_file_chooser_dialog_new("Open PDF", GTK_WINDOW (winMain),
+  dialog = gtk_file_chooser_dialog_new(_("Open PDF"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
      GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
      
   filt_all = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_all, "All files");
+  gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_pdf = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_pdf, "PDF files");
+  gtk_file_filter_set_name(filt_pdf, _("PDF files"));
   gtk_file_filter_add_pattern(filt_pdf, "*.pdf");
   gtk_file_filter_add_pattern(filt_pdf, "*.PDF");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_pdf);
@@ -67,7 +67,7 @@ on_fileNewBackground_activate          (GtkMenuItem     *menuitem,
 
   if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
 
-  attach_opt = gtk_check_button_new_with_label("Attach file to the journal");
+  attach_opt = gtk_check_button_new_with_label(_("Attach file to the journal"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(attach_opt), FALSE);
   gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER (dialog), attach_opt);
   
@@ -102,7 +102,7 @@ on_fileNewBackground_activate          (GtkMenuItem     *menuitem,
   
   /* open failed */
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error opening file '%s'", filename);
+    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), filename);
   gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   g_free(filename);
@@ -119,18 +119,20 @@ on_fileOpen_activate                   (GtkMenuItem     *menuitem,
   gboolean success;
   
   end_text();
-  reset_focus();
   if (!ok_to_close()) return; // user aborted on save confirmation
   
-  dialog = gtk_file_chooser_dialog_new("Open Journal", GTK_WINDOW (winMain),
+  dialog = gtk_file_chooser_dialog_new(_("Open Journal"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
      GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
      
   filt_all = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_all, "All files");
+  gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_xoj = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_xoj, "Xournal files");
+  gtk_file_filter_set_name(filt_xoj, _("Xournal files"));
   gtk_file_filter_add_pattern(filt_xoj, "*.xoj");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_xoj);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
@@ -151,7 +153,7 @@ on_fileOpen_activate                   (GtkMenuItem     *menuitem,
   
   /* open failed */
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error opening file '%s'", filename);
+    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), filename);
   gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   g_free(filename);
@@ -166,7 +168,6 @@ on_fileSave_activate                   (GtkMenuItem     *menuitem,
   GtkWidget *dialog;
   
   end_text();
-  reset_focus();
   if (ui.filename == NULL) {
     on_fileSaveAs_activate(menuitem, user_data);
     return;
@@ -180,7 +181,7 @@ on_fileSave_activate                   (GtkMenuItem     *menuitem,
   set_cursor_busy(FALSE);
   /* save failed */
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error saving file '%s'", ui.filename);
+    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error saving file '%s'"), ui.filename);
   gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
 }
@@ -199,10 +200,12 @@ on_fileSaveAs_activate                 (GtkMenuItem     *menuitem,
   struct stat stat_buf;
   
   end_text();
-  reset_focus();
-  dialog = gtk_file_chooser_dialog_new("Save Journal", GTK_WINDOW (winMain),
+  dialog = gtk_file_chooser_dialog_new(_("Save Journal"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
      GTK_STOCK_SAVE, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
      
   if (ui.filename!=NULL) {
     gtk_file_chooser_set_filename(GTK_FILE_CHOOSER (dialog), ui.filename);
@@ -225,10 +228,10 @@ on_fileSaveAs_activate                 (GtkMenuItem     *menuitem,
   }
      
   filt_all = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_all, "All files");
+  gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_xoj = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_xoj, "Xournal files");
+  gtk_file_filter_set_name(filt_xoj, _("Xournal files"));
   gtk_file_filter_add_pattern(filt_xoj, "*.xoj");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_xoj);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
@@ -254,7 +257,7 @@ on_fileSaveAs_activate                 (GtkMenuItem     *menuitem,
     if (warn) {
       warning_dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), 
         GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO,
-        "Should the file %s be overwritten?", filename);
+        _("Should the file %s be overwritten?"), filename);
       if (gtk_dialog_run(GTK_DIALOG(warning_dialog)) == GTK_RESPONSE_YES)
         warn = FALSE;
       gtk_widget_destroy(warning_dialog);
@@ -273,7 +276,7 @@ on_fileSaveAs_activate                 (GtkMenuItem     *menuitem,
   set_cursor_busy(FALSE);
   /* save failed */
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error saving file '%s'", filename);
+    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error saving file '%s'"), filename);
   gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   g_free(filename);
@@ -287,87 +290,56 @@ on_filePrintOptions_activate           (GtkMenuItem     *menuitem,
 
 }
 
-
 void
 on_filePrint_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  GtkWidget *printDialog;
-  GnomePrintJob *gpj;
+#if GTK_CHECK_VERSION(2, 10, 0)
+  GtkPrintOperation *print;
+  GtkPrintOperationResult res;
+  
   int fromPage, toPage;
   int response;
-  char *in_fn;
-  guchar *s;
-  GnomePrintConfig *config = gnome_print_config_default();
+  char *in_fn, *p;
 
   end_text();
-  reset_focus();
-  if (ui.filename!=NULL) {
-    if (g_str_has_suffix(ui.filename, ".xoj")) {
-      in_fn = g_strdup(ui.filename);
-      g_strlcpy(g_strrstr(in_fn, "xoj"), "pdf", 4);
-    } 
-    else
-      in_fn = g_strdup_printf("%s.pdf", ui.filename);
-    gnome_print_config_set(config, (guchar *)"Printer", (guchar *)"PDF");
-    gnome_print_config_set(config, (guchar *)GNOME_PRINT_KEY_OUTPUT_FILENAME, (guchar *)in_fn);
-    gnome_print_config_set(config, (guchar *)"Settings.Transport.Backend.FileName", (guchar *)in_fn);
-    g_strlcpy(g_strrstr(in_fn, "pdf"), "ps", 3);
-    gnome_print_config_set(config, (guchar *)"Printer", (guchar *)"GENERIC");
-    gnome_print_config_set (config, (guchar *)GNOME_PRINT_KEY_OUTPUT_FILENAME, (guchar *)in_fn);
-    s = gnome_print_config_get(config, (guchar *)"Settings.Transport.Backend.FileName");
-    if (s != NULL) {
-      g_free(s);
-      gnome_print_config_set(config, (guchar *)"Settings.Transport.Backend.FileName", (guchar *)in_fn);
-    }
-    g_free(in_fn);
-  }
-  
-  gpj = gnome_print_job_new(config); /* was NULL */
-  gnome_print_config_unref(config);
-/* end */
-  printDialog = gnome_print_dialog_new(gpj, (guchar *)"Print", GNOME_PRINT_DIALOG_RANGE);
-  gnome_print_dialog_construct_range_page(GNOME_PRINT_DIALOG(printDialog),
-    GNOME_PRINT_RANGE_ALL | GNOME_PRINT_RANGE_RANGE,
-    1, journal.npages, (guchar *)"Current page", (guchar *)"Pages");
-  /* don't have "Current page" as option, else it becomes the default!! */
-  
-  gtk_dialog_set_response_sensitive(GTK_DIALOG(printDialog),
-                         GNOME_PRINT_DIALOG_RESPONSE_PREVIEW, FALSE);
-  /* the print-job-preview "feature" is completely, hopelessly broken */                       
-
-  response = gtk_dialog_run(GTK_DIALOG(printDialog));
-  if (response <= 0) {
-    gtk_widget_destroy(printDialog);
-    return;
-  }
-
+  if (!gtk_check_version(2, 10, 0)) {
+    print = gtk_print_operation_new();
 /*
-  if (response == GNOME_PRINT_DIALOG_RESPONSE_PREVIEW) {
-    print_job_render(gpj, 0, journal.npages-1);
-    gtk_widget_destroy(printDialog);
-    preview = gnome_print_job_preview_new(gpj, (guchar *)"Preview");
-    try_fix_print_preview_ui(preview);
-    gtk_window_set_modal(GTK_WINDOW(preview), TRUE);
-    gtk_widget_show_all(preview);
-  }
-*/
-
-  if (response == GNOME_PRINT_DIALOG_RESPONSE_PRINT) {
-    switch(gnome_print_dialog_get_range(GNOME_PRINT_DIALOG(printDialog))) {
-      case GNOME_PRINT_RANGE_RANGE: 
-        gnome_print_dialog_get_range_page(GNOME_PRINT_DIALOG(printDialog), &fromPage, &toPage);
-        fromPage--;
-        toPage--;
-        break;
-      default: 
-        fromPage = 0; 
-        toPage = journal.npages-1;
+    if (!ui.print_settings)
+      ui.print_settings = gtk_print_settings_new();
+    if (ui.filename!=NULL) {
+      if (g_str_has_suffix(ui.filename, ".xoj")) {
+        in_fn = g_strdup(ui.filename);
+        g_strlcpy(g_strrstr(in_fn, "xoj"), "pdf", 4);
+      } 
+      else in_fn = g_strdup_printf("%s.pdf", ui.filename);
+      gtk_print_settings_set(ui.print_settings, GTK_PRINT_SETTINGS_OUTPUT_URI,
+         g_filename_to_uri(in_fn, NULL, NULL));
+      g_free(in_fn);
     }
-
-    gtk_widget_destroy(printDialog);
-    print_job_render(gpj, fromPage, toPage);
+*/
+    if (ui.print_settings!=NULL)
+       gtk_print_operation_set_print_settings (print, ui.print_settings);
+    gtk_print_operation_set_n_pages(print, journal.npages);
+    gtk_print_operation_set_current_page(print, ui.pageno);
+    gtk_print_operation_set_show_progress(print, TRUE);
+    if (ui.filename!=NULL) {
+      p = g_utf8_strrchr(ui.filename, -1, '/');
+      if (p==NULL) p = ui.filename;
+      else p++;
+      gtk_print_operation_set_job_name(print, p);
+    }
+    g_signal_connect (print, "draw_page", G_CALLBACK (print_job_render_page), NULL);
+    res = gtk_print_operation_run(print, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+                                  GTK_WINDOW(winMain), NULL);
+    if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
+      if (ui.print_settings!=NULL) g_object_unref(ui.print_settings);
+      ui.print_settings = g_object_ref(gtk_print_operation_get_print_settings(print));
+    }
+    g_object_unref(print);
   }
+#endif
 }
 
 
@@ -384,10 +356,12 @@ on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
   gboolean warn;
   
   end_text();
-  reset_focus();
-  dialog = gtk_file_chooser_dialog_new("Export to PDF", GTK_WINDOW (winMain),
+  dialog = gtk_file_chooser_dialog_new(_("Export to PDF"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_SAVE, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
      GTK_STOCK_SAVE, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
      
   if (ui.filename!=NULL) {
     if (g_str_has_suffix(ui.filename, ".xoj")) {
@@ -408,10 +382,10 @@ on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
   }
      
   filt_all = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_all, "All files");
+  gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_pdf = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_pdf, "PDF files");
+  gtk_file_filter_set_name(filt_pdf, _("PDF files"));
   gtk_file_filter_add_pattern(filt_pdf, "*.pdf");
   gtk_file_filter_add_pattern(filt_pdf, "*.PDF");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_pdf);
@@ -429,7 +403,7 @@ on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
     if (warn) {
       warning_dialog = gtk_message_dialog_new(GTK_WINDOW(winMain),
         GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO,
-        "Should the file %s be overwritten?", filename);
+        _("Should the file %s be overwritten?"), filename);
       if (gtk_dialog_run(GTK_DIALOG(warning_dialog)) == GTK_RESPONSE_YES)
         warn = FALSE;
       gtk_widget_destroy(warning_dialog);
@@ -442,7 +416,7 @@ on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
   if (!print_to_pdf(filename)) {
     set_cursor_busy(FALSE);
     dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-      GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error creating file '%s'", filename);
+      GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error creating file '%s'"), filename);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }
@@ -456,7 +430,6 @@ on_fileQuit_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (ok_to_close()) gtk_main_quit ();
 }
 
@@ -476,9 +449,9 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
   GnomeCanvasGroup *group;
   
   end_text();
-  reset_focus();
   if (undo == NULL) return; // nothing to undo!
   reset_selection(); // safer
+  reset_recognizer(); // safer
   if (undo->type == ITEM_STROKE || undo->type == ITEM_TEXT) {
     // we're keeping the stroke info, but deleting the canvas item
     gtk_object_destroy(GTK_OBJECT(undo->item->canvas_item));
@@ -690,9 +663,9 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
   GnomeCanvasGroup *group;
   
   end_text();
-  reset_focus();
   if (redo == NULL) return; // nothing to redo!
   reset_selection(); // safer
+  reset_recognizer(); // safer
   if (redo->type == ITEM_STROKE || redo->type == ITEM_TEXT) {
     // re-create the canvas_item
     make_canvas_item_one(redo->layer->group, redo->item);
@@ -892,7 +865,6 @@ on_editCut_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   selection_to_clip();
   selection_delete();
 }
@@ -903,7 +875,6 @@ on_editCopy_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   selection_to_clip();
 }
 
@@ -913,7 +884,6 @@ on_editPaste_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   clipboard_paste();
 }
 
@@ -923,7 +893,6 @@ on_editDelete_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   selection_delete();
 }
 
@@ -936,7 +905,6 @@ on_viewContinuous_activate             (GtkMenuItem     *menuitem,
   double yscroll;
   struct Page *pg;
 
-  reset_focus();
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem))) return;
   if (ui.view_continuous) return;
   ui.view_continuous = TRUE;
@@ -957,7 +925,6 @@ on_viewOnePage_activate                (GtkMenuItem     *menuitem,
   GtkAdjustment *v_adj;
   double yscroll;
   
-  reset_focus();
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem))) return;
   if (!ui.view_continuous) return;
   ui.view_continuous = FALSE;
@@ -974,7 +941,6 @@ void
 on_viewZoomIn_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  reset_focus();
   if (ui.zoom > MAX_ZOOM) return;
   ui.zoom *= ui.zoom_step_factor;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
@@ -987,7 +953,6 @@ void
 on_viewZoomOut_activate                (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  reset_focus();
   if (ui.zoom < MIN_ZOOM) return;
   ui.zoom /= ui.zoom_step_factor;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
@@ -1000,7 +965,6 @@ void
 on_viewNormalSize_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  reset_focus();
   ui.zoom = DEFAULT_ZOOM;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
   rescale_text_items();
@@ -1012,16 +976,7 @@ void
 on_viewPageWidth_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  double x1, y1, x2, y2 ; 
-
-  reset_focus();
-  if( !ui.view_continuous || !ui.multipage_view  ) {
-    ui.zoom = (GTK_WIDGET(canvas))->allocation.width/ui.cur_page->width;
-  }
-  else {
-    gnome_canvas_get_scroll_region( canvas, &x1, &y1, &x2, &y2 ); 
-    ui.zoom = (GTK_WIDGET(canvas))->allocation.width/(x2-x1);  
-  }
+  ui.zoom = (GTK_WIDGET(canvas))->allocation.width/ui.cur_page->width;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
   rescale_text_items();
   rescale_bg_pixmaps();
@@ -1033,7 +988,6 @@ on_viewFirstPage_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   do_switch_page(0, TRUE, FALSE);
 }
 
@@ -1043,7 +997,6 @@ on_viewPreviousPage_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (ui.pageno == 0) return;
   do_switch_page(ui.pageno-1, TRUE, FALSE);
 }
@@ -1054,9 +1007,7 @@ on_viewNextPage_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (ui.pageno == journal.npages-1) { // create a page at end
-    if (page_ops_forbidden()) return;
     on_journalNewPageEnd_activate(menuitem, user_data);
     return;
   }
@@ -1069,7 +1020,6 @@ on_viewLastPage_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   do_switch_page(journal.npages-1, TRUE, FALSE);
 }
 
@@ -1079,7 +1029,6 @@ on_viewShowLayer_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (ui.layerno == ui.cur_page->nlayers-1) return;
   reset_selection();
   ui.layerno++;
@@ -1094,7 +1043,6 @@ on_viewHideLayer_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (ui.layerno == -1) return;
   reset_selection();
   gnome_canvas_item_hide(GNOME_CANVAS_ITEM(ui.cur_layer->group));
@@ -1112,8 +1060,6 @@ on_journalNewPageBefore_activate       (GtkMenuItem     *menuitem,
   struct Page *pg;
 
   end_text();
-  reset_focus();
-  if (page_ops_forbidden()) return;
   reset_selection();
   pg = new_page(ui.cur_page);
   journal.pages = g_list_insert(journal.pages, pg, ui.pageno);
@@ -1134,8 +1080,6 @@ on_journalNewPageAfter_activate        (GtkMenuItem     *menuitem,
   struct Page *pg;
 
   end_text();
-  reset_focus();
-  if (page_ops_forbidden()) return;
   reset_selection();
   pg = new_page(ui.cur_page);
   journal.pages = g_list_insert(journal.pages, pg, ui.pageno+1);
@@ -1156,8 +1100,6 @@ on_journalNewPageEnd_activate          (GtkMenuItem     *menuitem,
   struct Page *pg;
 
   end_text();
-  reset_focus();
-  if (page_ops_forbidden()) return;
   reset_selection();
   pg = new_page((struct Page *)g_list_last(journal.pages)->data);
   journal.pages = g_list_append(journal.pages, pg);
@@ -1179,10 +1121,9 @@ on_journalDeletePage_activate          (GtkMenuItem     *menuitem,
   struct Layer *l;
 
   end_text();
-  reset_focus();
-  if (page_ops_forbidden()) return;
   if (journal.npages == 1) return;
   reset_selection();  
+  reset_recognizer(); // safer
   prepare_new_undo();
   undo->type = ITEM_DELETE_PAGE;
   undo->val = ui.pageno;
@@ -1215,7 +1156,6 @@ on_journalNewLayer_activate            (GtkMenuItem     *menuitem,
   struct Layer *l;
   
   end_text();
-  reset_focus();
   reset_selection();
   l = g_new(struct Layer, 1);
   l->items = NULL;
@@ -1245,9 +1185,9 @@ on_journalDeleteLayer_activate         (GtkMenuItem     *menuitem,
   GList *list;
   
   end_text();
-  reset_focus();
   if (ui.cur_layer == NULL) return;
   reset_selection();
+  reset_recognizer(); // safer
   prepare_new_undo();
   undo->type = ITEM_DELETE_LAYER;
   undo->val = ui.layerno;
@@ -1318,7 +1258,6 @@ on_journalPaperSize_activate           (GtkMenuItem     *menuitem,
   GList *pglist;
   
   end_text();
-  reset_focus();
   papersize_dialog = create_papersizeDialog();
   papersize_width = ui.cur_page->width;
   papersize_height = ui.cur_page->height;
@@ -1369,8 +1308,7 @@ on_papercolorWhite_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  process_papercolor_activate(menuitem, COLOR_WHITE);
+  process_papercolor_activate(menuitem, COLOR_WHITE, predef_bgcolors_rgba[COLOR_WHITE]);
 }
 
 
@@ -1379,8 +1317,7 @@ on_papercolorYellow_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  process_papercolor_activate(menuitem, COLOR_YELLOW);
+  process_papercolor_activate(menuitem, COLOR_YELLOW, predef_bgcolors_rgba[COLOR_YELLOW]);
 }
 
 
@@ -1389,8 +1326,7 @@ on_papercolorPink_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  process_papercolor_activate(menuitem, COLOR_RED);
+  process_papercolor_activate(menuitem, COLOR_RED, predef_bgcolors_rgba[COLOR_RED]);
 }
 
 
@@ -1399,8 +1335,7 @@ on_papercolorOrange_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  process_papercolor_activate(menuitem, COLOR_ORANGE);
+  process_papercolor_activate(menuitem, COLOR_ORANGE, predef_bgcolors_rgba[COLOR_ORANGE]);
 }
 
 
@@ -1409,8 +1344,7 @@ on_papercolorBlue_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  process_papercolor_activate(menuitem, COLOR_BLUE);
+  process_papercolor_activate(menuitem, COLOR_BLUE, predef_bgcolors_rgba[COLOR_BLUE]);
 }
 
 
@@ -1419,8 +1353,7 @@ on_papercolorGreen_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  process_papercolor_activate(menuitem, COLOR_GREEN);
+  process_papercolor_activate(menuitem, COLOR_GREEN, predef_bgcolors_rgba[COLOR_GREEN]);
 }
 
 
@@ -1428,7 +1361,25 @@ void
 on_papercolorOther_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-
+  GtkWidget *dialog;
+  GtkColorSelection *colorsel;
+  gint result;
+  guint rgba;
+  GdkColor gdkcolor;
+  
+  end_text();
+  dialog = gtk_color_selection_dialog_new(_("Pick a Paper Color"));
+  colorsel = GTK_COLOR_SELECTION(GTK_COLOR_SELECTION_DIALOG(dialog)->colorsel);
+  if (ui.cur_page->bg->type == BG_SOLID) rgba = ui.cur_page->bg->color_rgba;
+  else rgba = ui.default_page.bg->color_rgba;
+  rgb_to_gdkcolor(rgba, &gdkcolor);
+  gtk_color_selection_set_current_color(colorsel, &gdkcolor);
+  
+  if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK) {
+    gtk_color_selection_get_current_color(colorsel, &gdkcolor);
+    process_papercolor_activate(menuitem, COLOR_OTHER, gdkcolor_to_rgba(gdkcolor, 0xffff));
+  }
+  gtk_widget_destroy(dialog);
 }
 
 
@@ -1437,7 +1388,6 @@ on_paperstylePlain_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   process_paperstyle_activate(menuitem, RULING_NONE);
 }
 
@@ -1447,7 +1397,6 @@ on_paperstyleLined_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   process_paperstyle_activate(menuitem, RULING_LINED);
 }
 
@@ -1457,7 +1406,6 @@ on_paperstyleRuled_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   process_paperstyle_activate(menuitem, RULING_RULED);
 }
 
@@ -1467,7 +1415,6 @@ on_paperstyleGraph_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   process_paperstyle_activate(menuitem, RULING_GRAPH);
 }
 
@@ -1486,13 +1433,15 @@ on_journalLoadBackground_activate      (GtkMenuItem     *menuitem,
   gboolean attach;
   
   end_text();
-  reset_focus();
-  dialog = gtk_file_chooser_dialog_new("Open Background", GTK_WINDOW (winMain),
+  dialog = gtk_file_chooser_dialog_new(_("Open Background"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
      GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
 
   filt_all = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_all, "All files");
+  gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
 
@@ -1500,7 +1449,7 @@ on_journalLoadBackground_activate      (GtkMenuItem     *menuitem,
 
   if (!gtk_check_version(2, 6, 0)) {
     filt_pix = gtk_file_filter_new();
-    gtk_file_filter_set_name(filt_pix, "Bitmap files");
+    gtk_file_filter_set_name(filt_pix, _("Bitmap files"));
     gtk_file_filter_add_pixbuf_formats(filt_pix);
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_pix);
   }
@@ -1508,14 +1457,14 @@ on_journalLoadBackground_activate      (GtkMenuItem     *menuitem,
 #endif
 
   filt_pspdf = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_pspdf, "PS/PDF files (as bitmaps)");
+  gtk_file_filter_set_name(filt_pspdf, _("PS/PDF files (as bitmaps)"));
   gtk_file_filter_add_pattern(filt_pspdf, "*.ps");
   gtk_file_filter_add_pattern(filt_pspdf, "*.PS");
   gtk_file_filter_add_pattern(filt_pspdf, "*.pdf");
   gtk_file_filter_add_pattern(filt_pspdf, "*.PDF");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_pspdf);
 
-  attach_opt = gtk_check_button_new_with_label("Attach file to the journal");
+  attach_opt = gtk_check_button_new_with_label(_("Attach file to the journal"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(attach_opt), FALSE);
   gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER (dialog), attach_opt);
 
@@ -1538,7 +1487,7 @@ on_journalLoadBackground_activate      (GtkMenuItem     *menuitem,
   if (bglist == NULL) {
     dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-      "Error opening background '%s'", filename);
+      _("Error opening background '%s'"), filename);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
     g_free(filename);
@@ -1601,7 +1550,6 @@ on_journalScreenshot_activate          (GtkMenuItem     *menuitem,
   struct Background *bg;
   
   end_text();
-  reset_focus();
   reset_selection();
   gtk_window_iconify(GTK_WINDOW(winMain)); // hide ourselves
   gdk_display_sync(gdk_display_get_default());
@@ -1649,7 +1597,6 @@ on_journalApplyAllPages_activate       (GtkMenuItem     *menuitem,
   gboolean active;
   
   end_text();
-  reset_focus();
   active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   if (active == ui.bg_apply_all_pages) return;
   ui.bg_apply_all_pages = active;
@@ -1698,14 +1645,14 @@ on_toolsPen_activate                   (GtkMenuItem     *menuitem,
       return;
   }
   
-  if (ui.cur_mapping != 0) return;
-  if (ui.toolno[0] == TOOL_PEN) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_PEN) return;
 
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
   end_text();
-  reset_focus();
   reset_selection();
-  ui.toolno[0] = TOOL_PEN;
-  ui.cur_brush = &(ui.brushes[0][TOOL_PEN]);
+  ui.toolno[ui.cur_mapping] = TOOL_PEN;
+  ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_PEN]);
   ui.cur_brush->ruler = ui.default_brushes[TOOL_PEN].ruler;
   ui.cur_brush->recognizer = ui.default_brushes[TOOL_PEN].recognizer;
   update_mapping_linkings(TOOL_PEN);
@@ -1728,14 +1675,14 @@ on_toolsEraser_activate                (GtkMenuItem     *menuitem,
       return;
   }
   
-  if (ui.cur_mapping != 0) return;
-  if (ui.toolno[0] == TOOL_ERASER) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_ERASER) return;
   
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
   end_text();
-  reset_focus();
   reset_selection();
-  ui.toolno[0] = TOOL_ERASER;
-  ui.cur_brush = &(ui.brushes[0][TOOL_ERASER]);
+  ui.toolno[ui.cur_mapping] = TOOL_ERASER;
+  ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_ERASER]);
   update_mapping_linkings(TOOL_ERASER);
   update_tool_buttons();
   update_tool_menu();
@@ -1756,14 +1703,14 @@ on_toolsHighlighter_activate           (GtkMenuItem     *menuitem,
       return;
   }
   
-  if (ui.cur_mapping != 0) return; // not user-generated
-  if (ui.toolno[0] == TOOL_HIGHLIGHTER) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_HIGHLIGHTER) return;
   
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
   end_text();
-  reset_focus();
   reset_selection();
-  ui.toolno[0] = TOOL_HIGHLIGHTER;
-  ui.cur_brush = &(ui.brushes[0][TOOL_HIGHLIGHTER]);
+  ui.toolno[ui.cur_mapping] = TOOL_HIGHLIGHTER;
+  ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_HIGHLIGHTER]);
   ui.cur_brush->ruler = ui.default_brushes[TOOL_HIGHLIGHTER].ruler;
   ui.cur_brush->recognizer = ui.default_brushes[TOOL_HIGHLIGHTER].recognizer;
   update_mapping_linkings(TOOL_HIGHLIGHTER);
@@ -1786,13 +1733,13 @@ on_toolsText_activate                  (GtkMenuItem     *menuitem,
       return;
   }
   
-  if (ui.cur_mapping != 0) return; // not user-generated
-  if (ui.toolno[0] == TOOL_TEXT) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_TEXT) return;
   
-  reset_focus();
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
   reset_selection();
-  ui.toolno[0] = TOOL_TEXT;
-  ui.cur_brush = &(ui.brushes[0][TOOL_PEN]);
+  ui.toolno[ui.cur_mapping] = TOOL_TEXT;
+  ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_PEN]);
   update_mapping_linkings(-1);
   update_tool_buttons();
   update_tool_menu();
@@ -1805,25 +1752,7 @@ void
 on_toolsSelectRegion_activate          (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  if (GTK_OBJECT_TYPE(menuitem) == GTK_TYPE_RADIO_MENU_ITEM) {
-    if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem)))
-      return;
-  } else {
-    if (!gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem)))
-      return;
-  }
 
-  if (ui.cur_mapping != 0) return; // not user-generated
-  if (ui.toolno[0] == TOOL_SELECTREGION) return;
-  
-  end_text();
-  reset_focus();
-  ui.toolno[0] = TOOL_SELECTREGION;
-  update_mapping_linkings(-1);
-  update_tool_buttons();
-  update_tool_menu();
-  update_color_menu();
-  update_cursor();
 }
 
 
@@ -1839,12 +1768,12 @@ on_toolsSelectRectangle_activate       (GtkMenuItem     *menuitem,
       return;
   }
   
-  if (ui.cur_mapping != 0) return; // not user-generated
-  if (ui.toolno[0] == TOOL_SELECTRECT) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_SELECTRECT) return;
   
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
   end_text();
-  reset_focus();
-  ui.toolno[0] = TOOL_SELECTRECT;
+  ui.toolno[ui.cur_mapping] = TOOL_SELECTRECT;
   update_mapping_linkings(-1);
   update_tool_buttons();
   update_tool_menu();
@@ -1865,13 +1794,13 @@ on_toolsVerticalSpace_activate         (GtkMenuItem     *menuitem,
       return;
   }
   
-  if (ui.cur_mapping != 0) return; // not user-generated
-  if (ui.toolno[0] == TOOL_VERTSPACE) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_VERTSPACE) return;
   
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
   end_text();
-  reset_focus();
   reset_selection();
-  ui.toolno[0] = TOOL_VERTSPACE;
+  ui.toolno[ui.cur_mapping] = TOOL_VERTSPACE;
   update_mapping_linkings(-1);
   update_tool_buttons();
   update_tool_menu();
@@ -1884,7 +1813,7 @@ void
 on_colorBlack_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_BLACK);
+  process_color_activate(menuitem, COLOR_BLACK, predef_colors_rgba[COLOR_BLACK]);
 }
 
 
@@ -1892,8 +1821,7 @@ void
 on_colorBlue_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_BLUE);
-
+  process_color_activate(menuitem, COLOR_BLUE, predef_colors_rgba[COLOR_BLUE]);
 }
 
 
@@ -1901,7 +1829,7 @@ void
 on_colorRed_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_RED);
+  process_color_activate(menuitem, COLOR_RED, predef_colors_rgba[COLOR_RED]);
 }
 
 
@@ -1909,7 +1837,7 @@ void
 on_colorGreen_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_GREEN);
+  process_color_activate(menuitem, COLOR_GREEN, predef_colors_rgba[COLOR_GREEN]);
 }
 
 
@@ -1917,7 +1845,7 @@ void
 on_colorGray_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_GRAY);
+  process_color_activate(menuitem, COLOR_GRAY, predef_colors_rgba[COLOR_GRAY]);
 }
 
 
@@ -1925,7 +1853,7 @@ void
 on_colorLightBlue_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_LIGHTBLUE);
+  process_color_activate(menuitem, COLOR_LIGHTBLUE, predef_colors_rgba[COLOR_LIGHTBLUE]);
 }
 
 
@@ -1933,7 +1861,7 @@ void
 on_colorLightGreen_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_LIGHTGREEN);
+  process_color_activate(menuitem, COLOR_LIGHTGREEN, predef_colors_rgba[COLOR_LIGHTGREEN]);
 }
 
 
@@ -1941,7 +1869,7 @@ void
 on_colorMagenta_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_MAGENTA);
+  process_color_activate(menuitem, COLOR_MAGENTA, predef_colors_rgba[COLOR_MAGENTA]);
 }
 
 
@@ -1949,7 +1877,7 @@ void
 on_colorOrange_activate                (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_ORANGE);
+  process_color_activate(menuitem, COLOR_ORANGE, predef_colors_rgba[COLOR_ORANGE]);
 }
 
 
@@ -1957,7 +1885,7 @@ void
 on_colorYellow_activate                (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_YELLOW);
+  process_color_activate(menuitem, COLOR_YELLOW, predef_colors_rgba[COLOR_YELLOW]);
 }
 
 
@@ -1965,7 +1893,7 @@ void
 on_colorWhite_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  process_color_activate(menuitem, COLOR_WHITE);
+  process_color_activate(menuitem, COLOR_WHITE, predef_colors_rgba[COLOR_WHITE]);
 }
 
 
@@ -1973,7 +1901,7 @@ void
 on_colorOther_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-
+  gtk_button_clicked(GTK_BUTTON(GET_COMPONENT("buttonColorChooser")));
 }
 
 
@@ -2047,7 +1975,6 @@ on_eraserStandard_activate             (GtkMenuItem     *menuitem,
 {
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem))) return;
   end_text();
-  reset_focus();
   ui.brushes[0][TOOL_ERASER].tool_options = TOOLOPT_ERASER_STANDARD;
   update_mapping_linkings(TOOL_ERASER);
 }
@@ -2059,7 +1986,6 @@ on_eraserWhiteout_activate             (GtkMenuItem     *menuitem,
 {
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem))) return;
   end_text();
-  reset_focus();
   ui.brushes[0][TOOL_ERASER].tool_options = TOOLOPT_ERASER_WHITEOUT;
   update_mapping_linkings(TOOL_ERASER);
 }
@@ -2071,7 +1997,6 @@ on_eraserDeleteStrokes_activate        (GtkMenuItem     *menuitem,
 {
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem))) return;
   end_text();
-  reset_focus();
   ui.brushes[0][TOOL_ERASER].tool_options = TOOLOPT_ERASER_STROKES;
   update_mapping_linkings(TOOL_ERASER);
 }
@@ -2108,13 +2033,12 @@ on_toolsTextFont_activate              (GtkMenuItem     *menuitem,
   GtkWidget *dialog;
   gchar *str;
   
-  dialog = gtk_font_selection_dialog_new("Select Font");
+  dialog = gtk_font_selection_dialog_new(_("Select Font"));
   str = make_cur_font_name();
   gtk_font_selection_dialog_set_font_name(GTK_FONT_SELECTION_DIALOG(dialog), str);
   g_free(str);
   if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
     gtk_widget_destroy(dialog);
-    reset_focus();
     return;
   }
   str = gtk_font_selection_dialog_get_font_name(GTK_FONT_SELECTION_DIALOG(dialog));
@@ -2128,7 +2052,6 @@ on_toolsDefaultPen_activate            (GtkMenuItem     *menuitem,
 {
   switch_mapping(0);
   end_text();
-  reset_focus();
   reset_selection();
   g_memmove(&(ui.brushes[0][TOOL_PEN]), ui.default_brushes+TOOL_PEN, sizeof(struct Brush));
   ui.toolno[0] = TOOL_PEN;
@@ -2148,7 +2071,6 @@ on_toolsDefaultEraser_activate         (GtkMenuItem     *menuitem,
 {
   switch_mapping(0);
   end_text();
-  reset_focus();
   reset_selection();
   g_memmove(&(ui.brushes[0][TOOL_ERASER]), ui.default_brushes+TOOL_ERASER, sizeof(struct Brush));
   ui.toolno[0] = TOOL_ERASER;
@@ -2168,7 +2090,6 @@ on_toolsDefaultHighlighter_activate    (GtkMenuItem     *menuitem,
 {
   switch_mapping(0);
   end_text();
-  reset_focus();
   reset_selection();
   g_memmove(&(ui.brushes[0][TOOL_HIGHLIGHTER]), ui.default_brushes+TOOL_HIGHLIGHTER, sizeof(struct Brush));
   ui.toolno[0] = TOOL_HIGHLIGHTER;
@@ -2187,7 +2108,6 @@ on_toolsDefaultText_activate           (GtkMenuItem     *menuitem,
 {
   switch_mapping(0);
   if (ui.toolno[0]!=TOOL_TEXT) end_text();
-  reset_focus();
   reset_selection();
   ui.toolno[0] = TOOL_TEXT;
   ui.cur_brush = &(ui.brushes[0][TOOL_PEN]);
@@ -2214,10 +2134,11 @@ on_toolsSetAsDefault_activate          (GtkMenuItem     *menuitem,
 {
   struct Item *it;
   
-  if (ui.cur_mapping!=0) return;
-  if (ui.toolno[0] < NUM_STROKE_TOOLS)
-    g_memmove(ui.default_brushes+ui.toolno[0], &(ui.brushes[0][ui.toolno[0]]), sizeof(struct Brush));
-  if (ui.toolno[0] == TOOL_TEXT) {
+  if (ui.cur_mapping!=0 && !ui.button_switch_mapping) return;
+  if (ui.toolno[ui.cur_mapping] < NUM_STROKE_TOOLS)
+    g_memmove(ui.default_brushes+ui.toolno[ui.cur_mapping], 
+              &(ui.brushes[ui.cur_mapping][ui.toolno[ui.cur_mapping]]), sizeof(struct Brush));
+  if (ui.toolno[ui.cur_mapping] == TOOL_TEXT) {
     if (ui.cur_item_type == ITEM_TEXT) {
       g_free(ui.font_name);
       ui.font_name = g_strdup(ui.cur_item->font_name);
@@ -2235,7 +2156,6 @@ on_toolsSetAsDefault_activate          (GtkMenuItem     *menuitem,
     ui.default_font_size = ui.font_size;
   }
   end_text();
-  reset_focus();
 }
 
 
@@ -2250,16 +2170,16 @@ on_toolsRuler_activate                 (GtkMenuItem     *menuitem,
   else
     active = gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem));
 
-  if (ui.cur_mapping != 0) return;
-  current = (ui.toolno[0] == TOOL_PEN || ui.toolno[0] == TOOL_HIGHLIGHTER) && ui.cur_brush->ruler;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return;
+  current = (ui.toolno[ui.cur_mapping] == TOOL_PEN || ui.toolno[ui.cur_mapping] == TOOL_HIGHLIGHTER) && ui.cur_brush->ruler;
   if (active == current) return;
-  
+
+  ui.cur_mapping = 0;  
   end_text();
-  reset_focus();
-  if (ui.toolno[0]!=TOOL_PEN && ui.toolno[0]!=TOOL_HIGHLIGHTER) {
+  if (ui.toolno[ui.cur_mapping]!=TOOL_PEN && ui.toolno[ui.cur_mapping]!=TOOL_HIGHLIGHTER) {
     reset_selection();
-    ui.toolno[0] = TOOL_PEN;
-    ui.cur_brush = &(ui.brushes[0][TOOL_PEN]);
+    ui.toolno[ui.cur_mapping] = TOOL_PEN;
+    ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_PEN]);
     update_color_menu();
     update_tool_buttons();
     update_tool_menu();
@@ -2268,7 +2188,7 @@ on_toolsRuler_activate                 (GtkMenuItem     *menuitem,
   
   ui.cur_brush->ruler = active;
   if (active) ui.cur_brush->recognizer = FALSE;
-  update_mapping_linkings(ui.toolno[0]);
+  update_mapping_linkings(ui.toolno[ui.cur_mapping]);
   update_ruler_indicator();
 }
 
@@ -2284,16 +2204,16 @@ on_toolsReco_activate                  (GtkMenuItem *menuitem,
   else
     active = gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem));
 
-  if (ui.cur_mapping != 0) return;
-  current = (ui.toolno[0] == TOOL_PEN || ui.toolno[0] == TOOL_HIGHLIGHTER) && ui.cur_brush->recognizer;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return;
+  current = (ui.toolno[ui.cur_mapping] == TOOL_PEN || ui.toolno[ui.cur_mapping] == TOOL_HIGHLIGHTER) && ui.cur_brush->recognizer;
   if (active == current) return;
   
+  ui.cur_mapping = 0;
   end_text();
-  reset_focus();
-  if (ui.toolno[0]!=TOOL_PEN && ui.toolno[0]!=TOOL_HIGHLIGHTER) {
+  if (ui.toolno[ui.cur_mapping]!=TOOL_PEN && ui.toolno[ui.cur_mapping]!=TOOL_HIGHLIGHTER) {
     reset_selection();
-    ui.toolno[0] = TOOL_PEN;
-    ui.cur_brush = &(ui.brushes[0][TOOL_PEN]);
+    ui.toolno[ui.cur_mapping] = TOOL_PEN;
+    ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_PEN]);
     update_color_menu();
     update_tool_buttons();
     update_tool_menu();
@@ -2305,7 +2225,7 @@ on_toolsReco_activate                  (GtkMenuItem *menuitem,
     ui.cur_brush->ruler = FALSE;
     reset_recognizer();
   }
-  update_mapping_linkings(ui.toolno[0]);
+  update_mapping_linkings(ui.toolno[ui.cur_mapping]);
   update_ruler_indicator();
 }
 
@@ -2315,7 +2235,6 @@ on_optionsSavePreferences_activate     (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   save_config_to_file();
 }
 
@@ -2336,7 +2255,6 @@ on_helpAbout_activate                  (GtkMenuItem     *menuitem,
   GtkLabel *labelTitle;
   
   end_text();
-  reset_focus();
   aboutDialog = create_aboutDialog ();
   labelTitle = GTK_LABEL(g_object_get_data(G_OBJECT(aboutDialog), "labelTitle"));
   gtk_label_set_markup(labelTitle, 
@@ -2355,7 +2273,6 @@ on_buttonToolDefault_clicked           (GtkToolButton   *toolbutton,
     return;
   }
   end_text();
-  reset_focus();
   switch_mapping(0);
   if (ui.toolno[0] < NUM_STROKE_TOOLS) {
     g_memmove(&(ui.brushes[0][ui.toolno[0]]), ui.default_brushes+ui.toolno[0], sizeof(struct Brush));
@@ -2375,8 +2292,8 @@ void
 on_buttonFine_clicked                  (GtkToolButton   *toolbutton,
                                         gpointer         user_data)
 {
-  if (ui.cur_mapping != 0) return;
-  process_thickness_activate((GtkMenuItem*)toolbutton, ui.toolno[0], THICKNESS_FINE);
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return;
+  process_thickness_activate((GtkMenuItem*)toolbutton, ui.toolno[ui.cur_mapping], THICKNESS_FINE);
 }
 
 
@@ -2384,8 +2301,8 @@ void
 on_buttonMedium_clicked                (GtkToolButton   *toolbutton,
                                         gpointer         user_data)
 {
-  if (ui.cur_mapping != 0) return;
-  process_thickness_activate((GtkMenuItem*)toolbutton, ui.toolno[0], THICKNESS_MEDIUM);
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return;
+  process_thickness_activate((GtkMenuItem*)toolbutton, ui.toolno[ui.cur_mapping], THICKNESS_MEDIUM);
 }
 
 
@@ -2393,8 +2310,8 @@ void
 on_buttonThick_clicked                 (GtkToolButton   *toolbutton,
                                         gpointer         user_data)
 {
-  if (ui.cur_mapping != 0) return;
-  process_thickness_activate((GtkMenuItem*)toolbutton, ui.toolno[0], THICKNESS_THICK);
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return;
+  process_thickness_activate((GtkMenuItem*)toolbutton, ui.toolno[ui.cur_mapping], THICKNESS_THICK);
 }
 
 
@@ -2410,26 +2327,58 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   int mapping;
   gboolean is_core;
   struct Item *item;
+  GdkEvent scroll_event;
 
+#ifdef INPUT_DEBUG
+  printf("DEBUG: ButtonPress (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
+    event->device->name, event->x, event->y, event->button, event->state);
+#endif
+
+  // abort any page changes pending in the spin button, and take the focus
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(GET_COMPONENT("spinPageNo")), ui.pageno+1);
+  reset_focus();
+    
   is_core = (event->device == gdk_device_get_core_pointer());
   if (!ui.use_xinput && !is_core) return FALSE;
   if (ui.use_xinput && is_core && ui.discard_corepointer) return FALSE;
-  if (event->button > 3) return FALSE; // no painting with the mouse wheel!
   if (event->type != GDK_BUTTON_PRESS) return FALSE; 
     // double-clicks may have broken axes member (free'd) due to a bug in GDK
-  if (!is_core) { 
-    // re-get the axis values since Synaptics sends bogus ones
-    gdk_device_get_state(event->device, event->window, event->axes, NULL);
-    fix_xinput_coords((GdkEvent *)event);
+
+  if (event->button > 3) { // scroll wheel events! don't paint...
+    if (ui.use_xinput && !gtk_check_version(2, 17, 0) && event->button <= 7) {
+      /* with GTK+ 2.17 and later, the entire widget hierarchy is xinput-aware,
+         so the core button event gets discarded and the scroll event never 
+         gets processed by the main window. This is arguably a GTK+ bug.
+         We work around it. */
+      scroll_event.scroll.type = GDK_SCROLL;
+      scroll_event.scroll.window = event->window;
+      scroll_event.scroll.send_event = event->send_event;
+      scroll_event.scroll.time = event->time;
+      scroll_event.scroll.x = event->x;
+      scroll_event.scroll.y = event->y;
+      scroll_event.scroll.state = event->state;
+      scroll_event.scroll.device = event->device;
+      scroll_event.scroll.x_root = event->x_root;
+      scroll_event.scroll.y_root = event->y_root;
+      if (event->button == 4) scroll_event.scroll.direction = GDK_SCROLL_UP;
+      else if (event->button == 5) scroll_event.scroll.direction = GDK_SCROLL_DOWN;
+      else if (event->button == 6) scroll_event.scroll.direction = GDK_SCROLL_LEFT;
+      else scroll_event.scroll.direction = GDK_SCROLL_RIGHT;
+      gtk_widget_event(GET_COMPONENT("scrolledwindowMain"), &scroll_event);
+    }
+    return FALSE;
   }
-#ifdef INPUT_DEBUG
-  printf("DEBUG: ButtonDown (%s) (x,y)=(%.2f,%.2f)\n", 
-    is_core?"core":"xinput", event->x, event->y);
-#endif
+  if ((event->state & (GDK_CONTROL_MASK|GDK_MOD1_MASK)) != 0) return FALSE;
+    // no control-clicking or alt-clicking
+  if (!is_core)
+    fix_xinput_coords((GdkEvent *)event);
+
   if (!finite(event->x) || !finite(event->y)) return FALSE; // Xorg 7.3 bug
 
-  if (ui.cur_item_type == ITEM_TEXT && !is_event_within_textview(event))
-    end_text();
+  if (ui.cur_item_type == ITEM_TEXT) {
+    if (!is_event_within_textview(event)) end_text();
+    else return FALSE;
+  }
   if (ui.cur_item_type == ITEM_STROKE && ui.is_corestroke && !is_core &&
       ui.cur_path.num_points == 1) { 
       // Xorg 7.3+ sent core event before XInput event: fix initial point 
@@ -2438,56 +2387,43 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   }
   if (ui.cur_item_type != ITEM_NONE) return FALSE; // we're already doing something
 
+  // if button_switch_mapping enabled, button 2 or 3 clicks only switch mapping
+  if (ui.button_switch_mapping && event->button > 1) {
+    ui.which_unswitch_button = event->button;
+    switch_mapping(event->button-1);
+    return FALSE;
+  }
+
   ui.is_corestroke = is_core;
+  ui.stroke_device = event->device;
 
   if (ui.use_erasertip && event->device->source == GDK_SOURCE_ERASER)
-       mapping = NUM_BUTTONS;
+    mapping = NUM_BUTTONS;
+  else if (ui.button_switch_mapping) {
+    mapping = ui.cur_mapping;
+    if (!mapping && (event->state & GDK_BUTTON2_MASK)) mapping = 1;
+    if (!mapping && (event->state & GDK_BUTTON3_MASK)) mapping = 2;
+  }
   else mapping = event->button-1;
 
   // check whether we're in a page
   page_change = FALSE;
   tmppage = ui.cur_page;
   get_pointer_coords((GdkEvent *)event, pt);
-  if( ui.view_continuous ) {
-    if( !ui.multipage_view ) {
-      while (pt[1] < - VIEW_CONTINUOUS_SKIP) {
-	if (ui.pageno == 0) break;
-	page_change = TRUE;
-	ui.pageno--;
-	tmppage = g_list_nth_data(journal.pages, ui.pageno);
-	pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
-      }
-      while (pt[1] > tmppage->height + VIEW_CONTINUOUS_SKIP) {
-	if (ui.pageno == journal.npages-1) break;
-	pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
-	page_change = TRUE;
-	ui.pageno++;
-	tmppage = g_list_nth_data(journal.pages, ui.pageno);
-      }
-    }
-    else {
-      int tmppagenum = 0 ; 
-      GList *pglist ;
-      struct Page* pg;  
-    
-      for( pglist = journal.pages ; pglist != NULL ; pglist = pglist->next ) {
-	pg = (struct Page *)pglist->data; 
-
-	if( (pt[0]+ui.cur_page->hoffset >= pg->hoffset) && 
-	    (pt[0]+ui.cur_page->hoffset <= pg->hoffset + pg->width) &&
-	    (pt[1]+ui.cur_page->voffset >= pg->voffset) && 
-	    (pt[1]+ui.cur_page->voffset <= pg->voffset + pg->height)) 
-	  break; 
-	tmppagenum ++; 	
-      }
-      if( tmppagenum != ui.pageno && (tmppagenum < journal.npages) 
-	  && (tmppagenum >=0 ) ) {
-	page_change = TRUE ; 
-	ui.pageno = tmppagenum ; 
-      }
-    }
+  while (ui.view_continuous && (pt[1] < - VIEW_CONTINUOUS_SKIP)) {
+    if (ui.pageno == 0) break;
+    page_change = TRUE;
+    ui.pageno--;
+    tmppage = g_list_nth_data(journal.pages, ui.pageno);
+    pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
   }
-
+  while (ui.view_continuous && (pt[1] > tmppage->height + VIEW_CONTINUOUS_SKIP)) {
+    if (ui.pageno == journal.npages-1) break;
+    pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+    page_change = TRUE;
+    ui.pageno++;
+    tmppage = g_list_nth_data(journal.pages, ui.pageno);
+  }
   if (page_change) do_switch_page(ui.pageno, FALSE, FALSE);
   
   // can't paint on the background...
@@ -2495,8 +2431,8 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   if (ui.cur_layer == NULL) {
     /* warn */
     dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
-      GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, "Drawing is not allowed on the "
-      "background layer.\n Switching to Layer 1.");
+      GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("Drawing is not allowed on the "
+      "background layer.\n Switching to Layer 1."));
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
     on_viewShowLayer_activate(NULL, NULL);
@@ -2542,10 +2478,6 @@ on_canvas_button_press_event           (GtkWidget       *widget,
     do_eraser((GdkEvent *)event, ui.cur_brush->thickness/2,
                ui.cur_brush->tool_options == TOOLOPT_ERASER_STROKES);
   }
-  else if (ui.toolno[mapping] == TOOL_SELECTREGION) {
-    start_selectregion((GdkEvent *)event); 
-  }
-
   else if (ui.toolno[mapping] == TOOL_SELECTRECT) {
     start_selectrect((GdkEvent *)event);
   }
@@ -2566,14 +2498,19 @@ on_canvas_button_release_event         (GtkWidget       *widget,
 {
   gboolean is_core;
   
-  if (ui.cur_item_type == ITEM_NONE) return FALSE; // not doing anything
-
-  if (event->button != ui.which_mouse_button) return FALSE; // ignore
+#ifdef INPUT_DEBUG
+  printf("DEBUG: ButtonRelease (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
+      event->device->name, event->x, event->y, event->button, event->state);
+#endif
 
   is_core = (event->device == gdk_device_get_core_pointer());
   if (!ui.use_xinput && !is_core) return FALSE;
   if (ui.use_xinput && is_core && !ui.is_corestroke) return FALSE;
   if (!is_core) fix_xinput_coords((GdkEvent *)event);
+
+  if (event->button != ui.which_mouse_button && 
+      event->button != ui.which_unswitch_button)
+    return FALSE;
 
   if (ui.cur_item_type == ITEM_STROKE) {
     finalize_stroke();
@@ -2581,9 +2518,6 @@ on_canvas_button_release_event         (GtkWidget       *widget,
   }
   else if (ui.cur_item_type == ITEM_ERASURE) {
     finalize_erasure();
-  }
-  else if (ui.cur_item_type == ITEM_SELECTREGION) {
-    finalize_selectregion();
   }
   else if (ui.cur_item_type == ITEM_SELECTRECT) {
     finalize_selectrect();
@@ -2597,8 +2531,10 @@ on_canvas_button_release_event         (GtkWidget       *widget,
   else if (ui.cur_item_type == ITEM_HAND) {
     ui.cur_item_type = ITEM_NONE;
   }
+  
+  if (!ui.which_unswitch_button || event->button == ui.which_unswitch_button)
+    switch_mapping(0); // will reset ui.which_unswitch_button
 
-  switch_mapping(0);
   return FALSE;
 }
 
@@ -2608,7 +2544,42 @@ on_canvas_enter_notify_event           (GtkWidget       *widget,
                                         GdkEventCrossing *event,
                                         gpointer         user_data)
 {
+  GList *dev_list;
+  GdkDevice *dev;
 
+#ifdef INPUT_DEBUG
+  printf("DEBUG: enter notify\n");
+#endif
+    /* re-enable input devices after they've been emergency-disabled
+       by leave_notify */
+  if (!gtk_check_version(2, 17, 0)) {
+    for (dev_list = gdk_devices_list(); dev_list != NULL; dev_list = dev_list->next) {
+      dev = GDK_DEVICE(dev_list->data);
+      gdk_device_set_mode(dev, GDK_MODE_SCREEN);
+    }
+  }
+  return FALSE;
+}
+
+gboolean
+on_canvas_leave_notify_event           (GtkWidget       *widget,
+                                        GdkEventCrossing *event,
+                                        gpointer         user_data)
+{
+  GList *dev_list;
+  GdkDevice *dev;
+
+#ifdef INPUT_DEBUG
+  printf("DEBUG: leave notify (mode=%d, details=%d)\n", event->mode, event->detail);
+#endif
+    /* emergency disable XInput to avoid segfaults (GTK+ 2.17) or 
+       interface non-responsiveness (GTK+ 2.18) */
+  if (!gtk_check_version(2, 17, 0)) { 
+    for (dev_list = gdk_devices_list(); dev_list != NULL; dev_list = dev_list->next) {
+      dev = GDK_DEVICE(dev_list->data);
+      gdk_device_set_mode(dev, GDK_MODE_DISABLED);
+    }
+  }
   return FALSE;
 }
 
@@ -2628,22 +2599,53 @@ on_canvas_key_press_event              (GtkWidget       *widget,
                                         GdkEventKey     *event,
                                         gpointer         user_data)
 {
-  // If zoomed-out and in single page mode, switch pages with PgUp/PgDn.
-  if (!ui.view_continuous && 
-      (0.96 * ui.zoom * ui.cur_page->height < 
-       GTK_WIDGET(canvas)->allocation.height)) {
-    if (event->keyval == GDK_Page_Down) {
-      end_text();
-      reset_focus();
-      if (ui.pageno == journal.npages-1) { return FALSE; }
-      do_switch_page(ui.pageno+1, TRUE, FALSE);
+  GtkAdjustment *adj;
+  gint pgheight;
+
+  // Esc leaves text edition, or leaves fullscreen mode
+  if (event->keyval == GDK_Escape) {
+    if (ui.cur_item_type == ITEM_TEXT) { 
+      end_text(); 
+      return TRUE;
     }
-    if (event->keyval == GDK_Page_Up) {
-      end_text();
-      reset_focus();
-      if (ui.pageno == 0) { return FALSE; }
-      do_switch_page(ui.pageno-1, TRUE, FALSE);
+    else if (ui.fullscreen) {
+      do_fullscreen(FALSE);
+      return TRUE;
     }
+    else return FALSE;
+  }
+  
+  /* In single page mode, switch pages with PgUp/PgDn (or Up/Dn) 
+     when there's nowhere else to go. */
+  pgheight = GTK_WIDGET(canvas)->allocation.height;
+  adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(GET_COMPONENT("scrolledwindowMain")));
+
+  if (event->keyval == GDK_Page_Down || event->keyval == GDK_Down) {
+    if (!ui.view_continuous && 
+         (0.96 * ui.zoom * ui.cur_page->height < pgheight ||
+          adj->value == adj->upper-pgheight)) 
+    {
+      end_text();
+      if (ui.pageno < journal.npages-1)
+        do_switch_page(ui.pageno+1, TRUE, FALSE);
+      return TRUE;
+    }
+    if (adj->value == adj->upper-pgheight) return TRUE; // don't send focus away
+  }
+
+  if (event->keyval == GDK_Page_Up || event->keyval == GDK_Up) {
+    if (!ui.view_continuous && 
+         (0.96 * ui.zoom * ui.cur_page->height < pgheight ||
+          adj->value == adj->lower))
+    {
+      end_text();
+      if (ui.pageno != 0) {
+        do_switch_page(ui.pageno-1, TRUE, FALSE);
+        gtk_adjustment_set_value(adj, adj->upper-pgheight);
+      }
+      return TRUE;
+    }
+    if (adj->value == adj->lower) return TRUE; // don't send focus away
   }
 
   return FALSE;
@@ -2657,11 +2659,13 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
 {
   gboolean looks_wrong, is_core;
   double pt[2];
+  GdkModifierType mask;
 
   /* we don't care about this event unless some operation is in progress;
      or if there's a selection (then we might want to change the mouse
      cursor to indicate the possibility of resizing) */  
   if (ui.cur_item_type == ITEM_NONE && ui.selection==NULL) return FALSE;
+  if (ui.cur_item_type == ITEM_TEXT) return FALSE;
 
   is_core = (event->device == gdk_device_get_core_pointer());
   if (!ui.use_xinput && !is_core) return FALSE;
@@ -2678,11 +2682,15 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   if (!is_core) ui.is_corestroke = FALSE;
 
 #ifdef INPUT_DEBUG
-  printf("DEBUG: MotionNotify (%s) (x,y)=(%.2f,%.2f)\n", 
-    is_core?"core":"xinput", event->x, event->y);
+  printf("DEBUG: MotionNotify (%s) (x,y)=(%.2f,%.2f), modifier %x\n", 
+    is_core?"core":"xinput", event->x, event->y, event->state);
 #endif
   
   looks_wrong = !(event->state & (1<<(7+ui.which_mouse_button)));
+  if (looks_wrong) {
+    gdk_device_get_state(ui.stroke_device, event->window, NULL, &mask);
+    looks_wrong = !(mask & (1<<(7+ui.which_mouse_button)));
+  }
   
   if (looks_wrong) { /* mouse button shouldn't be up... give up */
     if (ui.cur_item_type == ITEM_STROKE) {
@@ -2691,9 +2699,6 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
     }
     else if (ui.cur_item_type == ITEM_ERASURE) {
       finalize_erasure();
-    }
-    else if (ui.cur_item_type == ITEM_SELECTREGION) {
-      finalize_selectregion();
     }
     else if (ui.cur_item_type == ITEM_SELECTRECT) {
       finalize_selectrect();
@@ -2714,20 +2719,6 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   else if (ui.cur_item_type == ITEM_ERASURE) {
     do_eraser((GdkEvent *)event, ui.cur_brush->thickness/2,
                ui.cur_brush->tool_options == TOOLOPT_ERASER_STROKES);
-  }
-  else if (ui.cur_item_type == ITEM_SELECTREGION) {
-    get_pointer_coords((GdkEvent *)event, pt);
-    //    ui.selection->bbox.right = pt[0];
-    //    ui.selection->bbox.bottom = pt[1];
-    gnome_canvas_path_def_lineto( ui.selection->lassopath, pt[0], pt[1] ); 
-    /*    gnome_canvas_item_set(ui.selection->canvas_item,
-	  "x2", pt[0], "y2", pt[1], NULL); */
-    
-    gnome_canvas_path_def_unref(ui.selection->closedlassopath); 
-    ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath); 
-    gnome_canvas_item_set((GnomeCanvasItem*) ui.selection->lasso, 
-			  "bpath",  ui.selection->closedlassopath , NULL); 
-
   }
   else if (ui.cur_item_type == ITEM_SELECTRECT) {
     get_pointer_coords((GdkEvent *)event, pt);
@@ -2758,7 +2749,6 @@ on_comboLayer_changed                  (GtkComboBox     *combobox,
   if (ui.in_update_page_stuff) return; // avoid a bad retroaction
 
   end_text();
-  reset_focus();
 
   val = gtk_combo_box_get_active(combobox);
   if (val == -1) return;
@@ -2787,7 +2777,6 @@ on_winMain_delete_event                (GtkWidget       *widget,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   if (ok_to_close()) gtk_main_quit();
   return TRUE;
 }
@@ -2798,32 +2787,47 @@ on_optionsUseXInput_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   ui.allow_xinput = ui.use_xinput =
     gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 
-/* Important note: we'd like ONLY the canvas window itself to receive
-   XInput events, while its child window in the GDK hierarchy (also
-   associated to the canvas widget) receives the core events.
-   This way on_canvas_... will get both types of events -- otherwise,
-   the proximity detection code in GDK is broken and we'll lose core
-   events.
+/* HOW THINGS USED TO BE:
+
+   We'd like on_canvas_... to get BOTH core and xinput events. Up to
+   GTK+ 2.16 this is achieved by making only the canvas's parent 
+   GdkWindow xinput-aware, rather than the entire hierarchy.
+   Otherwise, the proximity detection code in GDK is broken and 
+   we'll lose core events.
    
    Up to GTK+ 2.10, gtk_widget_set_extension_events() only sets
    extension events for the widget's main window itself; in GTK+ 2.11
    also traverses GDK child windows that belong to the widget
    and sets their extension events too. We want to avoid that.
    So we use gdk_input_set_extension_events() directly on the canvas.
-*/
-   
-/*  // this causes GTK+ 2.11 bugs
-    gtk_widget_set_extension_events(GTK_WIDGET (canvas), 
-      ui.use_xinput?GDK_EXTENSION_EVENTS_ALL:GDK_EXTENSION_EVENTS_NONE);
-*/
-  gdk_input_set_extension_events(GTK_WIDGET(canvas)->window, 
-    GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK,
-    ui.use_xinput?GDK_EXTENSION_EVENTS_ALL:GDK_EXTENSION_EVENTS_NONE);
 
+   As much as possible, we'd like to keep doing this, though GTK+ 2.17
+   is making our life harder (crasher bugs require us to disable XInput
+   while editing text or using the layers combo box, but disabling
+   XInput while in a XInput-aware window causes the interface to become
+   non-responsive). 
+*/
+
+  if (!gtk_check_version(2, 17, 0)) {
+    /* GTK+ 2.17 and later: everybody shares a single native window,
+       so we'll never get any core events, and we might as well set 
+       extension events the way we're supposed to. Doing so helps solve 
+       crasher bugs in 2.17, and prevents us from losing two-button
+       events in 2.18 */
+    gtk_widget_set_extension_events(GTK_WIDGET (canvas), 
+       ui.use_xinput?GDK_EXTENSION_EVENTS_ALL:GDK_EXTENSION_EVENTS_NONE);
+  } else {
+    /* GTK+ 2.16 and earlier: we only activate extension events on the
+       canvas's parent GdkWindow. This allows us to keep receiving core
+       events. */
+    gdk_input_set_extension_events(GTK_WIDGET(canvas)->window, 
+      GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK,
+      ui.use_xinput?GDK_EXTENSION_EVENTS_ALL:GDK_EXTENSION_EVENTS_NONE);
+  }
+  
   update_mappings_menu();
 }
 
@@ -2858,7 +2862,6 @@ on_vscroll_changed                     (GtkAdjustment   *adjustment,
     end_text();
     do_switch_page(ui.pageno, FALSE, FALSE);
   }
-  reset_focus();
   return;
 }
 
@@ -2869,14 +2872,17 @@ on_spinPageNo_value_changed            (GtkSpinButton   *spinbutton,
   int val;
 
   if (ui.in_update_page_stuff) return; // avoid a bad retroaction
-  
+
+  /* in preparation for end_text(), send focus to the canvas if it's not ours.
+     (avoid issues with Gtk trying to send focus to the dead text widget) */
+
+  if (!GTK_WIDGET_HAS_FOCUS(spinbutton))
+    gtk_widget_grab_focus(GTK_WIDGET(canvas));
   end_text();
-  reset_focus();
 
   val = gtk_spin_button_get_value_as_int(spinbutton) - 1;
 
   if (val == journal.npages) { // create a page at end
-    if (page_ops_forbidden()) return;
     on_journalNewPageEnd_activate(NULL, NULL);
     return;
   }
@@ -2896,7 +2902,6 @@ on_journalDefaultBackground_activate   (GtkMenuItem     *menuitem,
   GList *pglist;
   
   end_text();
-  reset_focus();
   reset_selection();
   
   pg = ui.cur_page;
@@ -2933,7 +2938,6 @@ on_journalSetAsDefault_activate        (GtkMenuItem     *menuitem,
   if (ui.cur_page->bg->type != BG_SOLID) return;
   
   end_text();
-  reset_focus();
   prepare_new_undo();
   undo->type = ITEM_NEW_DEFAULT_BG;
   undo->val_x = ui.default_page.width;
@@ -3067,18 +3071,7 @@ on_viewFullscreen_activate             (GtkMenuItem     *menuitem,
     active = gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem));
 
   if (active == ui.fullscreen) return;
-  end_text();
-  reset_focus();
-  ui.fullscreen = active;
-  gtk_check_menu_item_set_active(
-    GTK_CHECK_MENU_ITEM(GET_COMPONENT("viewFullscreen")), ui.fullscreen);
-  gtk_toggle_tool_button_set_active(
-    GTK_TOGGLE_TOOL_BUTTON(GET_COMPONENT("buttonFullscreen")), ui.fullscreen);
-
-  if (ui.fullscreen) gtk_window_fullscreen(GTK_WINDOW(winMain));
-  else gtk_window_unfullscreen(GTK_WINDOW(winMain));
-  
-  update_vbox_order(ui.vertical_order[ui.fullscreen?1:0]);
+  do_fullscreen(active);
 }
 
 
@@ -3087,26 +3080,10 @@ on_optionsButtonMappings_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   ui.use_erasertip =
     gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   update_mappings_menu();
 }
-
-
-void
-on_optionsAntialiasBG_activate         (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  gboolean active;
-  
-  active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
-  if (ui.antialias_bg == active) return;
-  end_text();
-  reset_focus();
-  ui.antialias_bg = active;
-  rescale_bg_pixmaps();
-} 
 
 
 void
@@ -3118,7 +3095,6 @@ on_optionsProgressiveBG_activate       (GtkMenuItem     *menuitem,
   active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   if (ui.progressive_bg == active) return;
   end_text();
-  reset_focus();
   ui.progressive_bg = active;
   if (!ui.progressive_bg) rescale_bg_pixmaps();
 }
@@ -3133,7 +3109,6 @@ on_mru_activate                        (GtkMenuItem     *menuitem,
   GtkWidget *dialog;
   
   end_text();
-  reset_focus();
   if (!ok_to_close()) return; // user aborted on save confirmation
   
   for (which = 0 ; which < MRU_SIZE; which++) {
@@ -3148,7 +3123,7 @@ on_mru_activate                        (GtkMenuItem     *menuitem,
 
   /* open failed */
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error opening file '%s'", ui.mru[which]);
+    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), ui.mru[which]);
   gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   delete_mru_entry(which);
@@ -3219,7 +3194,6 @@ on_button2LinkBrush_activate           (GtkMenuItem     *menuitem,
   
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) return;
   end_text();
-  reset_focus();
   ui.linked_brush[1] = BRUSH_LINKED;
   for (i=0;i<NUM_STROKE_TOOLS;i++) update_mapping_linkings(i);
 }
@@ -3231,7 +3205,6 @@ on_button2CopyBrush_activate           (GtkMenuItem     *menuitem,
 {
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) return;
   end_text();
-  reset_focus();
   if (ui.toolno[1] >= NUM_STROKE_TOOLS) {
     ui.linked_brush[1] = BRUSH_STATIC;
     update_mappings_menu_linkings();
@@ -3306,7 +3279,6 @@ on_button3LinkBrush_activate           (GtkMenuItem     *menuitem,
   
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) return;
   end_text();
-  reset_focus();
   ui.linked_brush[2] = BRUSH_LINKED;
   for (i=0;i<NUM_STROKE_TOOLS;i++) update_mapping_linkings(i);
 }
@@ -3318,7 +3290,6 @@ on_button3CopyBrush_activate           (GtkMenuItem     *menuitem,
 {
   if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) return;
   end_text();
-  reset_focus();
   if (ui.toolno[2] >= NUM_STROKE_TOOLS) {
     ui.linked_brush[2] = BRUSH_STATIC;
     update_mappings_menu_linkings();
@@ -3342,7 +3313,6 @@ on_viewSetZoom_activate                (GtkMenuItem     *menuitem,
   GtkSpinButton *spinZoom;
   
   end_text();
-  reset_focus();
   zoom_dialog = create_zoomDialog();
   zoom_percent = 100*ui.zoom / DEFAULT_ZOOM;
   spinZoom = GTK_SPIN_BUTTON(g_object_get_data(G_OBJECT(zoom_dialog), "spinZoom"));
@@ -3448,13 +3418,13 @@ on_toolsHand_activate                  (GtkMenuItem     *menuitem,
       return;
   }
 
-  if (ui.cur_mapping != 0) return;
-  if (ui.toolno[0] == TOOL_HAND) return;
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return;
+  if (ui.toolno[ui.cur_mapping] == TOOL_HAND) return;
 
+  ui.cur_mapping = 0;
   end_text();
-  reset_focus();
   reset_selection();
-  ui.toolno[0] = TOOL_HAND;
+  ui.toolno[ui.cur_mapping] = TOOL_HAND;
   update_mapping_linkings(-1);
   update_tool_buttons();
   update_tool_menu();
@@ -3484,19 +3454,15 @@ on_optionsPrintRuling_activate         (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   ui.print_ruling = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
 void
-on_optionsDiscardCore_activate         (GtkMenuItem     *menuitem,
+on_optionsAutoloadPdfXoj_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  ui.discard_corepointer =
-    gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
-  update_mappings_menu();
+  ui.autoload_pdf_xoj = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
 void
@@ -3514,7 +3480,6 @@ on_optionsLeftHanded_activate          (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   ui.left_handed = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   gtk_scrolled_window_set_placement(GTK_SCROLLED_WINDOW(GET_COMPONENT("scrolledwindowMain")),
     ui.left_handed?GTK_CORNER_TOP_RIGHT:GTK_CORNER_TOP_LEFT);
@@ -3528,7 +3493,6 @@ on_optionsShortenMenus_activate        (GtkMenuItem     *menuitem,
   GtkWidget *w;
   
   end_text();
-  reset_focus();
   ui.shorten_menus = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   
   /* go over the item list */
@@ -3560,7 +3524,6 @@ on_optionsAutoSavePrefs_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
   ui.auto_save_prefs = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
@@ -3570,7 +3533,6 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
 {
   int i;
   end_text();
-  reset_focus();
   ui.pressure_sensitivity =
     gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   for (i=0; i<=NUM_BUTTONS; i++)
@@ -3578,222 +3540,26 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
   update_mappings_menu();
 }
 
-void
-open_relative_journal(int nextprev)
-{
-  const gchar *curname;
-  gchar *curdir, *ourname, *tmpname = NULL, *filename = NULL;
-  GDir *dirh;
-  curdir = g_path_get_dirname(ui.filename);
-  set_cursor_busy(TRUE);
-  dirh = g_dir_open(curdir, 0, NULL);
-  if (!dirh) {
-    g_free(curdir);
-    set_cursor_busy(FALSE);
-    return;
-  }
-  ourname = g_path_get_basename(ui.filename);
-  while ((curname = g_dir_read_name(dirh))) {
-    if (g_strcmp0(curname, ourname) == nextprev) {
-      if (NULL == tmpname || g_strcmp0(curname, tmpname) == -nextprev) {
-        tmpname = g_strdup(curname);
-      }
-    }
-  }
-  g_dir_close(dirh);
-  g_free(ourname);
-
-  if (NULL == tmpname) {
-    g_free(curdir);
-    set_cursor_busy(FALSE);
-    return;
-  }
-  filename = g_build_filename(curdir, tmpname, NULL);
-  g_free(curdir);
-  g_free(tmpname);
-
-  end_text();
-  reset_focus();
-  if (!ok_to_close()) {
-    g_free(filename);
-    set_cursor_busy(FALSE);
-    return;
-  }
-
-  open_journal(filename);
-  set_cursor_busy(FALSE);
-
-  g_free(filename);
-}
 
 void
-on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+on_buttonColorChooser_set              (GtkColorButton  *colorbutton,
                                         gpointer         user_data)
 {
-  open_relative_journal(-1);
-}
-
-void
-on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
-                                        gpointer         user_data)
-{
-  open_relative_journal(1);
-}
-
-
-void
-on_optionsMultipageView_activate       (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  GtkAdjustment *v_adj;
-  double yscroll;
-  struct Page *pg;
-
-  end_text();
-  reset_focus();
-  ui.multipage_view = 
-    gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
-
-  if( ui.multipage_view ) {
-    gtk_widget_set_sensitive(GET_COMPONENT("Multiple_pages"), TRUE);
-  }
-  else { 
-    gtk_widget_set_sensitive(GET_COMPONENT("Multiple_pages"), FALSE);
-  }
-
-  v_adj = gtk_layout_get_vadjustment(GTK_LAYOUT(canvas));
-  pg = ui.cur_page;
-  yscroll = gtk_adjustment_get_value(v_adj) - pg->voffset*ui.zoom;
-  update_page_stuff();
-  gtk_adjustment_set_value(v_adj, yscroll + pg->voffset*ui.zoom);
-
-  // force a refresh
-  gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-
+  GdkColor gdkcolor;
+  guint16 alpha;
+  
+  gtk_color_button_get_color(colorbutton, &gdkcolor);
+  alpha = gtk_color_button_get_alpha(colorbutton);
+  process_color_activate((GtkMenuItem*)colorbutton, COLOR_OTHER, gdkcolor_to_rgba(gdkcolor, alpha));
 }
 
 
 void
-on_MultiplePages2_activate             (GtkMenuItem     *menuitem,
+on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
                                         gpointer         user_data)
 {
   end_text();
-  reset_focus();
-  ui.multipage_view_num = 2 ; 
-  if( ui.multipage_view ) {    
-    update_page_stuff();
-  }
-}
-
-
-void
-on_MultiplePages3_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  reset_focus();
-
-  ui.multipage_view_num = 3 ; 
-
-  if( ui.multipage_view ) {   
-    update_page_stuff();
-  }
-}
-
-
-void
-on_MultiplePages4_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  reset_focus();
-  ui.multipage_view_num = 4 ; 
-  if( ui.multipage_view ) {
-    update_page_stuff();
-  }
-}
-
-
-void
-on_MultiplePages5_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  reset_focus();
-  ui.multipage_view_num = 5 ; 
-  if( ui.multipage_view ) {    
-    update_page_stuff();
-  }
-}
-
-
-void
-on_MultiplePages6_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  reset_focus();
-  ui.multipage_view_num = 6 ; 
-  if( ui.multipage_view ) {    
-    update_page_stuff();
-  }
-}
-
-
-void
-on_MultiplePages7_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  reset_focus();
-  ui.multipage_view_num = 7 ; 
-  if( ui.multipage_view ) {    
-    update_page_stuff();
-  }
-}
-
-
-void
-on_pagehiglight_activate               (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  reset_focus();
-  ui.pagehighlight = 
-    gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
-  update_page_stuff();
-}
-
-void
-on_swap_with_handtool_activate         (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  static int savedTool=0; 
-  // default current tool for button 0
-  // just make sure we are not in text mode
-  //  printf("Current tool %d Hand tool \n", ui.toolno[0], TOOL_HAND);
-
-  if (ui.toolno[0]==TOOL_TEXT) {
-    on_toolsDefaultText_activate(NULL, NULL);
-    return;
-  }
-  end_text();
-  reset_focus();
-  reset_selection();
-  if (ui.toolno[0]==TOOL_HAND) {
-    // the current tool is a hand, hence set the current one a hand and save it
-    ui.toolno[0] = savedTool;
-  } else {
-    // the current tool is not a hand
-    // then set it hand and save it
-    //    printf("To set hand\n");
-    savedTool = ui.toolno[0];
-    ui.toolno[0] = TOOL_HAND;
-  }
-  update_mapping_linkings(-1);
-  update_tool_buttons();
-  update_tool_menu();
-  update_color_menu();
-  update_cursor();
+  switch_mapping(0);
+  ui.button_switch_mapping = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 

@@ -69,28 +69,34 @@ inline double center_y(struct Inertia s)
 
 inline double I_xx(struct Inertia s)
 {
+  if (s.mass <= 0.) return 0.;
   return (s.sxx - s.sx*s.sx/s.mass)/s.mass;
 }
 
 inline double I_xy(struct Inertia s)
 {
+  if (s.mass <= 0.) return 0.;
   return (s.sxy - s.sx*s.sy/s.mass)/s.mass;
 }
 
 inline double I_yy(struct Inertia s)
 {
+  if (s.mass <= 0.) return 0.;
   return (s.syy - s.sy*s.sy/s.mass)/s.mass;
 }
 
 inline double I_rad(struct Inertia s)
 {
-  return sqrt(I_xx(s)+I_yy(s));
+  double ixx = I_xx(s), iyy = I_yy(s);
+  if (ixx+iyy <= 0.) return 0.;
+  return sqrt(ixx+iyy);
 }
 
 inline double I_det(struct Inertia s)
 {
-  if (s.mass == 0.) return 0.;
   double ixx = I_xx(s), iyy = I_yy(s), ixy = I_xy(s);
+  if (s.mass <= 0.) return 0.;
+  if (ixx+iyy <= 0.) return 0.;
   return 4*(ixx*iyy-ixy*ixy)/(ixx+iyy)/(ixx+iyy);
 }
 
@@ -408,7 +414,7 @@ gboolean try_arrow(void)
     while (alpha[i]<-M_PI/2) { alpha[i]+=M_PI; rs[i].reversed = !rs[i].reversed; }
     while (alpha[i]>M_PI/2) { alpha[i]-=M_PI; rs[i].reversed = !rs[i].reversed; }
 #ifdef RECOGNIZER_DEBUG
-    printf("arrow: alpha[%d] = %.1f degrees\n", i, alpha[i]*180/M_PI);
+    printf("DEBUG: arrow: alpha[%d] = %.1f degrees\n", i, alpha[i]*180/M_PI);
 #endif
     if (fabs(alpha[i])<ARROW_ANGLE_MIN || fabs(alpha[i])>ARROW_ANGLE_MAX) return FALSE;
   }
@@ -424,20 +430,20 @@ gboolean try_arrow(void)
     dist = hypot(pt[0]-(rs[j].reversed?rs[j].x1:rs[j].x2),
                  pt[1]-(rs[j].reversed?rs[j].y1:rs[j].y2));
 #ifdef RECOGNIZER_DEBUG
-    printf("linear tolerance: tip[%d] = %.2f\n", j, dist/rs[j].radius);
+    printf("DEBUG: linear tolerance: tip[%d] = %.2f\n", j, dist/rs[j].radius);
 #endif
     if (dist>ARROW_TIP_LINEAR_TOLERANCE*rs[j].radius) return FALSE;
   }
   dist = (pt[0]-x2)*sin(angle)-(pt[1]-y2)*cos(angle);
   dist /= rs[1].radius + rs[2].radius;
 #ifdef RECOGNIZER_DEBUG
-  printf("sideways gap tolerance = %.2f\n", dist);
+  printf("DEBUG: sideways gap tolerance = %.2f\n", dist);
 #endif
   if (fabs(dist)>ARROW_SIDEWAYS_GAP_TOLERANCE) return FALSE;
   dist = (pt[0]-x2)*cos(angle)+(pt[1]-y2)*sin(angle);
   dist /= rs[1].radius + rs[2].radius;
 #ifdef RECOGNIZER_DEBUG
-  printf("main linear gap = %.2f\n", dist);
+  printf("DEBUG: main linear gap = %.2f\n", dist);
 #endif
   if (dist<ARROW_MAIN_LINEAR_GAP_MIN || dist>ARROW_MAIN_LINEAR_GAP_MAX) return FALSE;
 
@@ -534,7 +540,7 @@ void recognize_patterns(void)
   it = undo->item;
   calc_inertia(it->path->coords, 0, it->path->num_points-1, &s);
 #ifdef RECOGNIZER_DEBUG
-  printf("Mass=%.0f, Center=(%.1f,%.1f), I=(%.0f,%.0f, %.0f), "
+  printf("DEBUG: Mass=%.0f, Center=(%.1f,%.1f), I=(%.0f,%.0f, %.0f), "
      "Rad=%.2f, Det=%.4f \n", 
      s.mass, center_x(s), center_y(s), I_xx(s), I_yy(s), I_xy(s), I_rad(s), I_det(s));
 #endif
@@ -544,9 +550,9 @@ void recognize_patterns(void)
   if (n>0) {
     optimize_polygonal(it->path->coords, n, brk, ss);
 #ifdef RECOGNIZER_DEBUG
-    printf("Polygon, %d edges: ", n);
+    printf("DEBUG: Polygon, %d edges: ", n);
     for (i=0; i<n; i++)
-      printf("%d-%d (M=%.0f, det=%.4f) ", brk[i], brk[i+1], ss[i].mass, I_det(ss[i]));
+      printf("DEBUG: %d-%d (M=%.0f, det=%.4f) ", brk[i], brk[i+1], ss[i].mass, I_det(ss[i]));
     printf("\n");
 #endif
     /* update recognizer segment queue (most recent at end) */
@@ -559,7 +565,7 @@ void recognize_patterns(void)
               recognizer_queue_length * sizeof(struct RecoSegment));
     }
 #ifdef RECOGNIZER_DEBUG
-    printf("Queue now has %d + %d edges\n", recognizer_queue_length, n);
+    printf("DEBUG: Queue now has %d + %d edges\n", recognizer_queue_length, n);
 #endif
     rs = recognizer_queue + recognizer_queue_length;
     recognizer_queue_length += n;
@@ -600,7 +606,7 @@ void recognize_patterns(void)
   if (I_det(s)>CIRCLE_MIN_DET) {
     score = score_circle(it->path->coords, 0, it->path->num_points-1, &s);
 #ifdef RECOGNIZER_DEBUG
-    printf("Circle score: %.2f\n", score);
+    printf("DEBUG: Circle score: %.2f\n", score);
 #endif
     if (score < CIRCLE_MAX_SCORE) {
       make_circle_shape(center_x(s), center_y(s), I_rad(s));

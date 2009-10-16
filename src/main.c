@@ -62,8 +62,8 @@ void init_stuff (int argc, char *argv[])
   ui.layerbox_length = 0;
 
   if (argc > 2 || (argc == 2 && argv[1][0] == '-')) {
-    printf("Invalid command line parameters.\n"
-           "Usage: %s [filename.xoj]\n", argv[0]);
+    printf(_("Invalid command line parameters.\n"
+           "Usage: %s [filename.xoj]\n"), argv[0]);
     gtk_exit(0);
   }
    
@@ -89,9 +89,11 @@ void init_stuff (int argc, char *argv[])
     for (i=0; i < NUM_STROKE_TOOLS; i++) {
       b = &(ui.brushes[j][i]);
       b->tool_type = i;
-      b->color_rgba = predef_colors_rgba[b->color_no];
-      if (i == TOOL_HIGHLIGHTER) {
-        b->color_rgba &= ui.hiliter_alpha_mask;
+      if (b->color_no>=0) {
+        b->color_rgba = predef_colors_rgba[b->color_no];
+        if (i == TOOL_HIGHLIGHTER) {
+          b->color_rgba &= ui.hiliter_alpha_mask;
+        }
       }
       b->thickness = predef_thickness[i][b->thickness_no];
     }
@@ -99,6 +101,7 @@ void init_stuff (int argc, char *argv[])
     g_memmove(ui.default_brushes+i, &(ui.brushes[0][i]), sizeof(struct Brush));
 
   ui.cur_mapping = 0;
+  ui.which_unswitch_button = 0;
   
   reset_recognizer();
 
@@ -118,9 +121,22 @@ void init_stuff (int argc, char *argv[])
       GTK_TOGGLE_TOOL_BUTTON(GET_COMPONENT("buttonFullscreen")), TRUE);
     gtk_window_fullscreen(GTK_WINDOW(winMain));
   }
+  gtk_button_set_relief(GTK_BUTTON(GET_COMPONENT("buttonColorChooser")), GTK_RELIEF_NONE);
 
   allow_all_accels();
   add_scroll_bindings();
+
+  // prevent interface items from stealing focus
+  // glade doesn't properly handle can_focus, so manually set it
+  gtk_combo_box_set_focus_on_click(GTK_COMBO_BOX(GET_COMPONENT("comboLayer")), FALSE);
+  g_signal_connect(GET_COMPONENT("spinPageNo"), "activate",
+          G_CALLBACK(handle_activate_signal), NULL);
+  gtk_container_forall(GTK_CONTAINER(winMain), unset_flags, (gpointer)GTK_CAN_FOCUS);
+  GTK_WIDGET_SET_FLAGS(GTK_WIDGET(canvas), GTK_CAN_FOCUS);
+  GTK_WIDGET_SET_FLAGS(GTK_WIDGET(GET_COMPONENT("spinPageNo")), GTK_CAN_FOCUS);
+  
+  // install hooks on button/key/activation events to make the spinPageNo lose focus
+  gtk_container_forall(GTK_CONTAINER(winMain), install_focus_hooks, NULL);
 
   // set up and initialize the canvas
 
@@ -134,16 +150,6 @@ void init_stuff (int argc, char *argv[])
   gtk_layout_get_hadjustment(GTK_LAYOUT (canvas))->step_increment = ui.scrollbar_step_increment;
   gtk_layout_get_vadjustment(GTK_LAYOUT (canvas))->step_increment = ui.scrollbar_step_increment;
 
-
-  // set up pagehighlighter
-  ui.pagehighlighter = 
-    gnome_canvas_item_new(gnome_canvas_root(canvas),
-			  gnome_canvas_rect_get_type(), "width-pixels", 1, 
-			  "outline-color-rgba", 0x000000ff,
-			  "fill-color-rgba", 0x80808040,
-			  "x1", 0, "x2", 0, "y1", 0, "y2", 0, 
-			  NULL);
-
   // set up the page size and canvas size
   update_page_stuff();
 
@@ -155,6 +161,9 @@ void init_stuff (int argc, char *argv[])
                     NULL);
   g_signal_connect ((gpointer) canvas, "enter_notify_event",
                     G_CALLBACK (on_canvas_enter_notify_event),
+                    NULL);
+  g_signal_connect ((gpointer) canvas, "leave_notify_event",
+                    G_CALLBACK (on_canvas_leave_notify_event),
                     NULL);
   g_signal_connect ((gpointer) canvas, "expose_event",
                     G_CALLBACK (on_canvas_expose_event),
@@ -185,6 +194,8 @@ void init_stuff (int argc, char *argv[])
       gdk_device_set_axis_use(device, 1, GDK_AXIS_IGNORE);
 #endif
       gdk_device_set_mode(device, GDK_MODE_SCREEN);
+      if (g_str_has_suffix(device->name, "eraser"))
+        gdk_device_set_source(device, GDK_SOURCE_ERASER);
       can_xinput = TRUE;
     }
     dev_list = dev_list->next;
@@ -195,25 +206,19 @@ void init_stuff (int argc, char *argv[])
   ui.use_xinput = ui.allow_xinput && can_xinput;
 
   gtk_check_menu_item_set_active(
-    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsMultipageView")), ui.multipage_view); 
-  if( !ui.multipage_view )
-    gtk_widget_set_sensitive(GET_COMPONENT("Multiple_pages"), FALSE); 
-
-  gtk_check_menu_item_set_active
-    (GTK_CHECK_MENU_ITEM(GET_COMPONENT("MultiplePages2")),TRUE); 
-
-  gtk_check_menu_item_set_active(
-    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsAntialiasBG")), ui.antialias_bg);
-  gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsProgressiveBG")), ui.progressive_bg);
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsPrintRuling")), ui.print_ruling);
+  gtk_check_menu_item_set_active(
+    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsAutoloadPdfXoj")), ui.autoload_pdf_xoj);
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsLeftHanded")), ui.left_handed);
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsShortenMenus")), ui.shorten_menus);
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsAutoSavePrefs")), ui.auto_save_prefs);
+  gtk_check_menu_item_set_active(
+    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsButtonSwitchMapping")), ui.button_switch_mapping);
   
   hide_unimplemented();
 
@@ -226,16 +231,46 @@ void init_stuff (int argc, char *argv[])
   
   gtk_widget_show (winMain);
   update_cursor();
-  
+
   /* this will cause extension events to get enabled/disabled, but
      we need the windows to be mapped first */
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsUseXInput")), ui.use_xinput);
 
+  /* fix a bug in GTK+ 2.16 and 2.17: scrollbars shouldn't get extended
+     input events from pointer motion when cursor moves into main window */
+
+  if (!gtk_check_version(2, 16, 0)) {
+    g_signal_connect (
+      GET_COMPONENT("menubar"),
+      "event", G_CALLBACK (filter_extended_events),
+      NULL);
+    g_signal_connect (
+      GET_COMPONENT("toolbarMain"),
+      "event", G_CALLBACK (filter_extended_events),
+      NULL);
+    g_signal_connect (
+      GET_COMPONENT("toolbarPen"),
+      "event", G_CALLBACK (filter_extended_events),
+      NULL);
+    g_signal_connect (
+      GET_COMPONENT("statusbar"),
+      "event", G_CALLBACK (filter_extended_events),
+      NULL);
+    g_signal_connect (
+      (gpointer)(gtk_scrolled_window_get_vscrollbar(GTK_SCROLLED_WINDOW(w))),
+      "event", G_CALLBACK (filter_extended_events),
+      NULL);
+    g_signal_connect (
+      (gpointer)(gtk_scrolled_window_get_hscrollbar(GTK_SCROLLED_WINDOW(w))),
+      "event", G_CALLBACK (filter_extended_events),
+      NULL);
+  }
+
   // load the MRU
   
   init_mru();
-  
+
   // and finally, open a file specified on the command line
   // (moved here because display parameters weren't initialized yet...)
   
@@ -253,7 +288,7 @@ void init_stuff (int argc, char *argv[])
   set_cursor_busy(FALSE);
   if (!success) {
     w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Error opening file '%s'", argv[1]);
+       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), argv[1]);
     gtk_dialog_run(GTK_DIALOG(w));
     gtk_widget_destroy(w);
   }
@@ -264,6 +299,12 @@ int
 main (int argc, char *argv[])
 {
   gchar *path, *path1, *path2;
+  
+#ifdef ENABLE_NLS
+  bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+  textdomain (GETTEXT_PACKAGE);
+#endif
   
   gtk_set_locale ();
   gtk_init (&argc, &argv);
@@ -292,7 +333,6 @@ main (int argc, char *argv[])
   gtk_main ();
   
   if (bgpdf.status != STATUS_NOT_INIT) shutdown_bgpdf();
-  if (bgpdf.status != STATUS_NOT_INIT) end_bgpdf_shutdown();
 
   save_mru_list();
   if (ui.auto_save_prefs) save_config_to_file();

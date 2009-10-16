@@ -34,11 +34,7 @@ gboolean have_intersect(struct BBox *a, struct BBox *b);
 void lower_canvas_item_to(GnomeCanvasGroup *g, GnomeCanvasItem *item, GnomeCanvasItem *after);
 
 void rgb_to_gdkcolor(guint rgba, GdkColor *color);
-
-
-gboolean hittest_point( ArtSVP* lassosvp, double x, double y ); 
-gboolean hittest_item( ArtSVP* lassosvp, Item* item); 
-struct BBox bboxadd( struct BBox a, struct BBox b ) ;  
+guint32 gdkcolor_to_rgba(GdkColor gdkcolor, guint16 alpha);
 
 // interface misc functions
 
@@ -65,15 +61,14 @@ void update_font_button(void);
 
 void update_mapping_linkings(int toolno);
 void do_switch_page(int pg, gboolean rescroll, gboolean refresh_all);
-void set_cur_color(int color);
+void set_cur_color(int color_no, guint color_rgba);
 void recolor_temp_text(int color_no, guint color_rgba);
-void process_color_activate(GtkMenuItem *menuitem, int color);
+void process_color_activate(GtkMenuItem *menuitem, int color_no, guint color_rgba);
 void process_thickness_activate(GtkMenuItem *menuitem, int tool, int val);
-void process_papercolor_activate(GtkMenuItem *menuitem, int color);
+void process_papercolor_activate(GtkMenuItem *menuitem, int color, guint rgba);
 void process_paperstyle_activate(GtkMenuItem *menuitem, int style);
 
 gboolean ok_to_close(void);
-gboolean page_ops_forbidden(void);
 
 void reset_focus(void);
 
@@ -99,6 +94,18 @@ void add_scroll_bindings(void);
 gboolean is_event_within_textview(GdkEventButton *event);
 
 void hide_unimplemented(void);
+
+void do_fullscreen(gboolean active);
+
+// fix GTK+ 2.16/2.17 issues with XInput events
+gboolean filter_extended_events(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+// gboolean fix_extended_events(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+
+// help with focus
+gboolean handle_activate_signal(GtkWidget *widget, gpointer user_data);
+void unset_flags(GtkWidget *w, gpointer flag);
+gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data);
+void install_focus_hooks(GtkWidget *w, gpointer data);
 
 // defines for paper rulings
 

@@ -1,7 +1,8 @@
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
+#include <poppler/glib/poppler.h>
 
-/* #define INPUT_DEBUG */
+// #define INPUT_DEBUG
 /* uncomment this line if you experience event-processing problems
    and want to list the input events received by xournal. Caution, lots
    of output (redirect to a file). */
@@ -10,6 +11,11 @@
 /* comment out this line if you are experiencing calibration problems with
    XInput and want to try things differently. This will probably break
    on-the-fly display rotation after application startup, though. */
+
+#define FILE_DIALOG_SIZE_BUGFIX
+/* ugly, but should help users with versions of GTK+ that suffer from the
+   "tiny file dialog" syndrome, without hurting those with well-behaved
+   versions of GTK+. Comment out if you'd prefer not to include this fix. */
 
 // PREF FILES INFO
 
@@ -27,6 +33,7 @@
 #define DISPLAY_DPI_DEFAULT 96.0
 #define MIN_ZOOM 0.2
 #define RESIZE_MARGIN 6.0
+#define MAX_SAFE_RENDER_DPI 720 // max dpi at which PDF bg's get rendered
 
 #define VBOX_MAIN_NITEMS 5 // number of interface items in vboxMain
 
@@ -53,9 +60,9 @@ typedef struct Background {
   Refstring *filename;
   int file_domain;
   int file_page_seq;
-  int pixbuf_dpi;      // for PDF only - the *current* dpi value
   double pixbuf_scale; // for PIXMAP, this is the *current* zoom value
                        // for PDF, this is the *requested* zoom value
+  int pixel_height, pixel_width; // PDF only: pixel size of current pixbuf
 } Background;
 
 #define BG_SOLID 0
@@ -132,7 +139,7 @@ struct UndoErasureData;
 typedef struct Item {
   int type;
   struct Brush brush; // the brush to use, if ITEM_STROKE
-  // 'brush" also contains color info for text items
+  // 'brush' also contains color info for text items
   GnomeCanvasPoints *path;
   gdouble *widths;
   GnomeCanvasItem *canvas_item; // the corresponding canvas item, or NULL
@@ -171,8 +178,6 @@ typedef struct Item {
 #define ITEM_TEXT_ATTRIB 21
 #define ITEM_RESIZESEL 22
 #define ITEM_RECOGNIZER 23
-// Select region is added here. need to be moved above (before ITEM_MOVESEL?)
-#define ITEM_SELECTREGION 24
 
 typedef struct Layer {
   GList *items; // the items on the layer, from bottom to top
@@ -206,15 +211,7 @@ typedef struct Selection {
   GList *items; // the selected items (a list of struct Item)
   int move_pageno, orig_pageno; // if selection moves to a different page
   struct Layer *move_layer;
-  double move_pagedelta;
-  double move_pagehdelta ; 
-
-  GnomeCanvasPathDef  *lassopath ; //  path for lasso selection 
-  GnomeCanvasPathDef  *closedlassopath ; // for drawing lasso shape
-  GnomeCanvasBpath *lasso; // for drawing lasso shape
-  //  ArtSVP *lassosvp  ;  // for selecting object
-  //  GnomeCanvasClipgroup *lassoclip; // for selecting object 
-
+  float move_pagedelta;
 } Selection;
 
 typedef struct UIData {
@@ -228,8 +225,10 @@ typedef struct UIData {
   struct Brush default_brushes[NUM_STROKE_TOOLS]; // the default ones
   int linked_brush[NUM_BUTTONS+1]; // whether brushes are linked across buttons
   int cur_mapping; // the current button number for mappings
+  gboolean button_switch_mapping; // button clicks switch button 1 mappings
   gboolean use_erasertip;
   int which_mouse_button; // the mouse button drawing the current path
+  int which_unswitch_button; // if button_switch_mapping, the mouse button that switched the mapping
   struct Page default_page;  // the model for the default page
   int layerbox_length;  // the number of entries registered in the layers combo-box
   struct Item *cur_item; // the item being drawn, or NULL
@@ -244,11 +243,8 @@ typedef struct UIData {
   gboolean discard_corepointer; // discard core pointer events in XInput mode
   gboolean pressure_sensitivity; // use pen pressure to control stroke width?
   double width_minimum_multiplier, width_maximum_multiplier; // calibration for pressure sensitivity
-  gboolean pagehighlight; // current page highlight?
-  GnomeCanvasItem* pagehighlighter ; 
-  gboolean multipage_view; // horizontal multipage view?
-  int multipage_view_num ;
   gboolean is_corestroke; // this stroke is painted with core pointer
+  GdkDevice *stroke_device; // who's painting this stroke
   int screen_width, screen_height; // initial screen size, for XInput events
   double hand_refpt[2];
   int hand_scrollto_cx, hand_scrollto_cy;
@@ -259,8 +255,7 @@ typedef struct UIData {
   gboolean in_update_page_stuff; // semaphore to avoid scrollbar retroaction
   struct Selection *selection;
   GdkCursor *cursor;
-  gboolean antialias_bg; // bilinear interpolation on bg pixmaps
-  gboolean progressive_bg; // rescale bg's one at a time
+  gboolean progressive_bg; // update PDF bg's one at a time
   char *mrufile, *configfile; // file names for MRU & config
   char *mru[MRU_SIZE]; // MRU data
   GtkWidget *mrumenu[MRU_SIZE];
@@ -272,6 +267,7 @@ typedef struct UIData {
   int zoom_step_increment; // the increment in the zoom dialog box
   double zoom_step_factor; // the multiplicative factor in zoom in/out
   double startup_zoom;
+  gboolean autoload_pdf_xoj;
 #if GLIB_CHECK_VERSION(2,6,0)
   GKeyFile *config_data;
 #endif
@@ -286,6 +282,9 @@ typedef struct UIData {
   gboolean shorten_menus; // shorten menus ?
   gchar *shorten_menu_items; // which items to hide
   gboolean is_sel_cursor; // displaying a selection-related cursor
+#if GTK_CHECK_VERSION(2,10,0)
+  GtkPrintSettings *print_settings;
+#endif
 } UIData;
 
 #define BRUSH_LINKED 0
@@ -324,35 +323,32 @@ typedef struct UndoItem {
 
 typedef struct BgPdfRequest {
   int pageno;
-  int dpi;
-  gboolean initial_request; // if so, loop over page numbers
-  gboolean is_printing;     // this is for printing, not for display
+  double dpi;
 } BgPdfRequest;
 
 typedef struct BgPdfPage {
-  int dpi;
+  double dpi;
   GdkPixbuf *pixbuf;
+  int pixel_height, pixel_width; // pixel size of pixbuf
 } BgPdfPage;
 
 typedef struct BgPdf {
   int status; // the rest only makes sense if this is not STATUS_NOT_INIT
-  int pid; // PID of the converter process
+  guint pid; // the identifier of the idle callback
   Refstring *filename;
   int file_domain;
-  gchar *tmpfile_copy; // the temporary work copy of the file (in tmpdir)
+  gchar *file_contents; // buffer containing a copy of file data
+  gsize file_length;  // size of above buffer
   int npages;
   GList *pages; // a list of BgPdfPage structures
   GList *requests; // a list of BgPdfRequest structures
-  gchar *tmpdir; // where to look for pages coming from pdf converter
-  gboolean create_pages; // create journal pages as we find stuff in PDF
   gboolean has_failed; // has failed in the past...
+  PopplerDocument *document; // the poppler document
 } BgPdf;
 
 #define STATUS_NOT_INIT 0
-#define STATUS_IDLE     1
-#define STATUS_RUNNING  2  // currently running child process on head(requests)
-#define STATUS_ABORTED  3  // child process running, but head(requests) aborted
-#define STATUS_SHUTDOWN 4  // waiting for child process to shut down
+#define STATUS_READY    1  // things are initialized and can work
+// there used to be more possible values, things got streamlined...
 
 // UTILITY MACROS
 
@@ -361,6 +357,7 @@ typedef struct BgPdf {
 
 // the margin between consecutive pages in continuous view
 #define VIEW_CONTINUOUS_SKIP 20.0
+
 
 // GLOBAL VARIABLES
 

@@ -11,8 +11,6 @@ void finalize_erasure(void);
 
 void do_hand(GdkEvent *event);
 
-void start_selectregion(GdkEvent *event);
-void finalize_selectregion(void);
 void start_selectrect(GdkEvent *event);
 void finalize_selectrect(void);
 gboolean start_movesel(GdkEvent *event);
@@ -27,7 +25,7 @@ void selection_delete(void);
 void selection_to_clip(void);
 void clipboard_paste(void);
 
-void recolor_selection(int color);
+void recolor_selection(int color_no, guint color_rgba);
 void rethicken_selection(int val);
 
 /* text functions */

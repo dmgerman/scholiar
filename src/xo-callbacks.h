@@ -404,6 +404,11 @@ on_canvas_enter_notify_event           (GtkWidget       *widget,
                                         gpointer         user_data);
 
 gboolean
+on_canvas_leave_notify_event           (GtkWidget       *widget,
+                                        GdkEventCrossing *event,
+                                        gpointer         user_data);
+
+gboolean
 on_canvas_expose_event                 (GtkWidget       *widget,
                                         GdkEventExpose  *event,
                                         gpointer         user_data);
@@ -472,13 +477,8 @@ on_optionsButtonMappings_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
-on_optionsAntialiasBG_activate         (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
 on_optionsProgressiveBG_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
-
 
 void
 on_mru_activate                        (GtkMenuItem     *menuitem,
@@ -598,7 +598,7 @@ on_optionsPrintRuling_activate         (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
-on_optionsDiscardCore_activate         (GtkMenuItem     *menuitem,
+on_optionsAutoloadPdfXoj_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
@@ -624,46 +624,11 @@ on_toolsReco_activate                  (GtkMenuItem     *menuitem,
 void
 on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+
 void
-on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+on_buttonColorChooser_set              (GtkColorButton  *colorbutton,
                                         gpointer         user_data);
 
 void
-on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
-                                        gpointer         user_data);
-
-void
-on_optionsMultipageView_activate       (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_MultiplePages2_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_MultiplePages3_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_MultiplePages4_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_MultiplePages5_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_MultiplePages6_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_MultiplePages7_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_pagehiglight_activate               (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
-
-void
-on_swap_with_handtool_activate         (GtkMenuItem     *menuitem,
+on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
                                         gpointer         user_data);

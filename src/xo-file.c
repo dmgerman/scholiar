@@ -16,6 +16,7 @@
 #include <locale.h>
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <poppler/glib/poppler.h>
 
 #include "xournal.h"
 #include "xo-interface.h"
@@ -25,7 +26,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 
-const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "selectregion", "selectrect", "vertspace", "hand"};
+const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "", "selectrect", "vertspace", "hand"};
 const char *color_names[COLOR_MAX] = {"black", "blue", "red", "green",
    "gray", "lightblue", "lightgreen", "magenta", "orange", "yellow", "white"};
 const char *bgtype_names[3] = {"solid", "pixmap", "pdf"};
@@ -77,8 +78,6 @@ gboolean save_journal(const char *filename)
   struct Item *item;
   int i, is_clone;
   char *tmpfn, *tmpstr;
-  gchar *pdfbuf;
-  gsize pdflen;
   gboolean success;
   FILE *tmpf;
   GList *pagelist, *layerlist, *itemlist, *list;
@@ -120,7 +119,7 @@ gboolean save_journal(const char *filename)
           if (!gdk_pixbuf_save(pg->bg->pixbuf, tmpfn, "png", NULL, NULL)) {
             dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
               GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, 
-              "Could not write background '%s'. Continuing anyway.", tmpfn);
+              _("Could not write background '%s'. Continuing anyway."), tmpfn);
             gtk_dialog_run(GTK_DIALOG(dialog));
             gtk_widget_destroy(dialog);
           }
@@ -142,19 +141,17 @@ gboolean save_journal(const char *filename)
         if (pg->bg->file_domain == DOMAIN_ATTACH) {
           tmpfn = g_strdup_printf("%s.%s", filename, pg->bg->filename->s);
           success = FALSE;
-          if (bgpdf.status != STATUS_NOT_INIT &&
-              g_file_get_contents(bgpdf.tmpfile_copy, &pdfbuf, &pdflen, NULL))
+          if (bgpdf.status != STATUS_NOT_INIT && bgpdf.file_contents != NULL)
           {
             tmpf = fopen(tmpfn, "w");
-            if (tmpf != NULL && fwrite(pdfbuf, 1, pdflen, tmpf) == pdflen)
+            if (tmpf != NULL && fwrite(bgpdf.file_contents, 1, bgpdf.file_length, tmpf) == bgpdf.file_length)
               success = TRUE;
-            g_free(pdfbuf);
             fclose(tmpf);
           }
           if (!success) {
             dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
               GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, 
-              "Could not write background '%s'. Continuing anyway.", tmpfn);
+              _("Could not write background '%s'. Continuing anyway."), tmpfn);
             gtk_dialog_run(GTK_DIALOG(dialog));
             gtk_widget_destroy(dialog);
           }
@@ -222,6 +219,7 @@ gboolean close_journal(void)
   
   // free everything...
   reset_selection();
+  reset_recognizer();
   clear_redo_stack();
   clear_undo_stack();
 
@@ -251,7 +249,7 @@ struct Background *tmpBg_pdf;
 
 GError *xoj_invalid(void)
 {
-  return g_error_new(G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT, "Invalid file contents");
+  return g_error_new(G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT, _("Invalid file contents"));
 }
 
 void xoj_parser_start_element(GMarkupParseContext *context,
@@ -345,7 +343,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
           }
         // there's also the case of hex (#rrggbbaa) colors
         if (tmpPage->bg->color_no == COLOR_OTHER && **attribute_values == '#') {
-          tmpPage->bg->color_rgba = strtol(*attribute_values + 1, &ptr, 16);
+          tmpPage->bg->color_rgba = strtoul(*attribute_values + 1, &ptr, 16);
           if (*ptr!=0) *error = xoj_invalid();
         }
         has_attr |= 2;
@@ -401,7 +399,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
             if (tmpPage->bg->pixbuf == NULL) {
               dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
                 GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, 
-                "Could not open background '%s'. Setting background to white.",
+                _("Could not open background '%s'. Setting background to white."),
                 tmpbg_filename);
               gtk_dialog_run(GTK_DIALOG(dialog));
               gtk_widget_destroy(dialog);
@@ -487,7 +485,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
           }
         // there's also the case of hex (#rrggbbaa) colors
         if (tmpItem->brush.color_no == COLOR_OTHER && **attribute_values == '#') {
-          tmpItem->brush.color_rgba = strtol(*attribute_values + 1, &ptr, 16);
+          tmpItem->brush.color_rgba = strtoul(*attribute_values + 1, &ptr, 16);
           if (*ptr!=0) *error = xoj_invalid();
         }
         has_attr |= 2;
@@ -566,7 +564,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
           }
         // there's also the case of hex (#rrggbbaa) colors
         if (tmpItem->brush.color_no == COLOR_OTHER && **attribute_values == '#') {
-          tmpItem->brush.color_rgba = strtol(*attribute_values + 1, &ptr, 16);
+          tmpItem->brush.color_rgba = strtoul(*attribute_values + 1, &ptr, 16);
           if (*ptr!=0) *error = xoj_invalid();
         }
         has_attr |= 16;
@@ -659,23 +657,28 @@ gboolean user_wants_second_chance(char **filename)
 
   dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
     GTK_MESSAGE_ERROR, GTK_BUTTONS_YES_NO, 
-    "Could not open background '%s'.\nSelect another file?",
+    _("Could not open background '%s'.\nSelect another file?"),
     *filename);
   response = gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   if (response != GTK_RESPONSE_YES) return FALSE;
-  dialog = gtk_file_chooser_dialog_new("Open PDF", GTK_WINDOW (winMain),
+  dialog = gtk_file_chooser_dialog_new(_("Open PDF"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
      GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
-
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
+  
   filt_all = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_all, "All files");
+  gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_pdf = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_pdf, "PDF files");
+  gtk_file_filter_set_name(filt_pdf, _("PDF files"));
   gtk_file_filter_add_pattern(filt_pdf, "*.pdf");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_pdf);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
+
+  if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
 
   if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
     gtk_widget_destroy(dialog);
@@ -699,11 +702,25 @@ gboolean open_journal(char *filename)
   gzFile f;
   char buffer[1000];
   int len;
-  gchar *tmpfn;
+  gchar *tmpfn, *tmpfn2, *p, *q;
   gboolean maybe_pdf;
   
+  tmpfn = g_strdup_printf("%s.xoj", filename);
+  if (ui.autoload_pdf_xoj && g_file_test(tmpfn, G_FILE_TEST_EXISTS) &&
+      (g_str_has_suffix(filename, ".pdf") || g_str_has_suffix(filename, ".PDF")))
+  {
+    valid = open_journal(tmpfn);
+    g_free(tmpfn);
+    return valid;
+  }
+  g_free(tmpfn);
+
   f = gzopen(filename, "r");
   if (f==NULL) return FALSE;
+  if (filename[0]=='/') {
+    if (ui.default_path != NULL) g_free(ui.default_path);
+    ui.default_path = g_path_get_dirname(filename);
+  }
   
   context = g_markup_parse_context_new(&parser, 0, NULL, NULL);
   valid = TRUE;
@@ -758,7 +775,21 @@ gboolean open_journal(char *filename)
     else
       tmpfn = g_strdup(tmpBg_pdf->filename->s);
     valid = init_bgpdf(tmpfn, FALSE, tmpBg_pdf->file_domain);
-    // in case the file name became invalid
+    // if file name is invalid: first try in xoj file's directory
+    if (!valid && tmpBg_pdf->file_domain != DOMAIN_ATTACH) {
+      p = g_path_get_dirname(filename);
+      q = g_path_get_basename(tmpfn);
+      tmpfn2 = g_strdup_printf("%s/%s", p, q);
+      g_free(p); g_free(q);
+      valid = init_bgpdf(tmpfn2, FALSE, tmpBg_pdf->file_domain);
+      if (valid) {  // change the file name...
+        printf("substituting %s -> %s\n", tmpfn, tmpfn2);
+        g_free(tmpBg_pdf->filename->s);
+        tmpBg_pdf->filename->s = tmpfn2;
+      }
+      else g_free(tmpfn2);
+    }
+    // if file name is invalid: next prompt user
     if (!valid && tmpBg_pdf->file_domain != DOMAIN_ATTACH)
       if (user_wants_second_chance(&tmpfn)) {
         valid = init_bgpdf(tmpfn, FALSE, tmpBg_pdf->file_domain);
@@ -772,7 +803,7 @@ gboolean open_journal(char *filename)
       bgpdf.filename = refstring_ref(tmpBg_pdf->filename);
     } else {
       dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
-        GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Could not open background '%s'.",
+        GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Could not open background '%s'."),
         tmpfn);
       gtk_dialog_run(GTK_DIALOG(dialog));
       gtk_widget_destroy(dialog);
@@ -790,6 +821,7 @@ gboolean open_journal(char *filename)
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
   make_canvas_items();
   update_page_stuff();
+  rescale_bg_pixmaps(); // this requests the PDF pages if need be
   gtk_adjustment_set_value(gtk_layout_get_vadjustment(GTK_LAYOUT(canvas)), 0);
   return TRUE;
 }
@@ -930,23 +962,6 @@ struct Background *attempt_screenshot_bg(void)
 
 /************** pdf annotation ***************/
 
-/* free tmp directory */
-
-void end_bgpdf_shutdown(void)
-{
-  if (bgpdf.tmpdir!=NULL) {
-    if (bgpdf.tmpfile_copy!=NULL) {
-      g_unlink(bgpdf.tmpfile_copy);
-      g_free(bgpdf.tmpfile_copy);
-      bgpdf.tmpfile_copy = NULL;
-    }
-    g_rmdir(bgpdf.tmpdir);  
-    g_free(bgpdf.tmpdir);
-    bgpdf.tmpdir = NULL;
-  }
-  bgpdf.status = STATUS_NOT_INIT;
-}
-
 /* cancel a request */
 
 void cancel_bgpdf_request(struct BgPdfRequest *req)
@@ -955,46 +970,50 @@ void cancel_bgpdf_request(struct BgPdfRequest *req)
   
   list_link = g_list_find(bgpdf.requests, req);
   if (list_link == NULL) return;
-  if (list_link->prev == NULL && bgpdf.pid > 0) {
-    // this is being processed: kill the child but don't remove the request yet
-    if (bgpdf.status == STATUS_RUNNING) bgpdf.status = STATUS_ABORTED;
-    kill(bgpdf.pid, SIGHUP);
-//    printf("Cancelling a request - killing %d\n", bgpdf.pid);
-  }
-  else {
-    // remove the request
-    bgpdf.requests = g_list_delete_link(bgpdf.requests, list_link);
-    g_free(req);
-//    printf("Cancelling a request - no kill needed\n");
-  }
+  // remove the request
+  bgpdf.requests = g_list_delete_link(bgpdf.requests, list_link);
+  g_free(req);
 }
 
-/* sigchld callback */
+/* process a bg PDF request from the queue, and recurse */
 
-void bgpdf_child_handler(GPid pid, gint status, gpointer data)
+gboolean bgpdf_scheduler_callback(gpointer data)
 {
   struct BgPdfRequest *req;
   struct BgPdfPage *bgpg;
-  gchar *ppm_name;
   GdkPixbuf *pixbuf;
-  int npad, ret;
-  
-  if (bgpdf.requests == NULL) return;
+  GtkWidget *dialog;
+  PopplerPage *pdfpage;
+  gdouble height, width;
+  int scaled_height, scaled_width;
+
+  // if all requests have been cancelled, remove ourselves from main loop
+  if (bgpdf.requests == NULL) { bgpdf.pid = 0; return FALSE; }
+  if (bgpdf.status == STATUS_NOT_INIT)
+    { printf("DEBUG: BGPDF not initialized??\n"); bgpdf.pid = 0; return FALSE; }
+
   req = (struct BgPdfRequest *)bgpdf.requests->data;
-  
+
+  // use poppler to generate the page
   pixbuf = NULL;
-  // pdftoppm used to generate p-nnnnnn.ppm (6 digits); new versions produce variable width
-  for (npad = 6; npad>0; npad--) {
-     ppm_name = g_strdup_printf("%s/p-%0*d.ppm", bgpdf.tmpdir, npad, req->pageno);
-     if (bgpdf.status != STATUS_ABORTED && bgpdf.status != STATUS_SHUTDOWN)
-       pixbuf = gdk_pixbuf_new_from_file(ppm_name, NULL);
-     ret = unlink(ppm_name);
-     g_free(ppm_name);
-     if (pixbuf != NULL || ret == 0) break;
+  pdfpage = poppler_document_get_page(bgpdf.document, req->pageno-1);
+  if (pdfpage) {
+//    printf("DEBUG: Processing request for page %d at %f dpi\n", req->pageno, req->dpi);
+    set_cursor_busy(TRUE);
+    poppler_page_get_size(pdfpage, &width, &height);
+    scaled_width = (int) (req->dpi * width/72);
+    scaled_height = (int) (req->dpi * height/72);
+    pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+                FALSE, 8, scaled_width, scaled_height);
+    poppler_page_render_to_pixbuf(
+                pdfpage, 0, 0, scaled_width, scaled_height,
+                req->dpi/72, 0, pixbuf);
+    g_object_unref(pdfpage);
+    set_cursor_busy(FALSE);
   }
 
+  // process the generated pixbuf...
   if (pixbuf != NULL) { // success
-//    printf("success\n");
     while (req->pageno > bgpdf.npages) {
       bgpg = g_new(struct BgPdfPage, 1);
       bgpg->pixbuf = NULL;
@@ -1005,125 +1024,50 @@ void bgpdf_child_handler(GPid pid, gint status, gpointer data)
     if (bgpg->pixbuf!=NULL) gdk_pixbuf_unref(bgpg->pixbuf);
     bgpg->pixbuf = pixbuf;
     bgpg->dpi = req->dpi;
-    if (req->initial_request && bgpdf.create_pages) {
-      bgpdf_create_page_with_bg(req->pageno, bgpg);
-      // create page n, resize it, set its bg - all without any undo effect
-    } else {
-      if (!req->is_printing) bgpdf_update_bg(req->pageno, bgpg);
-      // look for all pages with this bg, and update their bg pixmaps
-    }
-  }
-  else {
-//    printf("failed or aborted\n");
-    bgpdf.create_pages = FALSE;
-    req->initial_request = FALSE;
-  }
-
-  bgpdf.pid = 0;
-  g_spawn_close_pid(pid);
-  
-  if (req->initial_request)
-    req->pageno++; // try for next page
-  else
-    bgpdf.requests = g_list_delete_link(bgpdf.requests, bgpdf.requests);
-  
-  if (bgpdf.status == STATUS_SHUTDOWN) {
-    end_bgpdf_shutdown();
-    return;
-  }
-  
-  bgpdf.status = STATUS_IDLE;
-  if (bgpdf.requests != NULL) bgpdf_spawn_child();
-}
-
-/* spawn a child to process the head request */
-
-void bgpdf_spawn_child(void)
-{
-  struct BgPdfRequest *req;
-  GPid pid;
-  gchar pageno_str[10], dpi_str[10];
-  gchar *pdf_filename = bgpdf.tmpfile_copy;
-  gchar *ppm_root = g_strdup_printf("%s/p", bgpdf.tmpdir);
-  gchar *argv[]= PDFTOPPM_ARGV;
-  GtkWidget *dialog;
-
-  if (bgpdf.requests == NULL) return;
-  req = (struct BgPdfRequest *)bgpdf.requests->data;
-  if (req->pageno > bgpdf.npages+1 || 
-      (!req->initial_request && req->pageno <= bgpdf.npages && 
-       req->dpi == ((struct BgPdfPage *)g_list_nth_data(bgpdf.pages, req->pageno-1))->dpi))
-  { // ignore this request - it's redundant, or in outer space
-    bgpdf.pid = 0;
-    bgpdf.status = STATUS_IDLE;
-    bgpdf.requests = g_list_delete_link(bgpdf.requests, bgpdf.requests);
-    g_free(ppm_root);
-    if (bgpdf.requests != NULL) bgpdf_spawn_child();
-    return;
-  }
-  g_snprintf(pageno_str, 10, "%d", req->pageno);
-  g_snprintf(dpi_str, 10, "%d", req->dpi);
-/*  printf("Processing request for page %d at %d dpi -- in %s\n", 
-    req->pageno, req->dpi, ppm_root); */
-  if (!g_spawn_async(NULL, argv, NULL,
-                     G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, 
-                     NULL, NULL, &pid, NULL))
-  {
-    // couldn't spawn... abort this request, try next one maybe ?
-//    printf("Couldn't spawn\n");
-    bgpdf.pid = 0;
-    bgpdf.status = STATUS_IDLE;
-    bgpdf.requests = g_list_delete_link(bgpdf.requests, bgpdf.requests);
-    g_free(ppm_root);
+    bgpg->pixel_height = scaled_height;
+    bgpg->pixel_width = scaled_width;
+    bgpdf_update_bg(req->pageno, bgpg); // update all pages that have this bg
+  } else { // failure
     if (!bgpdf.has_failed) {
       dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
-        GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Unable to start PDF loader %s.", argv[0]);
+        GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Unable to render one or more PDF pages."));
       gtk_dialog_run(GTK_DIALOG(dialog));
       gtk_widget_destroy(dialog);
     }
     bgpdf.has_failed = TRUE;
-    if (bgpdf.requests != NULL) bgpdf_spawn_child();
-    return;
-  }  
+  }
 
-//  printf("Spawned process %d\n", pid);
-  bgpdf.pid = pid;
-  bgpdf.status = STATUS_RUNNING;
-  g_child_watch_add(pid, bgpdf_child_handler, NULL);
-  g_free(ppm_root);
+  bgpdf.requests = g_list_delete_link(bgpdf.requests, bgpdf.requests);
+  if (bgpdf.requests != NULL) return TRUE; // remain in the idle loop
+  bgpdf.pid = 0;
+  return FALSE; // we're done
 }
 
 /* make a request */
 
-void add_bgpdf_request(int pageno, double zoom, gboolean printing)
+gboolean add_bgpdf_request(int pageno, double zoom)
 {
   struct BgPdfRequest *req, *cmp_req;
   GList *list;
-  
-  if (bgpdf.status == STATUS_NOT_INIT || bgpdf.status == STATUS_SHUTDOWN)
-    return; // don't accept requests in those modes...
+
+  if (bgpdf.status == STATUS_NOT_INIT)
+    return FALSE; // don't accept requests
   req = g_new(struct BgPdfRequest, 1);
-  req->is_printing = printing;
-  if (printing) req->dpi = PDFTOPPM_PRINTING_DPI;
-  else req->dpi = (int)floor(72*zoom+0.5);
-//  printf("Enqueuing request for page %d at %d dpi\n", pageno, req->dpi);
-  if (pageno >= 1) {
-    // cancel any request this may supersede
-    for (list = bgpdf.requests; list != NULL; ) {
-      cmp_req = (struct BgPdfRequest *)list->data;
-      list = list->next;
-      if (!cmp_req->initial_request && cmp_req->pageno == pageno &&
-             cmp_req->is_printing == printing)
-        cancel_bgpdf_request(cmp_req);
-    }
-    req->pageno = pageno;
-    req->initial_request = FALSE;
-  } else {
-    req->pageno = 1;
-    req->initial_request = TRUE;
+  req->pageno = pageno;
+  req->dpi = 72*zoom;
+//  printf("DEBUG: Enqueuing request for page %d at %f dpi\n", pageno, req->dpi);
+
+  // cancel any request this may supersede
+  for (list = bgpdf.requests; list != NULL; ) {
+    cmp_req = (struct BgPdfRequest *)list->data;
+    list = list->next;
+    if (cmp_req->pageno == pageno) cancel_bgpdf_request(cmp_req);
   }
+
+  // make the request
   bgpdf.requests = g_list_append(bgpdf.requests, req);
-  if (!bgpdf.pid) bgpdf_spawn_child();
+  if (!bgpdf.pid) bgpdf.pid = g_idle_add(bgpdf_scheduler_callback, NULL);
+  return TRUE;
 }
 
 /* shutdown the PDF reader */
@@ -1133,114 +1077,121 @@ void shutdown_bgpdf(void)
   GList *list;
   struct BgPdfPage *pdfpg;
   struct BgPdfRequest *req;
+
+  if (bgpdf.status == STATUS_NOT_INIT) return;
   
-  if (bgpdf.status == STATUS_NOT_INIT || bgpdf.status == STATUS_SHUTDOWN) return;
+  // cancel all requests and free data structures
   refstring_unref(bgpdf.filename);
   for (list = bgpdf.pages; list != NULL; list = list->next) {
     pdfpg = (struct BgPdfPage *)list->data;
     if (pdfpg->pixbuf!=NULL) gdk_pixbuf_unref(pdfpg->pixbuf);
+    g_free(pdfpg);
   }
   g_list_free(bgpdf.pages);
-  bgpdf.status = STATUS_SHUTDOWN;
-  for (list = g_list_last(bgpdf.requests); list != NULL; ) {
+  for (list = bgpdf.requests; list != NULL; list = list->next) {
     req = (struct BgPdfRequest *)list->data;
-    list = list->prev;
-    cancel_bgpdf_request(req);
+    g_free(req);
   }
-  if (!bgpdf.pid) end_bgpdf_shutdown();
-  /* The above will ultimately remove all requests and kill the child if needed.
-     The child will set status to STATUS_NOT_INIT, clear the requests list,
-     empty tmpdir, ... except if there's no child! */
-  /* note: it could look like there's a race condition here - if a child
-     terminates and a new request is enqueued while we are destroying the
-     queue - but actually the child handler callback is NOT a signal
-     callback, so execution of this function is atomic */
+  g_list_free(bgpdf.requests);
+
+  if (bgpdf.file_contents!=NULL) {
+    g_free(bgpdf.file_contents); 
+    bgpdf.file_contents = NULL;
+  }
+  if (bgpdf.document!=NULL) {
+    g_object_unref(bgpdf.document);
+    bgpdf.document = NULL;
+  }
+
+  bgpdf.status = STATUS_NOT_INIT;
 }
+
+
+// initialize PDF background rendering 
 
 gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
 {
-  FILE *f;
-  gchar *filebuf;
-  gsize filelen;
+  int i, n_pages;
+  struct Background *bg;
+  struct Page *pg;
+  PopplerPage *pdfpage;
+  gdouble width, height;
+  gchar *uri;
   
   if (bgpdf.status != STATUS_NOT_INIT) return FALSE;
-  bgpdf.tmpfile_copy = NULL;
-  bgpdf.tmpdir = mkdtemp(g_strdup(TMPDIR_TEMPLATE));
-  if (!bgpdf.tmpdir) return FALSE;
-  // make a local copy and check if it's a PDF
-  if (!g_file_get_contents(pdfname, &filebuf, &filelen, NULL))
-    { end_bgpdf_shutdown(); return FALSE; }
-  if (filelen < 4 || strncmp(filebuf, "%PDF", 4))
-    { g_free(filebuf); end_bgpdf_shutdown(); return FALSE; }
-  bgpdf.tmpfile_copy = g_strdup_printf("%s/bg.pdf", bgpdf.tmpdir);
-  f = fopen(bgpdf.tmpfile_copy, "w");
-  if (f == NULL || fwrite(filebuf, 1, filelen, f) != filelen) 
-    { g_free(filebuf); end_bgpdf_shutdown(); return FALSE; }
-  fclose(f);
-  g_free(filebuf);
-  bgpdf.status = STATUS_IDLE;
-  bgpdf.pid = 0;
+  
+  // make a copy of the file in memory and check it's a PDF
+  if (!g_file_get_contents(pdfname, &(bgpdf.file_contents), &(bgpdf.file_length), NULL))
+    return FALSE;
+  if (bgpdf.file_length < 4 || strncmp(bgpdf.file_contents, "%PDF", 4))
+    { g_free(bgpdf.file_contents); bgpdf.file_contents = NULL; return FALSE; }
+
+  // init bgpdf data structures and open poppler document
+  bgpdf.status = STATUS_READY;
   bgpdf.filename = new_refstring((file_domain == DOMAIN_ATTACH) ? "bg.pdf" : pdfname);
   bgpdf.file_domain = file_domain;
   bgpdf.npages = 0;
   bgpdf.pages = NULL;
   bgpdf.requests = NULL;
-  bgpdf.create_pages = create_pages;
+  bgpdf.pid = 0;
   bgpdf.has_failed = FALSE;
-  add_bgpdf_request(-1, ui.startup_zoom, FALSE); // request all pages
-  // By default name the file by appending .xoj
-  //but only if the file does not exist. Otherwise don't append it
 
-  gchar* filenameXoj = g_strdup_printf("%s.xoj", pdfname);
-  if (g_file_test(filenameXoj, G_FILE_TEST_EXISTS)) {
-    // Don't use this name. it is taken
-    update_file_name(g_strdup(pdfname));
-    g_free(filenameXoj);
-  } else{
-    // The file does not exist, so we are safe
-    update_file_name(filenameXoj);
+/* poppler_document_new_from_data() starts at 0.6.1, but we want to
+   be compatible with poppler 0.5.4 = latest in CentOS as of sept 2009 */
+  uri = g_filename_to_uri(pdfname, NULL, NULL);
+  if (!uri) uri = g_strdup_printf("file://%s", pdfname);
+  bgpdf.document = poppler_document_new_from_file(uri, NULL, NULL);
+  g_free(uri);
+/*    with poppler 0.6.1 or later, can replace the above 4 lines by:
+  bgpdf.document = poppler_document_new_from_data(bgpdf.file_contents, 
+                          bgpdf.file_length, NULL, NULL);
+*/
+  if (bgpdf.document == NULL) { shutdown_bgpdf(); return FALSE; }
+  
+  if (pdfname[0]=='/' && ui.filename == NULL) {
+    if (ui.default_path!=NULL) g_free(ui.default_path);
+    ui.default_path = g_path_get_dirname(pdfname);
   }
+
+  if (!create_pages) return TRUE; // we're done
+  
+  // create pages with correct sizes if requested
+  n_pages = poppler_document_get_n_pages(bgpdf.document);
+  for (i=1; i<=n_pages; i++) {
+    pdfpage = poppler_document_get_page(bgpdf.document, i-1);
+    if (!pdfpage) continue;
+    if (journal.npages < i) {
+      bg = g_new(struct Background, 1);
+      bg->canvas_item = NULL;
+      pg = NULL;
+    } else {
+      pg = (struct Page *)g_list_nth_data(journal.pages, i-1);
+      bg = pg->bg;
+    }
+    bg->type = BG_PDF;
+    bg->filename = refstring_ref(bgpdf.filename);
+    bg->file_domain = bgpdf.file_domain;
+    bg->file_page_seq = i;
+    bg->pixbuf = NULL;
+    bg->pixbuf_scale = 0;
+    poppler_page_get_size(pdfpage, &width, &height);
+    g_object_unref(pdfpage);
+    if (pg == NULL) {
+      pg = new_page_with_bg(bg, width, height);
+      journal.pages = g_list_append(journal.pages, pg);
+      journal.npages++;
+    } else {
+      pg->width = width; 
+      pg->height = height;
+      make_page_clipbox(pg);
+      update_canvas_bg(pg);
+    }
+  }
+  update_page_stuff();
+  rescale_bg_pixmaps(); // this actually requests the pages !!
   return TRUE;
 }
 
-// create page n, resize it, set its bg
-void bgpdf_create_page_with_bg(int pageno, struct BgPdfPage *bgpg)
-{
-  struct Page *pg = NULL;
-  struct Background *bg;
-
-  if (journal.npages < pageno) {
-    bg = g_new(struct Background, 1);
-    bg->canvas_item = NULL;
-  } else {
-    pg = (struct Page *)g_list_nth_data(journal.pages, pageno-1);
-    bg = pg->bg;
-    if (bg->type != BG_SOLID) return;
-      // don't mess with a page the user has modified significantly...
-  }
-  
-  bg->type = BG_PDF;
-  bg->pixbuf = gdk_pixbuf_ref(bgpg->pixbuf);
-  bg->filename = refstring_ref(bgpdf.filename);
-  bg->file_domain = bgpdf.file_domain;
-  bg->file_page_seq = pageno;
-  bg->pixbuf_scale = ui.startup_zoom;
-  bg->pixbuf_dpi = bgpg->dpi;
-
-  if (journal.npages < pageno) {
-    pg = new_page_with_bg(bg, 
-            gdk_pixbuf_get_width(bg->pixbuf)*72.0/bg->pixbuf_dpi,
-            gdk_pixbuf_get_height(bg->pixbuf)*72.0/bg->pixbuf_dpi);
-    journal.pages = g_list_append(journal.pages, pg);
-    journal.npages++;
-  } else {
-    pg->width = gdk_pixbuf_get_width(bgpg->pixbuf)*72.0/bg->pixbuf_dpi;
-    pg->height = gdk_pixbuf_get_height(bgpg->pixbuf)*72.0/bg->pixbuf_dpi;
-    make_page_clipbox(pg);
-    update_canvas_bg(pg);
-  }
-  update_page_stuff();
-}
 
 // look for all journal pages with given pdf bg, and update their bg pixmaps
 void bgpdf_update_bg(int pageno, struct BgPdfPage *bgpg)
@@ -1253,7 +1204,8 @@ void bgpdf_update_bg(int pageno, struct BgPdfPage *bgpg)
     if (pg->bg->type == BG_PDF && pg->bg->file_page_seq == pageno) {
       if (pg->bg->pixbuf!=NULL) gdk_pixbuf_unref(pg->bg->pixbuf);
       pg->bg->pixbuf = gdk_pixbuf_ref(bgpg->pixbuf);
-      pg->bg->pixbuf_dpi = bgpg->dpi;
+      pg->bg->pixel_width = bgpg->pixel_width;
+      pg->bg->pixel_height = bgpg->pixel_height;
       update_canvas_bg(pg);
     }
   }
@@ -1302,7 +1254,8 @@ void update_mru_menu(void)
   
   for (i=0; i<MRU_SIZE; i++) {
     if (ui.mru[i]!=NULL) {
-      tmp = g_strdup_printf("_%d %s", i+1, g_basename(ui.mru[i]));
+      tmp = g_strdup_printf("_%d %s", i+1,
+               g_strjoinv("__", g_strsplit_set(g_basename(ui.mru[i]),"_",-1)));
       gtk_label_set_text_with_mnemonic(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ui.mrumenu[i]))),
           tmp);
       g_free(tmp);
@@ -1381,9 +1334,6 @@ void init_config_default(void)
   ui.scrollbar_step_increment = 30;
   ui.zoom_step_increment = 1;
   ui.zoom_step_factor = 1.5;
-  ui.multipage_view = FALSE; 
-  ui.multipage_view_num = 2; 
-  ui.antialias_bg = TRUE;
   ui.progressive_bg = TRUE;
   ui.print_ruling = TRUE;
   ui.default_unit = UNIT_CM;
@@ -1393,6 +1343,8 @@ void init_config_default(void)
   ui.pressure_sensitivity = FALSE;
   ui.width_minimum_multiplier = 0.0;
   ui.width_maximum_multiplier = 1.25;
+  ui.button_switch_mapping = FALSE;
+  ui.autoload_pdf_xoj = FALSE;
   
   // the default UI vertical order
   ui.vertical_order[0][0] = 1; 
@@ -1430,6 +1382,11 @@ void init_config_default(void)
   PDFTOPPM_PRINTING_DPI = 150;
   
   ui.hiliter_opacity = 0.5;
+  
+#if GTK_CHECK_VERSION(2,10,0)
+  ui.print_settings = NULL;
+#endif
+  
 }
 
 #if GLIB_CHECK_VERSION(2,6,0)
@@ -1479,217 +1436,232 @@ void save_config_to_file(void)
       &ui.window_default_width, &ui.window_default_height);
 
   update_keyval("general", "display_dpi",
-    " the display resolution, in pixels per inch",
+    _(" the display resolution, in pixels per inch"),
     g_strdup_printf("%.2f", DEFAULT_ZOOM*72));
   update_keyval("general", "initial_zoom",
-    " the initial zoom level, in percent",
+    _(" the initial zoom level, in percent"),
     g_strdup_printf("%.2f", 100*ui.zoom/DEFAULT_ZOOM));
   update_keyval("general", "window_maximize",
-    " maximize the window at startup (true/false)",
+    _(" maximize the window at startup (true/false)"),
     g_strdup(ui.maximize_at_start?"true":"false"));
   update_keyval("general", "window_fullscreen",
-    " start in full screen mode (true/false)",
+    _(" start in full screen mode (true/false)"),
     g_strdup(ui.fullscreen?"true":"false"));
   update_keyval("general", "window_width",
-    " the window width in pixels (when not maximized)",
+    _(" the window width in pixels (when not maximized)"),
     g_strdup_printf("%d", ui.window_default_width));
   update_keyval("general", "window_height",
-    " the window height in pixels",
+    _(" the window height in pixels"),
     g_strdup_printf("%d", ui.window_default_height));
   update_keyval("general", "scrollbar_speed",
-    " scrollbar step increment (in pixels)",
+    _(" scrollbar step increment (in pixels)"),
     g_strdup_printf("%d", ui.scrollbar_step_increment));
   update_keyval("general", "zoom_dialog_increment",
-    " the step increment in the zoom dialog box",
+    _(" the step increment in the zoom dialog box"),
     g_strdup_printf("%d", ui.zoom_step_increment));
   update_keyval("general", "zoom_step_factor",
-    " the multiplicative factor for zoom in/out",
+    _(" the multiplicative factor for zoom in/out"),
     g_strdup_printf("%.3f", ui.zoom_step_factor));
   update_keyval("general", "view_continuous",
-    " document view (true = continuous, false = single page)",
+    _(" document view (true = continuous, false = single page)"),
     g_strdup(ui.view_continuous?"true":"false"));
   update_keyval("general", "use_xinput",
-    " use XInput extensions (true/false)",
+    _(" use XInput extensions (true/false)"),
     g_strdup(ui.allow_xinput?"true":"false"));
   update_keyval("general", "discard_corepointer",
-    " discard Core Pointer events in XInput mode (true/false)",
+    _(" discard Core Pointer events in XInput mode (true/false)"),
     g_strdup(ui.discard_corepointer?"true":"false"));
   update_keyval("general", "use_erasertip",
-    " always map eraser tip to eraser (true/false)",
+    _(" always map eraser tip to eraser (true/false)"),
     g_strdup(ui.use_erasertip?"true":"false"));
+  update_keyval("general", "buttons_switch_mappings",
+    _(" buttons 2 and 3 switch mappings instead of drawing (useful for some tablets) (true/false)"),
+    g_strdup(ui.button_switch_mapping?"true":"false"));
+  update_keyval("general", "autoload_pdf_xoj",
+    _(" automatically load filename.pdf.xoj instead of filename.pdf (true/false)"),
+    g_strdup(ui.autoload_pdf_xoj?"true":"false"));
   update_keyval("general", "default_path",
-    " default path for open/save (leave blank for current directory)",
+    _(" default path for open/save (leave blank for current directory)"),
     g_strdup((ui.default_path!=NULL)?ui.default_path:""));
   update_keyval("general", "pressure_sensitivity",
-     " use pressure sensitivity to control pen stroke width (true/false)",
+     _(" use pressure sensitivity to control pen stroke width (true/false)"),
      g_strdup(ui.pressure_sensitivity?"true":"false"));
   update_keyval("general", "width_minimum_multiplier",
-     " minimum width multiplier",
+     _(" minimum width multiplier"),
      g_strdup_printf("%.2f", ui.width_minimum_multiplier));
   update_keyval("general", "width_maximum_multiplier",
-     " maximum width multiplier",
+     _(" maximum width multiplier"),
      g_strdup_printf("%.2f", ui.width_maximum_multiplier));
   update_keyval("general", "interface_order",
-    " interface components from top to bottom\n valid values: drawarea menu main_toolbar pen_toolbar statusbar",
+    _(" interface components from top to bottom\n valid values: drawarea menu main_toolbar pen_toolbar statusbar"),
     verbose_vertical_order(ui.vertical_order[0]));
   update_keyval("general", "interface_fullscreen",
-    " interface components in fullscreen mode, from top to bottom",
+    _(" interface components in fullscreen mode, from top to bottom"),
     verbose_vertical_order(ui.vertical_order[1]));
   update_keyval("general", "interface_lefthanded",
-    " interface has left-handed scrollbar (true/false)",
+    _(" interface has left-handed scrollbar (true/false)"),
     g_strdup(ui.left_handed?"true":"false"));
   update_keyval("general", "shorten_menus",
-    " hide some unwanted menu or toolbar items (true/false)",
+    _(" hide some unwanted menu or toolbar items (true/false)"),
     g_strdup(ui.shorten_menus?"true":"false"));
   update_keyval("general", "shorten_menu_items",
-    " interface items to hide (customize at your own risk!)\n see source file xo-interface.c for a list of item names",
+    _(" interface items to hide (customize at your own risk!)\n see source file xo-interface.c for a list of item names"),
     g_strdup(ui.shorten_menu_items));
   update_keyval("general", "highlighter_opacity",
-    " highlighter opacity (0 to 1, default 0.5)\n warning: opacity level is not saved in xoj files!",
+    _(" highlighter opacity (0 to 1, default 0.5)\n warning: opacity level is not saved in xoj files!"),
     g_strdup_printf("%.2f", ui.hiliter_opacity));
   update_keyval("general", "autosave_prefs",
-    " auto-save preferences on exit (true/false)",
+    _(" auto-save preferences on exit (true/false)"),
     g_strdup(ui.auto_save_prefs?"true":"false"));
 
   update_keyval("paper", "width",
-    " the default page width, in points (1/72 in)",
+    _(" the default page width, in points (1/72 in)"),
     g_strdup_printf("%.2f", ui.default_page.width));
   update_keyval("paper", "height",
-    " the default page height, in points (1/72 in)",
+    _(" the default page height, in points (1/72 in)"),
     g_strdup_printf("%.2f", ui.default_page.height));
   update_keyval("paper", "color",
-    " the default paper color",
-    g_strdup(bgcolor_names[ui.default_page.bg->color_no]));
+    _(" the default paper color"),
+    (ui.default_page.bg->color_no>=0)?
+    g_strdup(bgcolor_names[ui.default_page.bg->color_no]):
+    g_strdup_printf("#%08x", ui.default_page.bg->color_rgba));
   update_keyval("paper", "style",
-    " the default paper style (plain, lined, ruled, or graph)",
+    _(" the default paper style (plain, lined, ruled, or graph)"),
     g_strdup(bgstyle_names[ui.default_page.bg->ruling]));
   update_keyval("paper", "apply_all",
-    " apply paper style changes to all pages (true/false)",
+    _(" apply paper style changes to all pages (true/false)"),
     g_strdup(ui.bg_apply_all_pages?"true":"false"));
   update_keyval("paper", "default_unit",
-    " preferred unit (cm, in, px, pt)",
+    _(" preferred unit (cm, in, px, pt)"),
     g_strdup(unit_names[ui.default_unit]));
   update_keyval("paper", "print_ruling",
-    " include paper ruling when printing or exporting to PDF (true/false)",
+    _(" include paper ruling when printing or exporting to PDF (true/false)"),
     g_strdup(ui.print_ruling?"true":"false"));
-  update_keyval("paper", "antialias_bg",
-    " antialiased bitmap backgrounds (true/false)",
-    g_strdup(ui.antialias_bg?"true":"false"));
   update_keyval("paper", "progressive_bg",
-    " progressive scaling of bitmap backgrounds (true/false)",
+    _(" just-in-time update of page backgrounds (true/false)"),
     g_strdup(ui.progressive_bg?"true":"false"));
   update_keyval("paper", "gs_bitmap_dpi",
-    " bitmap resolution of PS/PDF backgrounds rendered using ghostscript (dpi)",
+    _(" bitmap resolution of PS/PDF backgrounds rendered using ghostscript (dpi)"),
     g_strdup_printf("%d", GS_BITMAP_DPI));
   update_keyval("paper", "pdftoppm_printing_dpi",
-    " bitmap resolution of PDF backgrounds when printing with libgnomeprint (dpi)",
+    _(" bitmap resolution of PDF backgrounds when printing with libgnomeprint (dpi)"),
     g_strdup_printf("%d", PDFTOPPM_PRINTING_DPI));
 
   update_keyval("tools", "startup_tool",
-    " selected tool at startup (pen, eraser, highlighter, selectregion, selectrect, vertspace, hand)",
+    _(" selected tool at startup (pen, eraser, highlighter, selectrect, vertspace, hand)"),
     g_strdup(tool_names[ui.startuptool]));
   update_keyval("tools", "pen_color",
-    " default pen color",
-    g_strdup(color_names[ui.default_brushes[TOOL_PEN].color_no]));
+    _(" default pen color"),
+    (ui.default_brushes[TOOL_PEN].color_no>=0)?
+    g_strdup(color_names[ui.default_brushes[TOOL_PEN].color_no]):
+    g_strdup_printf("#%08x", ui.default_brushes[TOOL_PEN].color_rgba));
   update_keyval("tools", "pen_thickness",
-    " default pen thickness (fine = 1, medium = 2, thick = 3)",
+    _(" default pen thickness (fine = 1, medium = 2, thick = 3)"),
     g_strdup_printf("%d", ui.default_brushes[TOOL_PEN].thickness_no));
   update_keyval("tools", "pen_ruler",
-    " default pen is in ruler mode (true/false)",
+    _(" default pen is in ruler mode (true/false)"),
     g_strdup(ui.default_brushes[TOOL_PEN].ruler?"true":"false"));
   update_keyval("tools", "pen_recognizer",
-    " default pen is in shape recognizer mode (true/false)",
+    _(" default pen is in shape recognizer mode (true/false)"),
     g_strdup(ui.default_brushes[TOOL_PEN].recognizer?"true":"false"));
   update_keyval("tools", "eraser_thickness",
-    " default eraser thickness (fine = 1, medium = 2, thick = 3)",
+    _(" default eraser thickness (fine = 1, medium = 2, thick = 3)"),
     g_strdup_printf("%d", ui.default_brushes[TOOL_ERASER].thickness_no));
   update_keyval("tools", "eraser_mode",
-    " default eraser mode (standard = 0, whiteout = 1, strokes = 2)",
+    _(" default eraser mode (standard = 0, whiteout = 1, strokes = 2)"),
     g_strdup_printf("%d", ui.default_brushes[TOOL_ERASER].tool_options));
   update_keyval("tools", "highlighter_color",
-    " default highlighter color",
-    g_strdup(color_names[ui.default_brushes[TOOL_HIGHLIGHTER].color_no]));
+    _(" default highlighter color"),
+    (ui.default_brushes[TOOL_HIGHLIGHTER].color_no>=0)?
+    g_strdup(color_names[ui.default_brushes[TOOL_HIGHLIGHTER].color_no]):
+    g_strdup_printf("#%08x", ui.default_brushes[TOOL_HIGHLIGHTER].color_rgba));
   update_keyval("tools", "highlighter_thickness",
-    " default highlighter thickness (fine = 1, medium = 2, thick = 3)",
+    _(" default highlighter thickness (fine = 1, medium = 2, thick = 3)"),
     g_strdup_printf("%d", ui.default_brushes[TOOL_HIGHLIGHTER].thickness_no));
   update_keyval("tools", "highlighter_ruler",
-    " default highlighter is in ruler mode (true/false)",
+    _(" default highlighter is in ruler mode (true/false)"),
     g_strdup(ui.default_brushes[TOOL_HIGHLIGHTER].ruler?"true":"false"));
   update_keyval("tools", "highlighter_recognizer",
-    " default highlighter is in shape recognizer mode (true/false)",
+    _(" default highlighter is in shape recognizer mode (true/false)"),
     g_strdup(ui.default_brushes[TOOL_HIGHLIGHTER].recognizer?"true":"false"));
   update_keyval("tools", "btn2_tool",
-    " button 2 tool (pen, eraser, highlighter, text, selectregion, selectrect, vertspace, hand)",
+    _(" button 2 tool (pen, eraser, highlighter, text, selectrect, vertspace, hand)"),
     g_strdup(tool_names[ui.toolno[1]]));
   update_keyval("tools", "btn2_linked",
-    " button 2 brush linked to primary brush (true/false) (overrides all other settings)",
+    _(" button 2 brush linked to primary brush (true/false) (overrides all other settings)"),
     g_strdup((ui.linked_brush[1]==BRUSH_LINKED)?"true":"false"));
   update_keyval("tools", "btn2_color",
-    " button 2 brush color (for pen or highlighter only)",
-    g_strdup((ui.toolno[1]<NUM_STROKE_TOOLS)?
-               color_names[ui.brushes[1][ui.toolno[1]].color_no]:"white"));
+    _(" button 2 brush color (for pen or highlighter only)"),
+    (ui.toolno[1]<NUM_STROKE_TOOLS)?
+      ((ui.brushes[1][ui.toolno[1]].color_no>=0)?
+       g_strdup(color_names[ui.brushes[1][ui.toolno[1]].color_no]):
+       g_strdup_printf("#%08x", ui.brushes[1][ui.toolno[1]].color_rgba)):
+      g_strdup("white"));
   update_keyval("tools", "btn2_thickness",
-    " button 2 brush thickness (pen, eraser, or highlighter only)",
+    _(" button 2 brush thickness (pen, eraser, or highlighter only)"),
     g_strdup_printf("%d", (ui.toolno[1]<NUM_STROKE_TOOLS)?
                             ui.brushes[1][ui.toolno[1]].thickness_no:0));
   update_keyval("tools", "btn2_ruler",
-    " button 2 ruler mode (true/false) (for pen or highlighter only)",
+    _(" button 2 ruler mode (true/false) (for pen or highlighter only)"),
     g_strdup(((ui.toolno[1]<NUM_STROKE_TOOLS)?
               ui.brushes[1][ui.toolno[1]].ruler:FALSE)?"true":"false"));
   update_keyval("tools", "btn2_recognizer",
-    " button 2 shape recognizer mode (true/false) (pen or highlighter only)",
+    _(" button 2 shape recognizer mode (true/false) (pen or highlighter only)"),
     g_strdup(((ui.toolno[1]<NUM_STROKE_TOOLS)?
               ui.brushes[1][ui.toolno[1]].recognizer:FALSE)?"true":"false"));
   update_keyval("tools", "btn2_erasermode",
-    " button 2 eraser mode (eraser only)",
+    _(" button 2 eraser mode (eraser only)"),
     g_strdup_printf("%d", ui.brushes[1][TOOL_ERASER].tool_options));
   update_keyval("tools", "btn3_tool",
-    " button 3 tool (pen, eraser, highlighter, text, selectregion, selectrect, vertspace, hand)",
+    _(" button 3 tool (pen, eraser, highlighter, text, selectrect, vertspace, hand)"),
     g_strdup(tool_names[ui.toolno[2]]));
   update_keyval("tools", "btn3_linked",
-    " button 3 brush linked to primary brush (true/false) (overrides all other settings)",
+    _(" button 3 brush linked to primary brush (true/false) (overrides all other settings)"),
     g_strdup((ui.linked_brush[2]==BRUSH_LINKED)?"true":"false"));
   update_keyval("tools", "btn3_color",
-    " button 3 brush color (for pen or highlighter only)",
-    g_strdup((ui.toolno[2]<NUM_STROKE_TOOLS)?
-               color_names[ui.brushes[2][ui.toolno[2]].color_no]:"white"));
+    _(" button 3 brush color (for pen or highlighter only)"),
+    (ui.toolno[2]<NUM_STROKE_TOOLS)?
+      ((ui.brushes[2][ui.toolno[2]].color_no>=0)?
+       g_strdup(color_names[ui.brushes[2][ui.toolno[2]].color_no]):
+       g_strdup_printf("#%08x", ui.brushes[2][ui.toolno[2]].color_rgba)):
+      g_strdup("white"));
   update_keyval("tools", "btn3_thickness",
-    " button 3 brush thickness (pen, eraser, or highlighter only)",
+    _(" button 3 brush thickness (pen, eraser, or highlighter only)"),
     g_strdup_printf("%d", (ui.toolno[2]<NUM_STROKE_TOOLS)?
                             ui.brushes[2][ui.toolno[2]].thickness_no:0));
   update_keyval("tools", "btn3_ruler",
-    " button 3 ruler mode (true/false) (for pen or highlighter only)",
+    _(" button 3 ruler mode (true/false) (for pen or highlighter only)"),
     g_strdup(((ui.toolno[2]<NUM_STROKE_TOOLS)?
               ui.brushes[2][ui.toolno[2]].ruler:FALSE)?"true":"false"));
   update_keyval("tools", "btn3_recognizer",
-    " button 3 shape recognizer mode (true/false) (pen or highlighter only)",
+    _(" button 3 shape recognizer mode (true/false) (pen or highlighter only)"),
     g_strdup(((ui.toolno[2]<NUM_STROKE_TOOLS)?
               ui.brushes[2][ui.toolno[2]].recognizer:FALSE)?"true":"false"));
   update_keyval("tools", "btn3_erasermode",
-    " button 3 eraser mode (eraser only)",
+    _(" button 3 eraser mode (eraser only)"),
     g_strdup_printf("%d", ui.brushes[2][TOOL_ERASER].tool_options));
 
   update_keyval("tools", "pen_thicknesses",
-    " thickness of the various pens (in points, 1 pt = 1/72 in)",
+    _(" thickness of the various pens (in points, 1 pt = 1/72 in)"),
     g_strdup_printf("%.2f;%.2f;%.2f;%.2f;%.2f", 
       predef_thickness[TOOL_PEN][0], predef_thickness[TOOL_PEN][1],
       predef_thickness[TOOL_PEN][2], predef_thickness[TOOL_PEN][3],
       predef_thickness[TOOL_PEN][4]));
   update_keyval("tools", "eraser_thicknesses",
-    " thickness of the various erasers (in points, 1 pt = 1/72 in)",
+    _(" thickness of the various erasers (in points, 1 pt = 1/72 in)"),
     g_strdup_printf("%.2f;%.2f;%.2f", 
       predef_thickness[TOOL_ERASER][1], predef_thickness[TOOL_ERASER][2],
       predef_thickness[TOOL_ERASER][3]));
   update_keyval("tools", "highlighter_thicknesses",
-    " thickness of the various highlighters (in points, 1 pt = 1/72 in)",
+    _(" thickness of the various highlighters (in points, 1 pt = 1/72 in)"),
     g_strdup_printf("%.2f;%.2f;%.2f", 
       predef_thickness[TOOL_HIGHLIGHTER][1], predef_thickness[TOOL_HIGHLIGHTER][2],
       predef_thickness[TOOL_HIGHLIGHTER][3]));
   update_keyval("tools", "default_font",
-    " name of the default font",
+    _(" name of the default font"),
     g_strdup(ui.default_font_name));
   update_keyval("tools", "default_font_size",
-    " default font size",
+    _(" default font size"),
     g_strdup_printf("%.1f", ui.default_font_size));
 
   buf = g_key_file_to_data(ui.config_data, NULL, NULL);
@@ -1765,6 +1737,28 @@ gboolean parse_keyval_enum(const gchar *group, const gchar *key, int *val, const
     if (!names[i][0]) continue; // "" is for invalid values
     if (!g_ascii_strcasecmp(ret, names[i]))
       { *val = i; g_free(ret); return TRUE; }
+  }
+  return FALSE;
+}
+
+gboolean parse_keyval_enum_color(const gchar *group, const gchar *key, int *val, guint *val_rgba, 
+                                 const char **names, const guint *predef_rgba, int n)
+{
+  gchar *ret;
+  int i;
+  
+  ret = g_key_file_get_value(ui.config_data, group, key, NULL);
+  if (ret==NULL) return FALSE;
+  for (i=0; i<n; i++) {
+    if (!names[i][0]) continue; // "" is for invalid values
+    if (!g_ascii_strcasecmp(ret, names[i]))
+      { *val = i; *val_rgba = predef_rgba[i]; g_free(ret); return TRUE; }
+  }
+  if (ret[0]=='#') {
+    *val = COLOR_OTHER;
+    *val_rgba = strtoul(ret+1, NULL, 16);
+    g_free(ret);
+    return TRUE;
   }
   return FALSE;
 }
@@ -1845,9 +1839,9 @@ void load_config_from_file(void)
     g_key_file_free(ui.config_data);
     ui.config_data = g_key_file_new();
     g_key_file_set_comment(ui.config_data, NULL, NULL, 
-           " Xournal configuration file.\n"
+         _(" Xournal configuration file.\n"
            " This file is generated automatically upon saving preferences.\n"
-           " Use caution when editing this file manually.\n", NULL);
+           " Use caution when editing this file manually.\n"), NULL);
     return;
   }
 
@@ -1868,6 +1862,8 @@ void load_config_from_file(void)
   parse_keyval_boolean("general", "use_xinput", &ui.allow_xinput);
   parse_keyval_boolean("general", "discard_corepointer", &ui.discard_corepointer);
   parse_keyval_boolean("general", "use_erasertip", &ui.use_erasertip);
+  parse_keyval_boolean("general", "buttons_switch_mappings", &ui.button_switch_mapping);
+  parse_keyval_boolean("general", "autoload_pdf_xoj", &ui.autoload_pdf_xoj);
   parse_keyval_string("general", "default_path", &ui.default_path);
   parse_keyval_boolean("general", "pressure_sensitivity", &ui.pressure_sensitivity);
   parse_keyval_float("general", "width_minimum_multiplier", &ui.width_minimum_multiplier, 0., 10.);
@@ -1884,12 +1880,12 @@ void load_config_from_file(void)
   
   parse_keyval_float("paper", "width", &ui.default_page.width, 1., 5000.);
   parse_keyval_float("paper", "height", &ui.default_page.height, 1., 5000.);
-  parse_keyval_enum("paper", "color", &(ui.default_page.bg->color_no), bgcolor_names, COLOR_MAX);
-  ui.default_page.bg->color_rgba = predef_bgcolors_rgba[ui.default_page.bg->color_no];
+  parse_keyval_enum_color("paper", "color", 
+     &(ui.default_page.bg->color_no), &(ui.default_page.bg->color_rgba), 
+     bgcolor_names, predef_bgcolors_rgba, COLOR_MAX);
   parse_keyval_enum("paper", "style", &(ui.default_page.bg->ruling), bgstyle_names, 4);
   parse_keyval_boolean("paper", "apply_all", &ui.bg_apply_all_pages);
   parse_keyval_enum("paper", "default_unit", &ui.default_unit, unit_names, 4);
-  parse_keyval_boolean("paper", "antialias_bg", &ui.antialias_bg);
   parse_keyval_boolean("paper", "progressive_bg", &ui.progressive_bg);
   parse_keyval_boolean("paper", "print_ruling", &ui.print_ruling);
   parse_keyval_int("paper", "gs_bitmap_dpi", &GS_BITMAP_DPI, 1, 1200);
@@ -1897,13 +1893,17 @@ void load_config_from_file(void)
 
   parse_keyval_enum("tools", "startup_tool", &ui.startuptool, tool_names, NUM_TOOLS);
   ui.toolno[0] = ui.startuptool;
-  parse_keyval_enum("tools", "pen_color", &(ui.brushes[0][TOOL_PEN].color_no), color_names, COLOR_MAX);
+  parse_keyval_enum_color("tools", "pen_color", 
+     &(ui.brushes[0][TOOL_PEN].color_no), &(ui.brushes[0][TOOL_PEN].color_rgba),
+     color_names, predef_colors_rgba, COLOR_MAX);
   parse_keyval_int("tools", "pen_thickness", &(ui.brushes[0][TOOL_PEN].thickness_no), 0, 4);
   parse_keyval_boolean("tools", "pen_ruler", &(ui.brushes[0][TOOL_PEN].ruler));
   parse_keyval_boolean("tools", "pen_recognizer", &(ui.brushes[0][TOOL_PEN].recognizer));
   parse_keyval_int("tools", "eraser_thickness", &(ui.brushes[0][TOOL_ERASER].thickness_no), 1, 3);
   parse_keyval_int("tools", "eraser_mode", &(ui.brushes[0][TOOL_ERASER].tool_options), 0, 2);
-  parse_keyval_enum("tools", "highlighter_color", &(ui.brushes[0][TOOL_HIGHLIGHTER].color_no), color_names, COLOR_MAX);
+  parse_keyval_enum_color("tools", "highlighter_color", 
+     &(ui.brushes[0][TOOL_HIGHLIGHTER].color_no), &(ui.brushes[0][TOOL_HIGHLIGHTER].color_rgba),
+     color_names, predef_colors_rgba, COLOR_MAX);
   parse_keyval_int("tools", "highlighter_thickness", &(ui.brushes[0][TOOL_HIGHLIGHTER].thickness_no), 0, 4);
   parse_keyval_boolean("tools", "highlighter_ruler", &(ui.brushes[0][TOOL_HIGHLIGHTER].ruler));
   parse_keyval_boolean("tools", "highlighter_recognizer", &(ui.brushes[0][TOOL_HIGHLIGHTER].recognizer));
@@ -1922,7 +1922,9 @@ void load_config_from_file(void)
     if (ui.toolno[1]==TOOL_PEN || ui.toolno[1]==TOOL_HIGHLIGHTER) {
       parse_keyval_boolean("tools", "btn2_ruler", &(ui.brushes[1][ui.toolno[1]].ruler));
       parse_keyval_boolean("tools", "btn2_recognizer", &(ui.brushes[1][ui.toolno[1]].recognizer));
-      parse_keyval_enum("tools", "btn2_color", &(ui.brushes[1][ui.toolno[1]].color_no), color_names, COLOR_MAX);
+      parse_keyval_enum_color("tools", "btn2_color", 
+         &(ui.brushes[1][ui.toolno[1]].color_no), &(ui.brushes[1][ui.toolno[1]].color_rgba), 
+         color_names, predef_colors_rgba, COLOR_MAX);
     }
     if (ui.toolno[1]<NUM_STROKE_TOOLS)
       parse_keyval_int("tools", "btn2_thickness", &(ui.brushes[1][ui.toolno[1]].thickness_no), 0, 4);
@@ -1933,7 +1935,9 @@ void load_config_from_file(void)
     if (ui.toolno[2]==TOOL_PEN || ui.toolno[2]==TOOL_HIGHLIGHTER) {
       parse_keyval_boolean("tools", "btn3_ruler", &(ui.brushes[2][ui.toolno[2]].ruler));
       parse_keyval_boolean("tools", "btn3_recognizer", &(ui.brushes[2][ui.toolno[2]].recognizer));
-      parse_keyval_enum("tools", "btn3_color", &(ui.brushes[2][ui.toolno[2]].color_no), color_names, COLOR_MAX);
+      parse_keyval_enum_color("tools", "btn3_color", 
+         &(ui.brushes[2][ui.toolno[2]].color_no), &(ui.brushes[2][ui.toolno[2]].color_rgba), 
+         color_names, predef_colors_rgba, COLOR_MAX);
     }
     if (ui.toolno[2]<NUM_STROKE_TOOLS)
       parse_keyval_int("tools", "btn3_thickness", &(ui.brushes[2][ui.toolno[2]].thickness_no), 0, 4);
