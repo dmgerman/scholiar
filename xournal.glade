@@ -58,7 +58,7 @@
 		      <signal name="activate" handler="on_fileNewBackground_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image623">
+			<widget class="GtkImage" id="image673">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -203,7 +203,7 @@
 		      <signal name="activate" handler="on_filePrintOptions_activate" last_modification_time="Wed, 30 Nov 2005 18:44:18 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image624">
+			<widget class="GtkImage" id="image674">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-preferences</property>
 			  <property name="icon_size">1</property>
@@ -432,7 +432,7 @@
 			      <accelerator key="equal" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 			      <child internal-child="image">
-				<widget class="GtkImage" id="image625">
+				<widget class="GtkImage" id="image675">
 				  <property name="visible">True</property>
 				  <property name="stock">gtk-zoom-fit</property>
 				  <property name="icon_size">1</property>
@@ -473,7 +473,7 @@
 		      <accelerator key="Home" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image626">
+			<widget class="GtkImage" id="image676">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-goto-first</property>
 			  <property name="icon_size">1</property>
@@ -495,7 +495,7 @@
 		      <accelerator key="Left" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image627">
+			<widget class="GtkImage" id="image677">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-go-back</property>
 			  <property name="icon_size">1</property>
@@ -509,15 +509,36 @@
 		  </child>
 
 		  <child>
-		    <widget class="GtkImageMenuItem" id="viewNotablePage">
+		    <widget class="GtkImageMenuItem" id="viewNotablePrevPage">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">Prev Notab_le Page</property>
+		      <property name="use_underline">True</property>
+		      <signal name="activate" handler="on_viewNotablePrevPage_activate" last_modification_time="Wed, 04 Nov 2009 16:58:43 GMT"/>
+		      <accelerator key="space" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
+
+		      <child internal-child="image">
+			<widget class="GtkImage" id="image678">
+			  <property name="visible">True</property>
+			  <property name="pixbuf">go-jump-rev.png</property>
+			  <property name="xalign">0.5</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">0</property>
+			  <property name="ypad">0</property>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkImageMenuItem" id="viewNotableNextPage">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Next Nota_ble Page</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_viewNotablePage_activate" last_modification_time="Sat, 15 Aug 2009 20:20:47 GMT"/>
+		      <signal name="activate" handler="on_viewNotableNextPage_activate" last_modification_time="Wed, 04 Nov 2009 16:54:54 GMT"/>
 		      <accelerator key="space" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image635">
+			<widget class="GtkImage" id="image679">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-jump-to</property>
 			  <property name="icon_size">1</property>
@@ -539,7 +560,7 @@
 		      <accelerator key="Right" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image628">
+			<widget class="GtkImage" id="image680">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-go-forward</property>
 			  <property name="icon_size">1</property>
@@ -561,7 +582,7 @@
 		      <accelerator key="End" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image629">
+			<widget class="GtkImage" id="image681">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-goto-last</property>
 			  <property name="icon_size">1</property>
@@ -588,7 +609,7 @@
 		      <signal name="activate" handler="on_viewShowLayer_activate" last_modification_time="Wed, 30 Nov 2005 19:40:23 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image630">
+			<widget class="GtkImage" id="image682">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-add</property>
 			  <property name="icon_size">1</property>
@@ -609,7 +630,7 @@
 		      <signal name="activate" handler="on_viewHideLayer_activate" last_modification_time="Wed, 30 Nov 2005 19:40:23 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image631">
+			<widget class="GtkImage" id="image683">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-remove</property>
 			  <property name="icon_size">1</property>
@@ -904,7 +925,7 @@
 		      <signal name="activate" handler="on_journalLoadBackground_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image632">
+			<widget class="GtkImage" id="image684">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1085,7 +1106,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">H_and Tool</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
+		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
 		      <signal name="activate" handler="on_toolsHand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
 		      <accelerator key="A" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
@@ -1105,7 +1126,7 @@
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image633">
+			<widget class="GtkImage" id="image685">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-select-color</property>
 			  <property name="icon_size">1</property>
@@ -1471,7 +1492,7 @@
 		      <accelerator key="F" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image634">
+			<widget class="GtkImage" id="image686">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-select-font</property>
 			  <property name="icon_size">1</property>
@@ -1668,7 +1689,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">H_and Tool</property>
 			      <property name="use_underline">True</property>
-			      <property name="active">False</property>
+			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
 			      <signal name="activate" handler="on_button2Hand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
 			    </widget>
@@ -1804,7 +1825,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">H_and Tool</property>
 			      <property name="use_underline">True</property>
-			      <property name="active">False</property>
+			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
 			      <signal name="activate" handler="on_button3Hand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
 			    </widget>
@@ -2209,14 +2230,32 @@
 	  </child>
 
 	  <child>
-	    <widget class="GtkToolButton" id="buttonNotablePage">
+	    <widget class="GtkToolButton" id="buttonNotablePrevPage">
+	      <property name="visible">True</property>
+	      <property name="tooltip" translatable="yes">Previous Notable Page</property>
+	      <property name="label" translatable="yes">JumpBack</property>
+	      <property name="use_underline">True</property>
+	      <property name="icon">go-jump-rev.png</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	      <signal name="clicked" handler="on_viewNotablePrevPage_activate" last_modification_time="Wed, 04 Nov 2009 16:53:25 GMT"/>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkToolButton" id="buttonNotableNextPage">
 	      <property name="visible">True</property>
 	      <property name="tooltip" translatable="yes">Next Notable Page</property>
 	      <property name="stock_id">gtk-jump-to</property>
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewNotablePage_activate" last_modification_time="Sat, 15 Aug 2009 00:39:42 GMT"/>
+	      <signal name="clicked" handler="on_viewNotableNextPage_activate" last_modification_time="Wed, 04 Nov 2009 16:25:38 GMT"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>

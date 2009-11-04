@@ -636,3 +636,11 @@ on_buttonColorChooser_set              (GtkColorButton  *colorbutton,
 void
 on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
                                         gpointer         user_data);
+
+void
+on_viewNotablePrevPage_activate        (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_viewNotableNextPage_activate        (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);

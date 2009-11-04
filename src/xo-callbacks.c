@@ -1023,10 +1023,11 @@ on_viewPreviousPage_activate           (GtkMenuItem     *menuitem,
 
 
 void
-on_viewNotablePage_activate            (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
+on_viewNotableNextPage_activate            (GtkMenuItem     *menuitem,
+                                            gpointer         user_data)
 {
   int pgn = 0;
+  int firstPageNo = -1;
   struct Page *pg;
   struct Layer *layer;
   GList *pagelist, *layerlist, *itemlist;
@@ -1034,14 +1035,70 @@ on_viewNotablePage_activate            (GtkMenuItem     *menuitem,
     pg = (struct Page *)pagelist->data;
     for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
       layer = (struct Layer *)layerlist->data;
-      if (layer->items != NULL && pgn > ui.pageno) {
-	do_switch_page(pgn, TRUE, FALSE);
-	return;
-      };
+      if (layer->items != NULL) {
+        if (pgn > ui.pageno) {
+          do_switch_page(pgn, TRUE, FALSE);
+          return;
+        };
+        // This page is before the current one. 
+        if (firstPageNo == -1) {
+          // if it is the first one we see, then save it to 
+          // wrap-around if needed
+          firstPageNo = pgn;
+        }
+      }
     };
     pgn=pgn+1;
   };
+  // if we reach this point is because we have not found a "notable" page
+  // so we see if there is one before the current one
+  if (firstPageNo >= 0) {
+    do_switch_page(firstPageNo, TRUE, FALSE);
+  }
 }
+
+void
+on_viewNotablePrevPage_activate            (GtkMenuItem     *menuitem,
+                                            gpointer         user_data)
+{
+  int pgn = 0;
+  int lastPageNo = -1;
+  int prevPageNo = -1;
+  struct Page *pg;
+  struct Layer *layer;
+  GList *pagelist, *layerlist, *itemlist;
+  for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
+      layer = (struct Layer *)layerlist->data;
+      if (layer->items != NULL) {
+        if (pgn > ui.pageno) {
+          // Save this page, it might be the last one with an annotation.
+          lastPageNo = pgn;
+        }
+        if (pgn < ui.pageno) {
+          // Save this page, it might be the next 'previous' page.
+          prevPageNo = pgn;
+        }
+        if (pgn == ui.pageno &&
+            prevPageNo >=0 ) {
+          // we are at the current page, and we found a page to jump to
+          break;
+        }
+      }
+    };
+    pgn=pgn+1;
+  };
+  // We have scanned the list of page.
+
+  if (prevPageNo >= 0) 
+    do_switch_page(prevPageNo, TRUE, FALSE);
+  else if (lastPageNo >= 0)
+    do_switch_page(lastPageNo, TRUE, FALSE);
+  else 
+    ; // don't do anything. there isn't a page to jump to
+}
+
 
 
 void
@@ -3604,4 +3661,5 @@ on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
   switch_mapping(0);
   ui.button_switch_mapping = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
+
 
