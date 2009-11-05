@@ -287,6 +287,9 @@ void init_stuff (int argc, char *argv[])
   g_free(tmpfn);
   set_cursor_busy(FALSE);
   if (!success) {
+	  #ifdef IMAGE_DEBUG
+	  printf("error opening file '%s'\n",argv[1]);
+	  #endif
     w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
        GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), argv[1]);
     gtk_dialog_run(GTK_DIALOG(w));

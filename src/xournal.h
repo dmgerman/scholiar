@@ -17,6 +17,8 @@
    "tiny file dialog" syndrome, without hurting those with well-behaved
    versions of GTK+. Comment out if you'd prefer not to include this fix. */
 
+//#define IMAGE_DEBUG  //this is for debugging of the "insert image" patch
+
 // PREF FILES INFO
 
 #define CONFIG_DIR ".xournal"
@@ -120,6 +122,7 @@ extern guint predef_bgcolors_rgba[COLOR_MAX];
 #define TOOL_SELECTRECT   5
 #define TOOL_VERTSPACE    6
 #define TOOL_HAND         7
+#define TOOL_IMAGE	8
 #define NUM_STROKE_TOOLS  3
 #define NUM_TOOLS         8
 #define NUM_BUTTONS       3
@@ -150,6 +153,10 @@ typedef struct Item {
   gchar *font_name;
   gdouble font_size;
   GtkWidget *widget; // the widget while text is being edited (ITEM_TEMP_TEXT)
+  // the following fields for ITEM_IMAGE:
+  gchar *image_path;
+  GdkPixbuf* image;  // original image for print and resizing quality
+  GdkPixbuf* image_scaled; // scaled pixbuf for display
 } Item;
 
 // item type values for Item.type, UndoItem.type, ui.cur_item_type ...
@@ -178,6 +185,7 @@ typedef struct Item {
 #define ITEM_TEXT_ATTRIB 21
 #define ITEM_RESIZESEL 22
 #define ITEM_RECOGNIZER 23
+#define ITEM_IMAGE 24
 
 typedef struct Layer {
   GList *items; // the items on the layer, from bottom to top
@@ -300,8 +308,8 @@ typedef struct UndoErasureData {
 
 typedef struct UndoItem {
   int type;
-  struct Item *item; // for ITEM_STROKE, ITEM_TEXT, ITEM_TEXT_EDIT, ITEM_TEXT_ATTRIB
-  struct Layer *layer; // for ITEM_STROKE, ITEM_ERASURE, ITEM_PASTE, ITEM_NEW_LAYER, ITEM_DELETE_LAYER, ITEM_MOVESEL, ITEM_TEXT, ITEM_TEXT_EDIT, ITEM_RECOGNIZER
+  struct Item *item; // for ITEM_STROKE, ITEM_TEXT, ITEM_TEXT_EDIT, ITEM_TEXT_ATTRIB, ITEM_IMAGE
+  struct Layer *layer; // for ITEM_STROKE, ITEM_ERASURE, ITEM_PASTE, ITEM_NEW_LAYER, ITEM_DELETE_LAYER, ITEM_MOVESEL, ITEM_TEXT, ITEM_TEXT_EDIT, ITEM_RECOGNIZER, ITEM_IMAGE
   struct Layer *layer2; // for ITEM_DELETE_LAYER with val=-1, ITEM_MOVESEL
   struct Page *page;  // for ITEM_NEW_BG_ONE/RESIZE, ITEM_NEW_PAGE, ITEM_NEW_LAYER, ITEM_DELETE_LAYER, ITEM_DELETE_PAGE
   GList *erasurelist; // for ITEM_ERASURE, ITEM_RECOGNIZER

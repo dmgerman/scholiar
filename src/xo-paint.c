@@ -895,7 +895,7 @@ void callback_clipboard_clear(GtkClipboard *clipboard, gpointer user_data)
   g_free(user_data);
 }
 
-void selection_to_clip(void)
+void selection_to_clip(void) //TODO clipping for images
 {
   int bufsz, nitems, val;
   char *buf, *p;
@@ -1432,4 +1432,118 @@ void process_font_sel(gchar *str)
       }
     }  
   update_font_button();
+}
+
+/************ IMAGE FUNCTIONS **************/
+void insert_image(GdkEvent *event, struct Item *item)
+{
+  double pt[2];
+  GtkTextBuffer *buffer;
+  GnomeCanvasItem *canvas_item;
+  GdkColor color;
+  GtkWidget *dialog;
+  GtkFileFilter *filt_all;
+  GtkFileFilter *filt_gdkimage;
+  char *filename;
+  GdkPixbuf *pixbuf;
+  double scale=1;
+  
+  dialog = gtk_file_chooser_dialog_new(_("Insert Image"), GTK_WINDOW (winMain),
+     GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+     GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
+     
+  filt_all = gtk_file_filter_new();
+  gtk_file_filter_set_name(filt_all, _("All files"));
+  gtk_file_filter_add_pattern(filt_all, "*");
+  filt_gdkimage = gtk_file_filter_new();
+  gtk_file_filter_set_name(filt_gdkimage, _("supported image files"));
+  gtk_file_filter_add_pixbuf_formats(filt_gdkimage);
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_gdkimage);
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
+
+  if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
+
+  if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
+    gtk_widget_destroy(dialog);
+    return;
+  }
+  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
+  gtk_widget_destroy(dialog);
+  
+  get_pointer_coords(event, pt);
+
+  ui.cur_item_type = ITEM_IMAGE;
+
+  pixbuf=gdk_pixbuf_new_from_file(filename, NULL);
+  if(pixbuf==NULL){
+	  /* open failed */
+	  dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+	    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening image '%s'"), filename);
+	  gtk_dialog_run(GTK_DIALOG(dialog));
+	  gtk_widget_destroy(dialog);
+	  g_free(filename);
+	  ui.cur_item = NULL;
+	  ui.cur_item_type = ITEM_NONE;
+	  return;
+  }
+	  
+  if (item==NULL) {
+    item = g_new(struct Item, 1);
+    item->type = ITEM_IMAGE;
+    item->image_path = filename;
+	  printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path);
+    item->canvas_item = NULL;
+    item->bbox.left = pt[0];
+    item->bbox.top = pt[1];
+    item->image = pixbuf;
+    if(1>(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image)) //set scale so that it does not extend too far to the right
+	scale=(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image);
+    if(scale>(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image)) //set scale so that it does not extend too far to the bottom
+	scale=(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image);
+    item->image_scaled=gdk_pixbuf_scale_simple(item->image,
+					scale*gdk_pixbuf_get_width(item->image),
+					scale*gdk_pixbuf_get_height(item->image),
+					GDK_INTERP_HYPER);
+    item->bbox.right = pt[0]+gdk_pixbuf_get_width(item->image_scaled);
+    item->bbox.bottom = pt[1]+gdk_pixbuf_get_height(item->image_scaled);
+    g_memmove(&(item->brush), ui.cur_brush, sizeof(struct Brush));
+    ui.cur_layer->items = g_list_append(ui.cur_layer->items, item);
+    ui.cur_layer->nitems++;
+  }
+  
+  item->type = ITEM_IMAGE;
+  ui.cur_item = item;
+  
+  
+  canvas_item = gnome_canvas_item_new(ui.cur_layer->group,
+                             GNOME_TYPE_CANVAS_PIXBUF,
+				"anchor",GTK_ANCHOR_NW,
+				"height-in-pixels",0,
+				"width-in-pixels",0,
+				"x-in-pixels",0,
+				"y-in-pixels",0,
+				"pixbuf",item->image_scaled,
+				"x", item->bbox.left, 
+				"y", item->bbox.top,
+				"height",item->bbox.bottom-item->bbox.top, 
+				"width", item->bbox.right-item->bbox.left,  
+				NULL);
+
+  if (item->canvas_item!=NULL) {
+    lower_canvas_item_to(ui.cur_layer->group, canvas_item, item->canvas_item);
+    gtk_object_destroy(GTK_OBJECT(item->canvas_item));
+  }
+  item->canvas_item = canvas_item;
+
+  // add undo information
+  prepare_new_undo();
+  undo->type = ITEM_IMAGE;
+  undo->item = ui.cur_item;
+  undo->layer = ui.cur_layer;
+  
+  ui.cur_item = NULL;
+  ui.cur_item_type = ITEM_NONE;
 }

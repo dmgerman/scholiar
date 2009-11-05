@@ -199,6 +199,16 @@ gboolean save_journal(const char *filename)
           gzprintf(f, "\">%s</text>\n", tmpstr);
           g_free(tmpstr);
         }
+	if (item->type == ITEM_IMAGE) {
+          tmpstr = g_markup_escape_text(item->image_path, -1);
+          gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
+          gzprintf(f, "\">%s</image>\n", tmpstr);
+		
+	  #ifdef IMAGE_DEBUG
+	  printf("saved image '%s'  image_path: '%s'\n",tmpstr,item->image_path);
+	  #endif
+          g_free(tmpstr);
+        }
       }
       gzprintf(f, "</layer>\n");
     }
@@ -575,6 +585,58 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     }
     if (has_attr!=31) *error = xoj_invalid();
   }
+  else if (!strcmp(element_name, "image")) { // start of a image item
+	  #ifdef IMAGE_DEBUG
+	  printf("found image tag\n");
+	  #endif
+    if (tmpLayer == NULL || tmpItem != NULL) {
+      *error = xoj_invalid();
+      return;
+    }
+    tmpItem = (struct Item *)g_malloc0(sizeof(struct Item));
+    tmpItem->type = ITEM_IMAGE;
+    tmpItem->canvas_item = NULL;
+    tmpItem->image=NULL;
+    tmpItem->image_scaled=NULL;
+    tmpLayer->items = g_list_append(tmpLayer->items, tmpItem);
+    tmpLayer->nitems++;
+    // scan for x, y
+    has_attr = 0;
+    while (*attribute_names!=NULL) {
+      if (!strcmp(*attribute_names, "left")) {
+        if (has_attr & 1) *error = xoj_invalid();
+        cleanup_numeric((gchar *)*attribute_values);
+        tmpItem->bbox.left = g_ascii_strtod(*attribute_values, &ptr);
+        if (ptr == *attribute_values) *error = xoj_invalid();
+        has_attr |= 1;
+      }
+      else if (!strcmp(*attribute_names, "top")) {
+        if (has_attr & 2) *error = xoj_invalid();
+        cleanup_numeric((gchar *)*attribute_values);
+        tmpItem->bbox.top = g_ascii_strtod(*attribute_values, &ptr);
+        if (ptr == *attribute_values) *error = xoj_invalid();
+        has_attr |= 2;
+      }
+      else if (!strcmp(*attribute_names, "right")) {
+        if (has_attr & 4) *error = xoj_invalid();
+        cleanup_numeric((gchar *)*attribute_values);
+        tmpItem->bbox.right = g_ascii_strtod(*attribute_values, &ptr);
+        if (ptr == *attribute_values) *error = xoj_invalid();
+        has_attr |= 4;
+      }
+      else if (!strcmp(*attribute_names, "bottom")) {
+        if (has_attr & 8) *error = xoj_invalid();
+        cleanup_numeric((gchar *)*attribute_values);
+        tmpItem->bbox.bottom = g_ascii_strtod(*attribute_values, &ptr);
+        if (ptr == *attribute_values) *error = xoj_invalid();
+        has_attr |= 8;
+      }
+      else *error = xoj_invalid();
+      attribute_names++;
+      attribute_values++;
+    }
+    if (has_attr!=15) *error = xoj_invalid();
+  }
 }
 
 void xoj_parser_end_element(GMarkupParseContext *context,
@@ -608,6 +670,16 @@ void xoj_parser_end_element(GMarkupParseContext *context,
       *error = xoj_invalid();
       return;
     }
+    tmpItem = NULL;
+  }
+  if (!strcmp(element_name, "image")) {
+    if (tmpItem == NULL) {
+      *error = xoj_invalid();
+      return;
+    }
+    #ifdef IMAGE_DEBUG
+	  printf("finished loading image tag\n");
+	  #endif
     tmpItem = NULL;
   }
 }
@@ -646,6 +718,14 @@ void xoj_parser_text(GMarkupParseContext *context,
     tmpItem->text = g_malloc(text_len+1);
     g_memmove(tmpItem->text, text, text_len);
     tmpItem->text[text_len]=0;
+  }
+  if (!strcmp(element_name, "image")) {
+    tmpItem->image_path = g_malloc(text_len+1);
+    g_memmove(tmpItem->image_path, text, text_len);
+    tmpItem->image_path[text_len]=0;
+	  #ifdef IMAGE_DEBUG
+	  printf("found image with path '%s' and length %i \n",tmpItem->image_path,text_len);
+	  #endif
   }
 }
 
@@ -716,7 +796,12 @@ gboolean open_journal(char *filename)
   g_free(tmpfn);
 
   f = gzopen(filename, "r");
-  if (f==NULL) return FALSE;
+  if (f==NULL) {
+	  #ifdef IMAGE_DEBUG
+	  printf("gzopen failed\n");
+	  #endif
+	  return FALSE;
+  }
   if (filename[0]=='/') {
     if (ui.default_path != NULL) g_free(ui.default_path);
     ui.default_path = g_path_get_dirname(filename);
@@ -737,16 +822,34 @@ gboolean open_journal(char *filename)
 
   while (valid && !gzeof(f)) {
     len = gzread(f, buffer, 1000);
-    if (len<0) valid = FALSE;
+    if (len<0){
+	    valid = FALSE;
+    }
     if (maybe_pdf && len>=4 && !strncmp(buffer, "%PDF", 4))
       { valid = FALSE; break; } // most likely pdf
     else maybe_pdf = FALSE;
     if (len<=0) break;
     valid = g_markup_parse_context_parse(context, buffer, len, &error);
+	      
+#ifdef IMAGE_DEBUG
+    if(!valid) printf("parsing failed\n");
+#endif
   }
   gzclose(f);
-  if (valid) valid = g_markup_parse_context_end_parse(context, &error);
-  if (tmpJournal.npages == 0) valid = FALSE;
+  
+  if (valid) {
+	  valid = g_markup_parse_context_end_parse(context, &error);
+	  
+	  #ifdef IMAGE_DEBUG
+	  if(!valid) printf("end parsing failed\n");
+	  #endif
+  }
+  if (tmpJournal.npages == 0){
+	   #ifdef IMAGE_DEBUG
+	  printf("found no pages\n");
+	  #endif
+	  valid = FALSE;
+  }
   g_markup_parse_context_free(context);
   
   if (!valid) {
@@ -823,6 +926,7 @@ gboolean open_journal(char *filename)
   update_page_stuff();
   rescale_bg_pixmaps(); // this requests the PDF pages if need be
   gtk_adjustment_set_value(gtk_layout_get_vadjustment(GTK_LAYOUT(canvas)), 0);
+  
   return TRUE;
 }
 

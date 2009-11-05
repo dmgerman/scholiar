@@ -18,7 +18,7 @@
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="focus_on_map">True</property>
   <property name="urgency_hint">False</property>
-  <signal name="delete_event" handler="on_winMain_delete_event" last_modification_time="Mon, 05 Dec 2005 03:21:33 GMT"/>
+  <signal name="delete_event" handler="on_winMain_delete_event"/>
 
   <child>
     <widget class="GtkVBox" id="vboxMain">
@@ -76,7 +76,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-open</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_fileOpen_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
+		      <signal name="activate" handler="on_fileOpen_activate"/>
 		    </widget>
 		  </child>
 
@@ -85,7 +85,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-save</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_fileSave_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
+		      <signal name="activate" handler="on_fileSave_activate"/>
 		    </widget>
 		  </child>
 
@@ -94,7 +94,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-save-as</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_fileSaveAs_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
+		      <signal name="activate" handler="on_fileSaveAs_activate"/>
 		    </widget>
 		  </child>
 
@@ -118,7 +118,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">0</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:09:19 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -127,7 +127,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">1</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:09:19 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -136,7 +136,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">2</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:09:19 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -145,7 +145,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">3</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:10:17 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -154,7 +154,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">4</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:10:17 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -163,7 +163,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">5</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:10:17 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -172,7 +172,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">6</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:10:17 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 
@@ -181,7 +181,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">7</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_mru_activate" last_modification_time="Fri, 02 Jun 2006 19:10:17 GMT"/>
+			      <signal name="activate" handler="on_mru_activate"/>
 			    </widget>
 			  </child>
 			</widget>
@@ -221,7 +221,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-print</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_filePrint_activate" last_modification_time="Wed, 30 Nov 2005 18:44:18 GMT"/>
+		      <signal name="activate" handler="on_filePrint_activate"/>
 		      <accelerator key="P" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -231,7 +231,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Export to PDF</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_filePrintPDF_activate" last_modification_time="Wed, 30 Nov 2005 18:44:18 GMT"/>
+		      <signal name="activate" handler="on_filePrintPDF_activate"/>
 		      <accelerator key="E" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -247,7 +247,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-quit</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_fileQuit_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
+		      <signal name="activate" handler="on_fileQuit_activate"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -269,7 +269,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-undo</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_editUndo_activate" last_modification_time="Wed, 30 Nov 2005 18:45:33 GMT"/>
+		      <signal name="activate" handler="on_editUndo_activate"/>
 		      <accelerator key="Z" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -279,7 +279,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-redo</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_editRedo_activate" last_modification_time="Wed, 30 Nov 2005 18:45:33 GMT"/>
+		      <signal name="activate" handler="on_editRedo_activate"/>
 		      <accelerator key="Y" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -295,7 +295,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-cut</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_editCut_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
+		      <signal name="activate" handler="on_editCut_activate"/>
 		    </widget>
 		  </child>
 
@@ -304,7 +304,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-copy</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_editCopy_activate" last_modification_time="Wed, 30 Nov 2005 18:39:59 GMT"/>
+		      <signal name="activate" handler="on_editCopy_activate"/>
 		    </widget>
 		  </child>
 
@@ -313,7 +313,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-paste</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_editPaste_activate" last_modification_time="Wed, 30 Nov 2005 18:40:00 GMT"/>
+		      <signal name="activate" handler="on_editPaste_activate"/>
 		    </widget>
 		  </child>
 
@@ -322,7 +322,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-delete</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_editDelete_activate" last_modification_time="Wed, 30 Nov 2005 18:40:00 GMT"/>
+		      <signal name="activate" handler="on_editDelete_activate"/>
 		      <accelerator key="Delete" modifiers="0" signal="activate"/>
 		    </widget>
 		  </child>
@@ -346,7 +346,7 @@
 		      <property name="label" translatable="yes">_Continuous</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
-		      <signal name="toggled" handler="on_viewContinuous_activate" last_modification_time="Wed, 30 Nov 2005 19:31:48 GMT"/>
+		      <signal name="toggled" handler="on_viewContinuous_activate"/>
 		    </widget>
 		  </child>
 
@@ -357,7 +357,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">viewContinuous</property>
-		      <signal name="toggled" handler="on_viewOnePage_activate" last_modification_time="Wed, 30 Nov 2005 19:31:48 GMT"/>
+		      <signal name="toggled" handler="on_viewOnePage_activate"/>
 		    </widget>
 		  </child>
 
@@ -373,7 +373,7 @@
 		      <property name="label" translatable="yes">Full Screen</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_viewFullscreen_activate" last_modification_time="Thu, 19 Jan 2006 19:58:13 GMT"/>
+		      <signal name="activate" handler="on_viewFullscreen_activate"/>
 		      <accelerator key="F11" modifiers="0" signal="activate"/>
 		    </widget>
 		  </child>
@@ -398,7 +398,7 @@
 			      <property name="visible">True</property>
 			      <property name="label">gtk-zoom-in</property>
 			      <property name="use_stock">True</property>
-			      <signal name="activate" handler="on_viewZoomIn_activate" last_modification_time="Wed, 30 Nov 2005 19:31:48 GMT"/>
+			      <signal name="activate" handler="on_viewZoomIn_activate"/>
 			      <accelerator key="plus" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 			    </widget>
 			  </child>
@@ -408,7 +408,7 @@
 			      <property name="visible">True</property>
 			      <property name="label">gtk-zoom-out</property>
 			      <property name="use_stock">True</property>
-			      <signal name="activate" handler="on_viewZoomOut_activate" last_modification_time="Wed, 30 Nov 2005 19:31:48 GMT"/>
+			      <signal name="activate" handler="on_viewZoomOut_activate"/>
 			      <accelerator key="minus" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 			    </widget>
 			  </child>
@@ -418,7 +418,7 @@
 			      <property name="visible">True</property>
 			      <property name="label">gtk-zoom-100</property>
 			      <property name="use_stock">True</property>
-			      <signal name="activate" handler="on_viewNormalSize_activate" last_modification_time="Wed, 30 Nov 2005 19:31:48 GMT"/>
+			      <signal name="activate" handler="on_viewNormalSize_activate"/>
 			      <accelerator key="0" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 			    </widget>
 			  </child>
@@ -450,7 +450,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">_Set Zoom</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_viewSetZoom_activate" last_modification_time="Sat, 22 Jul 2006 21:30:29 GMT"/>
+			      <signal name="activate" handler="on_viewSetZoom_activate"/>
 			    </widget>
 			  </child>
 			</widget>
@@ -661,7 +661,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">New Page _Before</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalNewPageBefore_activate" last_modification_time="Wed, 30 Nov 2005 19:50:07 GMT"/>
+		      <signal name="activate" handler="on_journalNewPageBefore_activate"/>
 		    </widget>
 		  </child>
 
@@ -670,7 +670,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">New Page _After</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalNewPageAfter_activate" last_modification_time="Wed, 30 Nov 2005 19:50:07 GMT"/>
+		      <signal name="activate" handler="on_journalNewPageAfter_activate"/>
 		    </widget>
 		  </child>
 
@@ -679,7 +679,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">New Page At _End</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalNewPageEnd_activate" last_modification_time="Wed, 30 Nov 2005 19:50:07 GMT"/>
+		      <signal name="activate" handler="on_journalNewPageEnd_activate"/>
 		    </widget>
 		  </child>
 
@@ -688,7 +688,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Delete Page</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalDeletePage_activate" last_modification_time="Wed, 30 Nov 2005 19:50:07 GMT"/>
+		      <signal name="activate" handler="on_journalDeletePage_activate"/>
 		    </widget>
 		  </child>
 
@@ -703,7 +703,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_New Layer</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalNewLayer_activate" last_modification_time="Wed, 30 Nov 2005 19:50:07 GMT"/>
+		      <signal name="activate" handler="on_journalNewLayer_activate"/>
 		    </widget>
 		  </child>
 
@@ -712,7 +712,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Delete La_yer</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalDeleteLayer_activate" last_modification_time="Wed, 30 Nov 2005 19:58:26 GMT"/>
+		      <signal name="activate" handler="on_journalDeleteLayer_activate"/>
 		    </widget>
 		  </child>
 
@@ -721,7 +721,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Flatten</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalFlatten_activate" last_modification_time="Thu, 01 Dec 2005 21:19:12 GMT"/>
+		      <signal name="activate" handler="on_journalFlatten_activate"/>
 		    </widget>
 		  </child>
 
@@ -736,7 +736,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Paper Si_ze</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalPaperSize_activate" last_modification_time="Wed, 30 Nov 2005 19:58:26 GMT"/>
+		      <signal name="activate" handler="on_journalPaperSize_activate"/>
 		    </widget>
 		  </child>
 
@@ -755,7 +755,7 @@
 			      <property name="label" translatable="yes">_white paper</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_papercolorWhite_activate" last_modification_time="Wed, 30 Nov 2005 19:58:26 GMT"/>
+			      <signal name="toggled" handler="on_papercolorWhite_activate"/>
 			    </widget>
 			  </child>
 
@@ -766,7 +766,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">papercolorWhite</property>
-			      <signal name="toggled" handler="on_papercolorYellow_activate" last_modification_time="Wed, 30 Nov 2005 19:58:26 GMT"/>
+			      <signal name="toggled" handler="on_papercolorYellow_activate"/>
 			    </widget>
 			  </child>
 
@@ -777,7 +777,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">papercolorWhite</property>
-			      <signal name="toggled" handler="on_papercolorPink_activate" last_modification_time="Wed, 30 Nov 2005 19:58:26 GMT"/>
+			      <signal name="toggled" handler="on_papercolorPink_activate"/>
 			    </widget>
 			  </child>
 
@@ -788,7 +788,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">papercolorWhite</property>
-			      <signal name="toggled" handler="on_papercolorOrange_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_papercolorOrange_activate"/>
 			    </widget>
 			  </child>
 
@@ -799,7 +799,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">papercolorWhite</property>
-			      <signal name="toggled" handler="on_papercolorBlue_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_papercolorBlue_activate"/>
 			    </widget>
 			  </child>
 
@@ -810,7 +810,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">papercolorWhite</property>
-			      <signal name="toggled" handler="on_papercolorGreen_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_papercolorGreen_activate"/>
 			    </widget>
 			  </child>
 
@@ -819,7 +819,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">other...</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_papercolorOther_activate" last_modification_time="Sun, 27 Sep 2009 22:00:06 GMT"/>
+			      <signal name="activate" handler="on_papercolorOther_activate"/>
 			    </widget>
 			  </child>
 
@@ -851,7 +851,7 @@
 			      <property name="label" translatable="yes">_plain</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_paperstylePlain_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_paperstylePlain_activate"/>
 			    </widget>
 			  </child>
 
@@ -862,7 +862,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">paperstylePlain</property>
-			      <signal name="toggled" handler="on_paperstyleLined_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_paperstyleLined_activate"/>
 			    </widget>
 			  </child>
 
@@ -873,7 +873,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">paperstylePlain</property>
-			      <signal name="toggled" handler="on_paperstyleRuled_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_paperstyleRuled_activate"/>
 			    </widget>
 			  </child>
 
@@ -884,7 +884,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">paperstylePlain</property>
-			      <signal name="toggled" handler="on_paperstyleGraph_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+			      <signal name="toggled" handler="on_paperstyleGraph_activate"/>
 			    </widget>
 			  </child>
 
@@ -907,7 +907,7 @@
 		      <property name="label" translatable="yes">Apply _To All Pages</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_journalApplyAllPages_activate" last_modification_time="Wed, 30 Nov 2005 19:58:26 GMT"/>
+		      <signal name="activate" handler="on_journalApplyAllPages_activate"/>
 		    </widget>
 		  </child>
 
@@ -943,7 +943,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Background Screens_hot</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalScreenshot_activate" last_modification_time="Wed, 30 Nov 2005 20:06:31 GMT"/>
+		      <signal name="activate" handler="on_journalScreenshot_activate"/>
 		    </widget>
 		  </child>
 
@@ -958,7 +958,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Default _Paper</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalDefaultBackground_activate" last_modification_time="Tue, 13 Dec 2005 22:35:03 GMT"/>
+		      <signal name="activate" handler="on_journalDefaultBackground_activate"/>
 		    </widget>
 		  </child>
 
@@ -967,7 +967,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Set As De_fault</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_journalSetAsDefault_activate" last_modification_time="Tue, 13 Dec 2005 22:35:03 GMT"/>
+		      <signal name="activate" handler="on_journalSetAsDefault_activate"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -990,7 +990,7 @@
 		      <property name="label" translatable="yes">_Pen</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
-		      <signal name="toggled" handler="on_toolsPen_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="toggled" handler="on_toolsPen_activate"/>
 		      <accelerator key="P" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1002,7 +1002,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="toggled" handler="on_toolsEraser_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="toggled" handler="on_toolsEraser_activate"/>
 		      <accelerator key="E" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1014,7 +1014,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="toggled" handler="on_toolsHighlighter_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="toggled" handler="on_toolsHighlighter_activate"/>
 		      <accelerator key="H" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1026,7 +1026,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="toggled" handler="on_toolsText_activate" last_modification_time="Thu, 01 Dec 2005 20:54:08 GMT"/>
+		      <signal name="toggled" handler="on_toolsText_activate"/>
 		      <accelerator key="T" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1043,7 +1043,7 @@
 		      <property name="label" translatable="yes">_Shape Recognizer</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_toolsReco_activate" last_modification_time="Fri, 21 Mar 2008 16:36:05 GMT"/>
+		      <signal name="toggled" handler="on_toolsReco_activate"/>
 		      <accelerator key="S" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1054,7 +1054,7 @@
 		      <property name="label" translatable="yes">Ru_ler</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_toolsRuler_activate" last_modification_time="Thu, 01 Dec 2005 20:54:08 GMT"/>
+		      <signal name="toggled" handler="on_toolsRuler_activate"/>
 		      <accelerator key="L" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1072,7 +1072,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="toggled" handler="on_toolsSelectRegion_activate" last_modification_time="Thu, 01 Dec 2005 20:54:08 GMT"/>
+		      <signal name="toggled" handler="on_toolsSelectRegion_activate"/>
 		      <accelerator key="G" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1084,7 +1084,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="toggled" handler="on_toolsSelectRectangle_activate" last_modification_time="Thu, 01 Dec 2005 20:54:08 GMT"/>
+		      <signal name="toggled" handler="on_toolsSelectRectangle_activate"/>
 		      <accelerator key="R" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1096,7 +1096,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="toggled" handler="on_toolsVerticalSpace_activate" last_modification_time="Thu, 01 Dec 2005 20:54:08 GMT"/>
+		      <signal name="toggled" handler="on_toolsVerticalSpace_activate"/>
 		      <accelerator key="V" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1108,7 +1108,7 @@
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <property name="group">toolsPen</property>
-		      <signal name="activate" handler="on_toolsHand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
+		      <signal name="activate" handler="on_toolsHand_activate"/>
 		      <accelerator key="A" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
 		    </widget>
 		  </child>
@@ -1146,7 +1146,7 @@
 			      <property name="label" translatable="yes">blac_k</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_colorBlack_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorBlack_activate"/>
 			    </widget>
 			  </child>
 
@@ -1157,7 +1157,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorBlue_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorBlue_activate"/>
 			    </widget>
 			  </child>
 
@@ -1168,7 +1168,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorRed_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorRed_activate"/>
 			    </widget>
 			  </child>
 
@@ -1179,7 +1179,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorGreen_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorGreen_activate"/>
 			    </widget>
 			  </child>
 
@@ -1190,7 +1190,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorGray_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorGray_activate"/>
 			    </widget>
 			  </child>
 
@@ -1207,7 +1207,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorLightBlue_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorLightBlue_activate"/>
 			    </widget>
 			  </child>
 
@@ -1218,7 +1218,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorLightGreen_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorLightGreen_activate"/>
 			    </widget>
 			  </child>
 
@@ -1229,7 +1229,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorMagenta_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorMagenta_activate"/>
 			    </widget>
 			  </child>
 
@@ -1240,7 +1240,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorOrange_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorOrange_activate"/>
 			    </widget>
 			  </child>
 
@@ -1251,7 +1251,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorYellow_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorYellow_activate"/>
 			    </widget>
 			  </child>
 
@@ -1262,7 +1262,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">colorBlack</property>
-			      <signal name="toggled" handler="on_colorWhite_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="toggled" handler="on_colorWhite_activate"/>
 			    </widget>
 			  </child>
 
@@ -1271,7 +1271,7 @@
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">other...</property>
 			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="on_colorOther_activate" last_modification_time="Thu, 01 Dec 2005 21:56:57 GMT"/>
+			      <signal name="activate" handler="on_colorOther_activate"/>
 			    </widget>
 			  </child>
 
@@ -1303,7 +1303,7 @@
 			      <property name="label" translatable="yes">_very fine</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_penthicknessVeryFine_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_penthicknessVeryFine_activate"/>
 			    </widget>
 			  </child>
 
@@ -1314,7 +1314,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">penthicknessVeryFine</property>
-			      <signal name="toggled" handler="on_penthicknessFine_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_penthicknessFine_activate"/>
 			    </widget>
 			  </child>
 
@@ -1325,7 +1325,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">penthicknessVeryFine</property>
-			      <signal name="toggled" handler="on_penthicknessMedium_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+			      <signal name="toggled" handler="on_penthicknessMedium_activate"/>
 			    </widget>
 			  </child>
 
@@ -1336,7 +1336,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">penthicknessVeryFine</property>
-			      <signal name="toggled" handler="on_penthicknessThick_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+			      <signal name="toggled" handler="on_penthicknessThick_activate"/>
 			    </widget>
 			  </child>
 
@@ -1347,7 +1347,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">penthicknessVeryFine</property>
-			      <signal name="toggled" handler="on_penthicknessVeryThick_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+			      <signal name="toggled" handler="on_penthicknessVeryThick_activate"/>
 			    </widget>
 			  </child>
 			</widget>
@@ -1370,7 +1370,7 @@
 			      <property name="label" translatable="yes">_fine</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_eraserFine_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_eraserFine_activate"/>
 			    </widget>
 			  </child>
 
@@ -1381,7 +1381,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">eraserFine</property>
-			      <signal name="toggled" handler="on_eraserMedium_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_eraserMedium_activate"/>
 			    </widget>
 			  </child>
 
@@ -1392,7 +1392,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">eraserFine</property>
-			      <signal name="toggled" handler="on_eraserThick_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_eraserThick_activate"/>
 			    </widget>
 			  </child>
 
@@ -1408,7 +1408,7 @@
 			      <property name="label" translatable="yes">_standard</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_eraserStandard_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_eraserStandard_activate"/>
 			    </widget>
 			  </child>
 
@@ -1419,7 +1419,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">eraserStandard</property>
-			      <signal name="toggled" handler="on_eraserWhiteout_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_eraserWhiteout_activate"/>
 			    </widget>
 			  </child>
 
@@ -1430,7 +1430,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">eraserStandard</property>
-			      <signal name="toggled" handler="on_eraserDeleteStrokes_activate" last_modification_time="Thu, 01 Dec 2005 19:29:18 GMT"/>
+			      <signal name="toggled" handler="on_eraserDeleteStrokes_activate"/>
 			    </widget>
 			  </child>
 			</widget>
@@ -1453,7 +1453,7 @@
 			      <property name="label" translatable="yes">_fine</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="toggled" handler="on_highlighterFine_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+			      <signal name="toggled" handler="on_highlighterFine_activate"/>
 			    </widget>
 			  </child>
 
@@ -1464,7 +1464,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">highlighterFine</property>
-			      <signal name="toggled" handler="on_highlighterMedium_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+			      <signal name="toggled" handler="on_highlighterMedium_activate"/>
 			    </widget>
 			  </child>
 
@@ -1475,7 +1475,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">highlighterFine</property>
-			      <signal name="toggled" handler="on_highlighterThick_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+			      <signal name="toggled" handler="on_highlighterThick_activate"/>
 			    </widget>
 			  </child>
 			</widget>
@@ -1516,7 +1516,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Default Pen</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_toolsDefaultPen_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="activate" handler="on_toolsDefaultPen_activate"/>
 		    </widget>
 		  </child>
 
@@ -1525,7 +1525,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Default Eraser</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_toolsDefaultEraser_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="activate" handler="on_toolsDefaultEraser_activate"/>
 		    </widget>
 		  </child>
 
@@ -1534,7 +1534,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Default Highlighter</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_toolsDefaultHighlighter_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="activate" handler="on_toolsDefaultHighlighter_activate"/>
 		    </widget>
 		  </child>
 
@@ -1543,7 +1543,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Default Te_xt</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_toolsDefaultText_activate" last_modification_time="Thu, 01 Dec 2005 20:54:08 GMT"/>
+		      <signal name="activate" handler="on_toolsDefaultText_activate"/>
 		    </widget>
 		  </child>
 
@@ -1552,7 +1552,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Set As Default</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_toolsSetAsDefault_activate" last_modification_time="Thu, 01 Dec 2005 05:36:05 GMT"/>
+		      <signal name="activate" handler="on_toolsSetAsDefault_activate"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -1575,7 +1575,7 @@
 		      <property name="label" translatable="yes">Use _XInput</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_optionsUseXInput_activate" last_modification_time="Wed, 07 Dec 2005 22:54:39 GMT"/>
+		      <signal name="toggled" handler="on_optionsUseXInput_activate"/>
 		    </widget>
 		  </child>
 
@@ -1585,7 +1585,7 @@
 		      <property name="label" translatable="yes">_Eraser Tip</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_optionsButtonMappings_activate" last_modification_time="Thu, 26 Jan 2006 03:45:32 GMT"/>
+		      <signal name="activate" handler="on_optionsButtonMappings_activate"/>
 		    </widget>
 		  </child>
 
@@ -1595,7 +1595,7 @@
 		      <property name="label" translatable="yes">_Pressure sensitivity</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_optionsPressureSensitive_activate" last_modification_time="Fri, 21 Mar 2008 19:00:32 GMT"/>
+		      <signal name="activate" handler="on_optionsPressureSensitive_activate"/>
 		    </widget>
 		  </child>
 
@@ -1614,7 +1614,7 @@
 			      <property name="label" translatable="yes">_Pen</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="activate" handler="on_button2Pen_activate" last_modification_time="Sun, 04 Jun 2006 14:18:50 GMT"/>
+			      <signal name="activate" handler="on_button2Pen_activate"/>
 			    </widget>
 			  </child>
 
@@ -1625,7 +1625,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2Eraser_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2Eraser_activate"/>
 			    </widget>
 			  </child>
 
@@ -1636,7 +1636,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2Highlighter_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2Highlighter_activate"/>
 			    </widget>
 			  </child>
 
@@ -1647,7 +1647,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2Text_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2Text_activate"/>
 			    </widget>
 			  </child>
 
@@ -1658,7 +1658,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2SelectRegion_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2SelectRegion_activate"/>
 			    </widget>
 			  </child>
 
@@ -1669,7 +1669,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2SelectRectangle_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2SelectRectangle_activate"/>
 			    </widget>
 			  </child>
 
@@ -1680,7 +1680,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2VerticalSpace_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2VerticalSpace_activate"/>
 			    </widget>
 			  </child>
 
@@ -1691,7 +1691,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2Pen</property>
-			      <signal name="activate" handler="on_button2Hand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
+			      <signal name="activate" handler="on_button2Hand_activate"/>
 			    </widget>
 			  </child>
 
@@ -1707,7 +1707,7 @@
 			      <property name="label" translatable="yes">_Link to Primary Brush</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="activate" handler="on_button2LinkBrush_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2LinkBrush_activate"/>
 			    </widget>
 			  </child>
 
@@ -1718,7 +1718,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button2LinkBrush</property>
-			      <signal name="activate" handler="on_button2CopyBrush_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button2CopyBrush_activate"/>
 			    </widget>
 			  </child>
 
@@ -1750,7 +1750,7 @@
 			      <property name="label" translatable="yes">_Pen</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="activate" handler="on_button3Pen_activate" last_modification_time="Sun, 04 Jun 2006 14:18:50 GMT"/>
+			      <signal name="activate" handler="on_button3Pen_activate"/>
 			    </widget>
 			  </child>
 
@@ -1761,7 +1761,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3Eraser_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3Eraser_activate"/>
 			    </widget>
 			  </child>
 
@@ -1772,7 +1772,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3Highlighter_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3Highlighter_activate"/>
 			    </widget>
 			  </child>
 
@@ -1783,7 +1783,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3Text_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3Text_activate"/>
 			    </widget>
 			  </child>
 
@@ -1794,7 +1794,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3SelectRegion_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3SelectRegion_activate"/>
 			    </widget>
 			  </child>
 
@@ -1805,7 +1805,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3SelectRectangle_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3SelectRectangle_activate"/>
 			    </widget>
 			  </child>
 
@@ -1816,7 +1816,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3VerticalSpace_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3VerticalSpace_activate"/>
 			    </widget>
 			  </child>
 
@@ -1827,7 +1827,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3Pen</property>
-			      <signal name="activate" handler="on_button3Hand_activate" last_modification_time="Wed, 20 Sep 2006 02:20:48 GMT"/>
+			      <signal name="activate" handler="on_button3Hand_activate"/>
 			    </widget>
 			  </child>
 
@@ -1843,7 +1843,7 @@
 			      <property name="label" translatable="yes">_Link to Primary Brush</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
-			      <signal name="activate" handler="on_button3LinkBrush_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3LinkBrush_activate"/>
 			    </widget>
 			  </child>
 
@@ -1854,7 +1854,7 @@
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">button3LinkBrush</property>
-			      <signal name="activate" handler="on_button3CopyBrush_activate" last_modification_time="Sun, 04 Jun 2006 14:33:10 GMT"/>
+			      <signal name="activate" handler="on_button3CopyBrush_activate"/>
 			    </widget>
 			  </child>
 
@@ -1877,7 +1877,7 @@
 		      <property name="label" translatable="yes">Buttons Switch Mappings</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_optionsButtonsSwitchMappings_activate" last_modification_time="Sun, 20 Sep 2009 22:54:39 GMT"/>
+		      <signal name="toggled" handler="on_optionsButtonsSwitchMappings_activate"/>
 		    </widget>
 		  </child>
 
@@ -1893,7 +1893,7 @@
 		      <property name="label" translatable="yes">_Progressive Backgrounds</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_optionsProgressiveBG_activate" last_modification_time="Thu, 26 Jan 2006 20:15:09 GMT"/>
+		      <signal name="activate" handler="on_optionsProgressiveBG_activate"/>
 		    </widget>
 		  </child>
 
@@ -1903,7 +1903,7 @@
 		      <property name="label" translatable="yes">Print Paper _Ruling</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_optionsPrintRuling_activate" last_modification_time="Sat, 25 Nov 2006 03:42:27 GMT"/>
+		      <signal name="activate" handler="on_optionsPrintRuling_activate"/>
 		    </widget>
 		  </child>
 
@@ -1913,7 +1913,7 @@
 		      <property name="label" translatable="yes">Autoload pdf.xoj</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="on_optionsAutoloadPdfXoj_activate" last_modification_time="Sat, 25 Nov 2006 03:42:27 GMT"/>
+		      <signal name="activate" handler="on_optionsAutoloadPdfXoj_activate"/>
 		    </widget>
 		  </child>
 
@@ -1923,7 +1923,7 @@
 		      <property name="label" translatable="yes">Left-Handed Scrollbar</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_optionsLeftHanded_activate" last_modification_time="Wed, 07 Dec 2005 22:54:39 GMT"/>
+		      <signal name="toggled" handler="on_optionsLeftHanded_activate"/>
 		    </widget>
 		  </child>
 
@@ -1933,7 +1933,7 @@
 		      <property name="label" translatable="yes">Shorten _Menus</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_optionsShortenMenus_activate" last_modification_time="Wed, 07 Dec 2005 22:54:39 GMT"/>
+		      <signal name="toggled" handler="on_optionsShortenMenus_activate"/>
 		    </widget>
 		  </child>
 
@@ -1949,7 +1949,7 @@
 		      <property name="label" translatable="yes">A_uto-Save Preferences</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="toggled" handler="on_optionsAutoSavePrefs_activate" last_modification_time="Wed, 07 Dec 2005 22:54:39 GMT"/>
+		      <signal name="toggled" handler="on_optionsAutoSavePrefs_activate"/>
 		    </widget>
 		  </child>
 
@@ -1958,7 +1958,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Save Preferences</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_optionsSavePreferences_activate" last_modification_time="Wed, 30 Nov 2005 20:09:25 GMT"/>
+		      <signal name="activate" handler="on_optionsSavePreferences_activate"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -1980,7 +1980,7 @@
 		      <property name="visible">True</property>
 		      <property name="label">gtk-index</property>
 		      <property name="use_stock">True</property>
-		      <signal name="activate" handler="on_helpIndex_activate" last_modification_time="Wed, 30 Nov 2005 18:40:00 GMT"/>
+		      <signal name="activate" handler="on_helpIndex_activate"/>
 		    </widget>
 		  </child>
 
@@ -1989,7 +1989,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_About</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_helpAbout_activate" last_modification_time="Wed, 30 Nov 2005 18:40:00 GMT"/>
+		      <signal name="activate" handler="on_helpAbout_activate"/>
 		    </widget>
 		  </child>
 		</widget>
@@ -2020,7 +2020,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_fileSave_activate" last_modification_time="Fri, 02 Dec 2005 02:19:52 GMT"/>
+	      <signal name="clicked" handler="on_fileSave_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2036,7 +2036,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_fileNew_activate" last_modification_time="Thu, 10 Aug 2006 15:14:10 GMT"/>
+	      <signal name="clicked" handler="on_fileNew_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2052,7 +2052,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_fileOpen_activate" last_modification_time="Thu, 10 Aug 2006 15:14:42 GMT"/>
+	      <signal name="clicked" handler="on_fileOpen_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2087,7 +2087,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_editCut_activate" last_modification_time="Fri, 02 Dec 2005 02:19:25 GMT"/>
+	      <signal name="clicked" handler="on_editCut_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2103,7 +2103,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_editCopy_activate" last_modification_time="Fri, 02 Dec 2005 02:21:44 GMT"/>
+	      <signal name="clicked" handler="on_editCopy_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2119,7 +2119,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_editPaste_activate" last_modification_time="Fri, 02 Dec 2005 02:21:58 GMT"/>
+	      <signal name="clicked" handler="on_editPaste_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2154,7 +2154,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_editUndo_activate" last_modification_time="Fri, 02 Dec 2005 02:24:47 GMT"/>
+	      <signal name="clicked" handler="on_editUndo_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2170,7 +2170,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_editRedo_activate" last_modification_time="Fri, 02 Dec 2005 02:24:23 GMT"/>
+	      <signal name="clicked" handler="on_editRedo_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2205,7 +2205,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewFirstPage_activate" last_modification_time="Fri, 02 Dec 2005 02:46:14 GMT"/>
+	      <signal name="clicked" handler="on_viewFirstPage_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2221,7 +2221,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewPreviousPage_activate" last_modification_time="Fri, 02 Dec 2005 02:46:27 GMT"/>
+	      <signal name="clicked" handler="on_viewPreviousPage_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2271,7 +2271,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewNextPage_activate" last_modification_time="Fri, 02 Dec 2005 02:46:54 GMT"/>
+	      <signal name="clicked" handler="on_viewNextPage_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2287,7 +2287,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewLastPage_activate" last_modification_time="Fri, 02 Dec 2005 02:47:10 GMT"/>
+	      <signal name="clicked" handler="on_viewLastPage_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2322,7 +2322,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewZoomOut_activate" last_modification_time="Fri, 02 Dec 2005 02:47:50 GMT"/>
+	      <signal name="clicked" handler="on_viewZoomOut_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2338,7 +2338,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">False</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewPageWidth_activate" last_modification_time="Fri, 02 Dec 2005 02:48:21 GMT"/>
+	      <signal name="clicked" handler="on_viewPageWidth_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2354,7 +2354,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewZoomIn_activate" last_modification_time="Fri, 02 Dec 2005 02:48:42 GMT"/>
+	      <signal name="clicked" handler="on_viewZoomIn_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2370,7 +2370,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewNormalSize_activate" last_modification_time="Thu, 26 Jan 2006 20:46:28 GMT"/>
+	      <signal name="clicked" handler="on_viewNormalSize_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2386,7 +2386,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_viewSetZoom_activate" last_modification_time="Sat, 22 Jul 2006 21:30:54 GMT"/>
+	      <signal name="clicked" handler="on_viewSetZoom_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2405,7 +2405,7 @@
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
-	      <signal name="toggled" handler="on_viewFullscreen_activate" last_modification_time="Thu, 19 Jan 2006 20:04:49 GMT"/>
+	      <signal name="toggled" handler="on_viewFullscreen_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2439,7 +2439,7 @@
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
-	      <signal name="toggled" handler="on_toolsPen_activate" last_modification_time="Thu, 08 Dec 2005 19:58:46 GMT"/>
+	      <signal name="toggled" handler="on_toolsPen_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2459,7 +2459,7 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsEraser_activate" last_modification_time="Thu, 08 Dec 2005 22:12:11 GMT"/>
+	      <signal name="toggled" handler="on_toolsEraser_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2479,7 +2479,7 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsHighlighter_activate" last_modification_time="Thu, 08 Dec 2005 19:59:16 GMT"/>
+	      <signal name="toggled" handler="on_toolsHighlighter_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2499,7 +2499,27 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsText_activate" last_modification_time="Thu, 08 Dec 2005 20:49:10 GMT"/>
+	      <signal name="toggled" handler="on_toolsText_activate"/>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkRadioToolButton" id="buttonImage">
+	      <property name="visible">True</property>
+	      <property name="tooltip" translatable="yes">Image</property>
+	      <property name="label" translatable="yes">Image</property>
+	      <property name="use_underline">True</property>
+	      <property name="stock_id">gtk-orientation-portrait</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	      <property name="active">False</property>
+	      <property name="group">buttonPen</property>
+	      <signal name="toggled" handler="on_toolsImage_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2518,7 +2538,7 @@
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
-	      <signal name="toggled" handler="on_toolsReco_activate" last_modification_time="Thu, 08 Dec 2005 20:49:10 GMT"/>
+	      <signal name="toggled" handler="on_toolsReco_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2537,7 +2557,7 @@
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
-	      <signal name="toggled" handler="on_toolsRuler_activate" last_modification_time="Thu, 08 Dec 2005 20:49:21 GMT"/>
+	      <signal name="toggled" handler="on_toolsRuler_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2576,7 +2596,7 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsSelectRegion_activate" last_modification_time="Thu, 08 Dec 2005 20:49:29 GMT"/>
+	      <signal name="toggled" handler="on_toolsSelectRegion_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2596,7 +2616,7 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsSelectRectangle_activate" last_modification_time="Thu, 08 Dec 2005 20:49:53 GMT"/>
+	      <signal name="toggled" handler="on_toolsSelectRectangle_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2616,7 +2636,7 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsVerticalSpace_activate" last_modification_time="Thu, 08 Dec 2005 20:50:33 GMT"/>
+	      <signal name="toggled" handler="on_toolsVerticalSpace_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2635,7 +2655,7 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonPen</property>
-	      <signal name="toggled" handler="on_toolsHand_activate" last_modification_time="Wed, 20 Sep 2006 02:21:25 GMT"/>
+	      <signal name="toggled" handler="on_toolsHand_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2672,11 +2692,11 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_buttonToolDefault_clicked" last_modification_time="Fri, 02 Dec 2005 21:45:36 GMT"/>
+	      <signal name="clicked" handler="on_buttonToolDefault_clicked"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2690,7 +2710,7 @@
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
-	      <signal name="clicked" handler="on_toolsDefaultPen_activate" last_modification_time="Fri, 02 Dec 2005 21:46:19 GMT"/>
+	      <signal name="clicked" handler="on_toolsDefaultPen_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
@@ -2729,11 +2749,11 @@
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
-	      <signal name="toggled" handler="on_buttonFine_clicked" last_modification_time="Thu, 08 Dec 2005 20:50:55 GMT"/>
+	      <signal name="toggled" handler="on_buttonFine_clicked"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2750,11 +2770,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonFine</property>
-	      <signal name="toggled" handler="on_buttonMedium_clicked" last_modification_time="Thu, 08 Dec 2005 20:51:02 GMT"/>
+	      <signal name="toggled" handler="on_buttonMedium_clicked"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2771,11 +2791,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonFine</property>
-	      <signal name="toggled" handler="on_buttonThick_clicked" last_modification_time="Thu, 08 Dec 2005 20:51:10 GMT"/>
+	      <signal name="toggled" handler="on_buttonThick_clicked"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2825,11 +2845,11 @@
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
-	      <signal name="toggled" handler="on_colorBlack_activate" last_modification_time="Thu, 08 Dec 2005 20:51:35 GMT"/>
+	      <signal name="toggled" handler="on_colorBlack_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2845,11 +2865,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorBlue_activate" last_modification_time="Thu, 08 Dec 2005 20:51:19 GMT"/>
+	      <signal name="toggled" handler="on_colorBlue_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2865,11 +2885,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorRed_activate" last_modification_time="Fri, 02 Dec 2005 21:48:32 GMT"/>
+	      <signal name="toggled" handler="on_colorRed_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2885,11 +2905,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorGreen_activate" last_modification_time="Fri, 02 Dec 2005 21:48:51 GMT"/>
+	      <signal name="toggled" handler="on_colorGreen_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2905,11 +2925,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorGray_activate" last_modification_time="Fri, 02 Dec 2005 21:49:09 GMT"/>
+	      <signal name="toggled" handler="on_colorGray_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2925,11 +2945,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorLightBlue_activate" last_modification_time="Fri, 02 Dec 2005 21:49:37 GMT"/>
+	      <signal name="toggled" handler="on_colorLightBlue_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2945,11 +2965,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorLightGreen_activate" last_modification_time="Fri, 02 Dec 2005 21:49:51 GMT"/>
+	      <signal name="toggled" handler="on_colorLightGreen_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2965,11 +2985,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorMagenta_activate" last_modification_time="Fri, 02 Dec 2005 21:50:04 GMT"/>
+	      <signal name="toggled" handler="on_colorMagenta_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -2985,11 +3005,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorOrange_activate" last_modification_time="Fri, 02 Dec 2005 21:50:21 GMT"/>
+	      <signal name="toggled" handler="on_colorOrange_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -3005,11 +3025,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorYellow_activate" last_modification_time="Fri, 02 Dec 2005 21:50:38 GMT"/>
+	      <signal name="toggled" handler="on_colorYellow_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -3025,11 +3045,11 @@
 	      <property name="is_important">False</property>
 	      <property name="active">False</property>
 	      <property name="group">buttonBlack</property>
-	      <signal name="toggled" handler="on_colorWhite_activate" last_modification_time="Fri, 02 Dec 2005 21:51:09 GMT"/>
+	      <signal name="toggled" handler="on_colorWhite_activate"/>
 	    </widget>
 	    <packing>
 	      <property name="expand">False</property>
-	      <property name="homogeneous">False</property>
+	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
 
@@ -3064,7 +3084,7 @@
 		  <property name="visible">True</property>
 		  <property name="use_alpha">False</property>
 		  <property name="focus_on_click">True</property>
-		  <signal name="color_set" handler="on_buttonColorChooser_set" last_modification_time="Wed, 16 Sep 2009 23:45:14 GMT"/>
+		  <signal name="color_set" handler="on_buttonColorChooser_set"/>
 		</widget>
 	      </child>
 	    </widget>
@@ -3109,7 +3129,7 @@
 		  <property name="use_font">True</property>
 		  <property name="use_size">False</property>
 		  <property name="focus_on_click">False</property>
-		  <signal name="font_set" handler="on_fontButton_font_set" last_modification_time="Sun, 12 Aug 2007 22:11:59 GMT"/>
+		  <signal name="font_set" handler="on_fontButton_font_set"/>
 		</widget>
 	      </child>
 	    </widget>
@@ -3189,7 +3209,7 @@
 	      <property name="snap_to_ticks">True</property>
 	      <property name="wrap">False</property>
 	      <property name="adjustment">1 1 1 1 0 0</property>
-	      <signal name="value_changed" handler="on_spinPageNo_value_changed" last_modification_time="Tue, 13 Dec 2005 21:15:21 GMT"/>
+	      <signal name="value_changed" handler="on_spinPageNo_value_changed"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -3264,7 +3284,7 @@
 	      <property name="visible">True</property>
 	      <property name="add_tearoffs">False</property>
 	      <property name="focus_on_click">True</property>
-	      <signal name="changed" handler="on_comboLayer_changed" last_modification_time="Thu, 01 Dec 2005 03:56:41 GMT"/>
+	      <signal name="changed" handler="on_comboLayer_changed"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">4</property>
@@ -3398,7 +3418,7 @@ US Letter (landscape)
 Custom</property>
 	      <property name="add_tearoffs">False</property>
 	      <property name="focus_on_click">True</property>
-	      <signal name="changed" handler="on_comboStdSizes_changed" last_modification_time="Sat, 31 Dec 2005 22:17:40 GMT"/>
+	      <signal name="changed" handler="on_comboStdSizes_changed"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">5</property>
@@ -3454,10 +3474,10 @@ Custom</property>
 	      <property name="max_length">0</property>
 	      <property name="text" translatable="yes"></property>
 	      <property name="has_frame">True</property>
-	      <property name="invisible_char">*</property>
+	      <property name="invisible_char">●</property>
 	      <property name="activates_default">False</property>
 	      <property name="width_chars">5</property>
-	      <signal name="changed" handler="on_entryWidth_changed" last_modification_time="Sat, 31 Dec 2005 22:17:58 GMT"/>
+	      <signal name="changed" handler="on_entryWidth_changed"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -3500,10 +3520,10 @@ Custom</property>
 	      <property name="max_length">0</property>
 	      <property name="text" translatable="yes"></property>
 	      <property name="has_frame">True</property>
-	      <property name="invisible_char">*</property>
+	      <property name="invisible_char">●</property>
 	      <property name="activates_default">False</property>
 	      <property name="width_chars">5</property>
-	      <signal name="changed" handler="on_entryHeight_changed" last_modification_time="Sat, 31 Dec 2005 22:19:41 GMT"/>
+	      <signal name="changed" handler="on_entryHeight_changed"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -3521,7 +3541,7 @@ pixels
 points</property>
 	      <property name="add_tearoffs">False</property>
 	      <property name="focus_on_click">True</property>
-	      <signal name="changed" handler="on_comboUnit_changed" last_modification_time="Sat, 31 Dec 2005 22:20:00 GMT"/>
+	      <signal name="changed" handler="on_comboUnit_changed"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">8</property>
@@ -3611,7 +3631,7 @@ points</property>
 	  <property name="label" translatable="yes">Xournal</property>
 	  <property name="use_underline">False</property>
 	  <property name="use_markup">False</property>
-	  <property name="justify">GTK_JUSTIFY_CENTER</property>
+	  <property name="justify">GTK_JUSTIFY_LEFT</property>
 	  <property name="wrap">False</property>
 	  <property name="selectable">False</property>
 	  <property name="xalign">0.5</property>
@@ -3638,7 +3658,7 @@ and other contributors
        http://xournal.sourceforge.net/       </property>
 	  <property name="use_underline">False</property>
 	  <property name="use_markup">False</property>
-	  <property name="justify">GTK_JUSTIFY_CENTER</property>
+	  <property name="justify">GTK_JUSTIFY_LEFT</property>
 	  <property name="wrap">False</property>
 	  <property name="selectable">False</property>
 	  <property name="xalign">0.5</property>
@@ -3760,7 +3780,7 @@ and other contributors
 		  <property name="active">False</property>
 		  <property name="inconsistent">False</property>
 		  <property name="draw_indicator">True</property>
-		  <signal name="toggled" handler="on_radioZoom_toggled" last_modification_time="Sat, 22 Jul 2006 21:53:23 GMT"/>
+		  <signal name="toggled" handler="on_radioZoom_toggled"/>
 		</widget>
 		<packing>
 		  <property name="padding">0</property>
@@ -3780,7 +3800,7 @@ and other contributors
 		  <property name="snap_to_ticks">False</property>
 		  <property name="wrap">False</property>
 		  <property name="adjustment">100 10 1500 5 0 0</property>
-		  <signal name="value_changed" handler="on_spinZoom_value_changed" last_modification_time="Sat, 22 Jul 2006 21:04:21 GMT"/>
+		  <signal name="value_changed" handler="on_spinZoom_value_changed"/>
 		</widget>
 		<packing>
 		  <property name="padding">5</property>
@@ -3834,7 +3854,7 @@ and other contributors
 	      <property name="inconsistent">False</property>
 	      <property name="draw_indicator">True</property>
 	      <property name="group">radioZoom</property>
-	      <signal name="toggled" handler="on_radioZoom100_toggled" last_modification_time="Sat, 22 Jul 2006 21:53:30 GMT"/>
+	      <signal name="toggled" handler="on_radioZoom100_toggled"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -3856,7 +3876,7 @@ and other contributors
 	      <property name="inconsistent">False</property>
 	      <property name="draw_indicator">True</property>
 	      <property name="group">radioZoom</property>
-	      <signal name="toggled" handler="on_radioZoomWidth_toggled" last_modification_time="Sat, 22 Jul 2006 21:53:37 GMT"/>
+	      <signal name="toggled" handler="on_radioZoomWidth_toggled"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -3878,7 +3898,7 @@ and other contributors
 	      <property name="inconsistent">False</property>
 	      <property name="draw_indicator">True</property>
 	      <property name="group">radioZoom</property>
-	      <signal name="toggled" handler="on_radioZoomHeight_toggled" last_modification_time="Sat, 22 Jul 2006 21:53:45 GMT"/>
+	      <signal name="toggled" handler="on_radioZoomHeight_toggled"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>

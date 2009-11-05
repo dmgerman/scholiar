@@ -452,7 +452,7 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
   if (undo == NULL) return; // nothing to undo!
   reset_selection(); // safer
   reset_recognizer(); // safer
-  if (undo->type == ITEM_STROKE || undo->type == ITEM_TEXT) {
+  if (undo->type == ITEM_STROKE || undo->type == ITEM_TEXT || undo->type == ITEM_IMAGE) {
     // we're keeping the stroke info, but deleting the canvas item
     gtk_object_destroy(GTK_OBJECT(undo->item->canvas_item));
     undo->item->canvas_item = NULL;
@@ -666,7 +666,7 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
   if (redo == NULL) return; // nothing to redo!
   reset_selection(); // safer
   reset_recognizer(); // safer
-  if (redo->type == ITEM_STROKE || redo->type == ITEM_TEXT) {
+  if (redo->type == ITEM_STROKE || redo->type == ITEM_TEXT || redo->type == ITEM_IMAGE) {
     // re-create the canvas_item
     make_canvas_item_one(redo->layer->group, redo->item);
     // reinsert the item on its layer
@@ -824,6 +824,12 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
       if (it->type == ITEM_TEXT && it->canvas_item != NULL)
         gnome_canvas_item_set(it->canvas_item, 
           "fill-color-rgba", it->brush.color_rgba, NULL);
+      if (it->type == ITEM_IMAGE && it->canvas_item != NULL) {
+        // remark: a variable-width item might have lost its variable-width
+        group = (GnomeCanvasGroup *) it->canvas_item->parent;
+        gtk_object_destroy(GTK_OBJECT(it->canvas_item));
+        make_canvas_item_one(group, it);
+      }
     }
   }
   else if (redo->type == ITEM_TEXT_EDIT) {
@@ -1030,7 +1036,7 @@ on_viewNotableNextPage_activate            (GtkMenuItem     *menuitem,
   int firstPageNo = -1;
   struct Page *pg;
   struct Layer *layer;
-  GList *pagelist, *layerlist, *itemlist;
+  GList *pagelist, *layerlist;
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
     for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
@@ -1066,7 +1072,7 @@ on_viewNotablePrevPage_activate            (GtkMenuItem     *menuitem,
   int prevPageNo = -1;
   struct Page *pg;
   struct Layer *layer;
-  GList *pagelist, *layerlist, *itemlist;
+  GList *pagelist, *layerlist;
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
     for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
@@ -1846,6 +1852,32 @@ on_toolsText_activate                  (GtkMenuItem     *menuitem,
   update_cursor();
 }
 
+void
+on_toolsImage_activate                  (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  if (GTK_OBJECT_TYPE(menuitem) == GTK_TYPE_RADIO_MENU_ITEM) {
+    if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem)))
+      return;
+  } else {
+    if (!gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem)))
+      return;
+  }
+  
+  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  if (ui.toolno[ui.cur_mapping] == TOOL_IMAGE) return;
+  
+  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
+  reset_selection();
+  ui.toolno[ui.cur_mapping] = TOOL_IMAGE;
+  ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_PEN]);
+  update_mapping_linkings(-1);
+  update_tool_buttons();
+  update_tool_menu();
+  update_color_menu();
+  update_cursor();
+}
+
 
 void
 on_toolsSelectRegion_activate          (GtkMenuItem     *menuitem,
@@ -2586,6 +2618,9 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   else if (ui.toolno[mapping] == TOOL_TEXT) {
     start_text((GdkEvent *)event, NULL);
   }
+  else if (ui.toolno[mapping] == TOOL_IMAGE) {
+    insert_image((GdkEvent *)event, NULL);
+  }
   return FALSE;
 }
 
@@ -2764,7 +2799,7 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
      or if there's a selection (then we might want to change the mouse
      cursor to indicate the possibility of resizing) */  
   if (ui.cur_item_type == ITEM_NONE && ui.selection==NULL) return FALSE;
-  if (ui.cur_item_type == ITEM_TEXT) return FALSE;
+  if (ui.cur_item_type == ITEM_TEXT || ui.cur_item_type == ITEM_IMAGE) return FALSE;
 
   is_core = (event->device == gdk_device_get_core_pointer());
   if (!ui.use_xinput && !is_core) return FALSE;

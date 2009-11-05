@@ -142,6 +142,12 @@ void clear_redo_stack(void)
       g_free(redo->item->font_name);
       g_free(redo->item);
     }
+    else if (redo->type == ITEM_IMAGE) {
+      g_free(redo->item->image_path);
+      g_free(redo->item->image);
+      g_free(redo->item->image_scaled);
+      g_free(redo->item);
+    }
     else if (redo->type == ITEM_ERASURE || redo->type == ITEM_RECOGNIZER) {
       for (list = redo->erasurelist; list!=NULL; list=list->next) {
         erasure = (struct UndoErasureData *)list->data;
@@ -218,6 +224,8 @@ void clear_undo_stack(void)
         }
         if (erasure->item->type == ITEM_TEXT)
           { g_free(erasure->item->text); g_free(erasure->item->font_name); }
+	if (erasure->item->type == ITEM_IMAGE)
+          { g_free(erasure->item->image_path); g_free(erasure->item->image); g_free(erasure->item->image_scaled);}
         g_free(erasure->item);
         g_list_free(erasure->replacement_items);
         g_free(erasure);
@@ -301,6 +309,11 @@ void delete_layer(struct Layer *l)
       gnome_canvas_points_free(item->path);
     if (item->type == ITEM_TEXT) {
       g_free(item->font_name); g_free(item->text);
+    }
+    if (item->type == ITEM_IMAGE) {
+      g_free(item->image_path);
+      if(item->image!=item->image_scaled) g_free(item->image);
+      g_free(item->image_scaled);
     }
     // don't need to delete the canvas_item, as it's part of the group destroyed below
     g_free(item);
@@ -458,6 +471,12 @@ void update_item_bbox(struct Item *item)
     item->bbox.right = item->bbox.left + w;
     item->bbox.bottom = item->bbox.top + h;
   }
+  if (item->type == ITEM_IMAGE && item->canvas_item!=NULL) {
+    h=0.; w=0.;
+    g_object_get(item->canvas_item, "width", &w, "height", &h, NULL);
+    item->bbox.right = item->bbox.left + w;
+    item->bbox.bottom = item->bbox.top + h;
+  }
 }
 
 void make_page_clipbox(struct Page *pg)
@@ -478,6 +497,10 @@ void make_canvas_item_one(GnomeCanvasGroup *group, struct Item *item)
 {
   PangoFontDescription *font_desc;
   GnomeCanvasPoints points;
+  GtkFileFilter *filt_all;
+  GtkFileFilter *filt_gdkimage;
+  GtkWidget *dialog;
+  char *tmp_filename;
   int j;
 
   if (item->type == ITEM_STROKE) {
@@ -512,6 +535,66 @@ void make_canvas_item_one(GnomeCanvasGroup *group, struct Item *item)
           "font-desc", font_desc, "fill-color-rgba", item->brush.color_rgba,
           "text", item->text, NULL);
     update_item_bbox(item);
+  }
+  if (item->type == ITEM_IMAGE) {
+	  #ifdef IMAGE_DEBUG
+	  printf("make_canvas_item_one of image '%s'\n",item->image_path);
+	  #endif
+	  if(item->image==NULL)
+		item->image = gdk_pixbuf_new_from_file(item->image_path, NULL);
+	  tmp_filename=item->image_path;
+	  while(item->image==NULL){
+		  /* open failed */
+		  dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+		    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening image '%s'"), item->image_path);
+		  gtk_dialog_run(GTK_DIALOG(dialog));
+		  gtk_widget_destroy(dialog);
+		  dialog = gtk_file_chooser_dialog_new(_("Specify new image location"), GTK_WINDOW (winMain),
+		     GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		     GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+		#ifdef FILE_DIALOG_SIZE_BUGFIX
+		  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+		#endif
+		     
+		  filt_all = gtk_file_filter_new();
+		  gtk_file_filter_set_name(filt_all, _("All files"));
+		  gtk_file_filter_add_pattern(filt_all, "*");
+		  filt_gdkimage = gtk_file_filter_new();
+		  gtk_file_filter_set_name(filt_gdkimage, _("supported image files"));
+		  gtk_file_filter_add_pixbuf_formats(filt_gdkimage);
+		  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_gdkimage);
+		  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
+
+		  if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
+
+		  if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
+		    gtk_widget_destroy(dialog);
+		    return;
+		  }
+		  tmp_filename=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
+		  item->image = gdk_pixbuf_new_from_file(tmp_filename, NULL);
+		  gtk_widget_destroy(dialog);
+		  ui.saved = FALSE;
+	  }
+	  item->image_path=tmp_filename;
+	  item->image_scaled=gdk_pixbuf_scale_simple(item->image,
+					item->bbox.right-item->bbox.left,
+					item->bbox.bottom-item->bbox.top,
+					GDK_INTERP_BILINEAR);
+	  item->canvas_item = gnome_canvas_item_new(group,
+                             GNOME_TYPE_CANVAS_PIXBUF,
+				"anchor",GTK_ANCHOR_NW,
+				"height-in-pixels",0,
+				"width-in-pixels",0,
+				"x-in-pixels",0,
+				"y-in-pixels",0,
+				"pixbuf",item->image_scaled,
+				"x", item->bbox.left, 
+				"y", item->bbox.top,
+				"height",item->bbox.bottom-item->bbox.top, 
+				"width", item->bbox.right-item->bbox.left,  
+				NULL);
+	  update_item_bbox(item);
   }
 }
 
@@ -860,6 +943,11 @@ void update_tool_buttons(void)
     case TOOL_TEXT:
       gtk_toggle_tool_button_set_active(
         GTK_TOGGLE_TOOL_BUTTON(GET_COMPONENT("buttonText")), TRUE);
+      break;
+    
+    case TOOL_IMAGE:
+      gtk_toggle_tool_button_set_active(
+        GTK_TOGGLE_TOOL_BUTTON(GET_COMPONENT("buttonImage")), TRUE);
       break;
     case TOOL_SELECTREGION:
       gtk_toggle_tool_button_set_active(
@@ -1377,7 +1465,8 @@ void update_page_stuff(void)
   gtk_widget_set_sensitive(GET_COMPONENT("viewHideLayer"), ui.layerno>=0);
 
   gtk_widget_set_sensitive(GET_COMPONENT("editPaste"), ui.cur_layer!=NULL);
-  gtk_widget_set_sensitive(GET_COMPONENT("buttonPaste"), ui.cur_layer!=NULL);
+
+gtk_widget_set_sensitive(GET_COMPONENT("buttonPaste"), ui.cur_layer!=NULL);
 }
 
 void update_toolbar_and_menu(void)
@@ -1716,7 +1805,7 @@ void move_journal_items_by(GList *itemlist, double dx, double dy,
     if (item->type == ITEM_STROKE)
       for (pt=item->path->coords, i=0; i<item->path->num_points; i++, pt+=2)
         { pt[0] += dx; pt[1] += dy; }
-    if (item->type == ITEM_STROKE || item->type == ITEM_TEXT || item->type == ITEM_TEMP_TEXT) {
+    if (item->type == ITEM_STROKE || item->type == ITEM_TEXT || item->type == ITEM_TEMP_TEXT || item->type==ITEM_IMAGE) {
       item->bbox.left += dx;
       item->bbox.right += dx;
       item->bbox.top += dy;
@@ -1798,6 +1887,22 @@ void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y
       item->font_size *= mean_scaling;
       item->bbox.left = item->bbox.left*scaling_x + offset_x;
       item->bbox.top = item->bbox.top*scaling_y + offset_y;
+    }
+    if (item->type == ITEM_IMAGE) {
+      item->bbox.left = item->bbox.left*scaling_x + offset_x;
+      item->bbox.right = item->bbox.right*scaling_x + offset_x;
+      item->bbox.top = item->bbox.top*scaling_y + offset_y;
+      item->bbox.bottom = item->bbox.bottom*scaling_y + offset_y;
+      if (item->bbox.left > item->bbox.right) {
+        temp = item->bbox.left;
+        item->bbox.left = item->bbox.right;
+        item->bbox.right = temp;
+      }
+      if (item->bbox.top > item->bbox.bottom) {
+        temp = item->bbox.top;
+        item->bbox.top = item->bbox.bottom;
+        item->bbox.bottom = temp;
+      }
     }
     // redraw the item
     if (item->canvas_item!=NULL) {

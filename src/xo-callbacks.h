@@ -215,6 +215,10 @@ on_toolsHighlighter_activate           (GtkMenuItem     *menuitem,
 void
 on_toolsText_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+					
+void
+on_toolsImage_activate                  (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
 
 void
 on_toolsSelectRegion_activate          (GtkMenuItem     *menuitem,

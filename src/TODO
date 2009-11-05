@@ -138,8 +138,7 @@ REMAINING THINGS TO DO:
 - copy/paste of an entire page (beware if PDF bg is not compatible!)
 - rewrite printing using GtkPrint + Cairo as GnomePrint replacement
    (keep GnomePrint option for compatibility with GTK+ <2.10)
-- insert images (screen capture or from file or from clipboard), 
-  not as full-page backgrounds (new ITEM type)
+- insert images by screen capture or from clipboard
 
 - convert to/from Jarnal format; to/from MS Journal format???
 - export as SVG, as bitmap (use Cairo for this)

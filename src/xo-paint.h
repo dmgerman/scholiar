@@ -40,3 +40,8 @@ void rescale_text_items(void);
 struct Item *click_is_in_text(struct Layer *layer, double x, double y);
 void refont_text_item(struct Item *item, gchar *font_name, double font_size);
 void process_font_sel(gchar *str);
+
+
+/* image functions */
+
+void insert_image(GdkEvent *event, struct Item *item);

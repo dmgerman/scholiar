@@ -1161,6 +1161,8 @@ void pdf_draw_page(struct Page *pg, GString *str, gboolean *use_hiliter,
         pango_layout_iter_free(iter);
         g_object_unref(layout);
       }
+      else if  (item->type == ITEM_IMAGE) { //TODO add pdf export support for images
+      }
     }
   }
 }
@@ -1476,6 +1478,7 @@ void print_background(cairo_t *cr, struct Page *pg)
 void print_job_render_page(GtkPrintOperation *print, GtkPrintContext *context, gint pageno, gpointer user_data)
 {
   cairo_t *cr;
+  cairo_t *tempcr;
   gdouble width, height, scale;
   struct Page *pg;
   guint old_rgba;
@@ -1487,6 +1490,7 @@ void print_job_render_page(GtkPrintOperation *print, GtkPrintContext *context, g
   double *pt;
   PangoFontDescription *font_desc;
   PangoLayout *layout;
+  cairo_surface_t *surf;
         
   pg = (struct Page *)g_list_nth_data(journal.pages, pageno);
   cr = gtk_print_context_get_cairo_context(context);
@@ -1509,7 +1513,7 @@ void print_job_render_page(GtkPrintOperation *print, GtkPrintContext *context, g
     l = (struct Layer *)layerlist->data;
     for (itemlist = l->items; itemlist!=NULL; itemlist = itemlist->next) {
       item = (struct Item *)itemlist->data;
-      if (item->type == ITEM_STROKE || item->type == ITEM_TEXT) {
+      if (item->type == ITEM_STROKE || item->type == ITEM_TEXT || item->type==ITEM_IMAGE) {
         if (item->brush.color_rgba != old_rgba)
           cairo_set_source_rgba(cr, RGBA_RGB(item->brush.color_rgba),
                                     RGBA_ALPHA(item->brush.color_rgba));
@@ -1547,6 +1551,16 @@ void print_job_render_page(GtkPrintOperation *print, GtkPrintContext *context, g
         cairo_move_to(cr, item->bbox.left, item->bbox.top);
         pango_cairo_show_layout(cr, layout);
         g_object_unref(layout);
+      }
+      if (item->type == ITEM_IMAGE) {
+	double scalex=(double)gdk_pixbuf_get_width(item->image_scaled)/gdk_pixbuf_get_width(item->image);
+	double scaley=(double)gdk_pixbuf_get_height(item->image_scaled)/gdk_pixbuf_get_height(item->image);
+	cairo_scale(cr,scalex,scaley);
+	gdk_cairo_set_source_pixbuf(cr,item->image,item->bbox.left/scalex,item->bbox.top/scaley);
+	cairo_scale(cr,1/scalex,1/scaley);
+	cairo_paint (cr);
+	old_rgba = predef_colors_rgba[COLOR_BLACK]; //this is an ugly fix, I (victor) don't understand cairo enough
+	cairo_set_source_rgb(cr, 0, 0, 0);
       }
     }
   }
