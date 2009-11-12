@@ -36,7 +36,7 @@ create_winMain (void)
   GtkWidget *menuFile_menu;
   GtkWidget *fileNew;
   GtkWidget *fileNewBackground;
-  GtkWidget *image673;
+  GtkWidget *image728;
   GtkWidget *fileOpen;
   GtkWidget *fileSave;
   GtkWidget *fileSaveAs;
@@ -53,7 +53,7 @@ create_winMain (void)
   GtkWidget *mru7;
   GtkWidget *separator22;
   GtkWidget *filePrintOptions;
-  GtkWidget *image674;
+  GtkWidget *image729;
   GtkWidget *filePrint;
   GtkWidget *filePrintPDF;
   GtkWidget *separator2;
@@ -63,6 +63,9 @@ create_winMain (void)
   GtkWidget *editUndo;
   GtkWidget *editRedo;
   GtkWidget *separator3;
+  GtkWidget *find;
+  GtkWidget *image730;
+  GtkWidget *separator26;
   GtkWidget *editCut;
   GtkWidget *editCopy;
   GtkWidget *editPaste;
@@ -81,26 +84,26 @@ create_winMain (void)
   GtkWidget *viewZoomOut;
   GtkWidget *viewNormalSize;
   GtkWidget *viewPageWidth;
-  GtkWidget *image675;
+  GtkWidget *image731;
   GtkWidget *viewSetZoom;
   GtkWidget *separator5;
   GtkWidget *viewFirstPage;
-  GtkWidget *image676;
+  GtkWidget *image732;
   GtkWidget *viewPreviousPage;
-  GtkWidget *image677;
+  GtkWidget *image733;
   GtkWidget *viewNotablePrevPage;
-  GtkWidget *image678;
+  GtkWidget *image734;
   GtkWidget *viewNotableNextPage;
-  GtkWidget *image679;
+  GtkWidget *image735;
   GtkWidget *viewNextPage;
-  GtkWidget *image680;
+  GtkWidget *image736;
   GtkWidget *viewLastPage;
-  GtkWidget *image681;
+  GtkWidget *image737;
   GtkWidget *separator6;
   GtkWidget *viewShowLayer;
-  GtkWidget *image682;
+  GtkWidget *image738;
   GtkWidget *viewHideLayer;
-  GtkWidget *image683;
+  GtkWidget *image739;
   GtkWidget *menuJournal;
   GtkWidget *menuJournal_menu;
   GtkWidget *journalNewPageBefore;
@@ -135,7 +138,7 @@ create_winMain (void)
   GtkWidget *journalApplyAllPages;
   GtkWidget *separator23;
   GtkWidget *journalLoadBackground;
-  GtkWidget *image684;
+  GtkWidget *image740;
   GtkWidget *journalScreenshot;
   GtkWidget *separator19;
   GtkWidget *journalDefaultBackground;
@@ -157,7 +160,7 @@ create_winMain (void)
   GtkWidget *toolsHand;
   GtkWidget *separator16;
   GtkWidget *toolsColor;
-  GtkWidget *image685;
+  GtkWidget *image741;
   GtkWidget *toolsColor_menu;
   GSList *colorBlack_group = NULL;
   GtkWidget *colorBlack;
@@ -200,7 +203,7 @@ create_winMain (void)
   GtkWidget *highlighterMedium;
   GtkWidget *highlighterThick;
   GtkWidget *toolsTextFont;
-  GtkWidget *image686;
+  GtkWidget *image742;
   GtkWidget *separator10;
   GtkWidget *toolsDefaultPen;
   GtkWidget *toolsDefaultEraser;
@@ -337,6 +340,7 @@ create_winMain (void)
   GtkWidget *toolitem20;
   GtkWidget *fontButton;
   GtkWidget *scrolledwindowMain;
+  GtkWidget *findBar;
   GtkWidget *hbox1;
   GtkWidget *labelPage;
   GtkObject *spinPageNo_adj;
@@ -379,9 +383,9 @@ create_winMain (void)
   gtk_widget_show (fileNewBackground);
   gtk_container_add (GTK_CONTAINER (menuFile_menu), fileNewBackground);
 
-  image673 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image673);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (fileNewBackground), image673);
+  image728 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image728);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (fileNewBackground), image728);
 
   fileOpen = gtk_image_menu_item_new_from_stock ("gtk-open", accel_group);
   gtk_widget_show (fileOpen);
@@ -448,9 +452,9 @@ create_winMain (void)
   gtk_widget_show (filePrintOptions);
   gtk_container_add (GTK_CONTAINER (menuFile_menu), filePrintOptions);
 
-  image674 = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image674);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (filePrintOptions), image674);
+  image729 = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image729);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (filePrintOptions), image729);
 
   filePrint = gtk_image_menu_item_new_from_stock ("gtk-print", accel_group);
   gtk_widget_show (filePrint);
@@ -500,6 +504,22 @@ create_winMain (void)
   gtk_widget_show (separator3);
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), separator3);
   gtk_widget_set_sensitive (separator3, FALSE);
+
+  find = gtk_image_menu_item_new_with_mnemonic (_("_Find"));
+  gtk_widget_show (find);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), find);
+  gtk_widget_add_accelerator (find, "activate", accel_group,
+                              GDK_F, (GdkModifierType) GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
+  image730 = gtk_image_new_from_stock ("gtk-find", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image730);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (find), image730);
+
+  separator26 = gtk_separator_menu_item_new ();
+  gtk_widget_show (separator26);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), separator26);
+  gtk_widget_set_sensitive (separator26, FALSE);
 
   editCut = gtk_image_menu_item_new_from_stock ("gtk-cut", accel_group);
   gtk_widget_show (editCut);
@@ -591,9 +611,9 @@ create_winMain (void)
                               GDK_equal, (GdkModifierType) GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image675 = gtk_image_new_from_stock ("gtk-zoom-fit", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image675);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewPageWidth), image675);
+  image731 = gtk_image_new_from_stock ("gtk-zoom-fit", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image731);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewPageWidth), image731);
 
   viewSetZoom = gtk_menu_item_new_with_mnemonic (_("_Set Zoom"));
   gtk_widget_show (viewSetZoom);
@@ -611,9 +631,9 @@ create_winMain (void)
                               GDK_Home, (GdkModifierType) GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image676 = gtk_image_new_from_stock ("gtk-goto-first", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image676);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewFirstPage), image676);
+  image732 = gtk_image_new_from_stock ("gtk-goto-first", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image732);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewFirstPage), image732);
 
   viewPreviousPage = gtk_image_menu_item_new_with_mnemonic (_("_Previous Page"));
   gtk_widget_show (viewPreviousPage);
@@ -622,9 +642,9 @@ create_winMain (void)
                               GDK_Left, (GdkModifierType) GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image677 = gtk_image_new_from_stock ("gtk-go-back", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image677);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewPreviousPage), image677);
+  image733 = gtk_image_new_from_stock ("gtk-go-back", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image733);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewPreviousPage), image733);
 
   viewNotablePrevPage = gtk_image_menu_item_new_with_mnemonic (_("Prev Notab_le Page"));
   gtk_widget_show (viewNotablePrevPage);
@@ -633,9 +653,9 @@ create_winMain (void)
                               GDK_space, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image678 = create_pixmap (winMain, "go-jump-rev.png");
-  gtk_widget_show (image678);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNotablePrevPage), image678);
+  image734 = create_pixmap (winMain, "go-jump-rev.png");
+  gtk_widget_show (image734);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNotablePrevPage), image734);
 
   viewNotableNextPage = gtk_image_menu_item_new_with_mnemonic (_("Next Nota_ble Page"));
   gtk_widget_show (viewNotableNextPage);
@@ -644,9 +664,9 @@ create_winMain (void)
                               GDK_space, (GdkModifierType) GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image679 = gtk_image_new_from_stock ("gtk-jump-to", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image679);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNotableNextPage), image679);
+  image735 = gtk_image_new_from_stock ("gtk-jump-to", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image735);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNotableNextPage), image735);
 
   viewNextPage = gtk_image_menu_item_new_with_mnemonic (_("_Next Page"));
   gtk_widget_show (viewNextPage);
@@ -655,9 +675,9 @@ create_winMain (void)
                               GDK_Right, (GdkModifierType) GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image680 = gtk_image_new_from_stock ("gtk-go-forward", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image680);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNextPage), image680);
+  image736 = gtk_image_new_from_stock ("gtk-go-forward", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image736);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewNextPage), image736);
 
   viewLastPage = gtk_image_menu_item_new_with_mnemonic (_("_Last Page"));
   gtk_widget_show (viewLastPage);
@@ -666,9 +686,9 @@ create_winMain (void)
                               GDK_End, (GdkModifierType) GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image681 = gtk_image_new_from_stock ("gtk-goto-last", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image681);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewLastPage), image681);
+  image737 = gtk_image_new_from_stock ("gtk-goto-last", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image737);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewLastPage), image737);
 
   separator6 = gtk_separator_menu_item_new ();
   gtk_widget_show (separator6);
@@ -679,17 +699,17 @@ create_winMain (void)
   gtk_widget_show (viewShowLayer);
   gtk_container_add (GTK_CONTAINER (menuView_menu), viewShowLayer);
 
-  image682 = gtk_image_new_from_stock ("gtk-add", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image682);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewShowLayer), image682);
+  image738 = gtk_image_new_from_stock ("gtk-add", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image738);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewShowLayer), image738);
 
   viewHideLayer = gtk_image_menu_item_new_with_mnemonic (_("_Hide Layer"));
   gtk_widget_show (viewHideLayer);
   gtk_container_add (GTK_CONTAINER (menuView_menu), viewHideLayer);
 
-  image683 = gtk_image_new_from_stock ("gtk-remove", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image683);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewHideLayer), image683);
+  image739 = gtk_image_new_from_stock ("gtk-remove", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image739);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (viewHideLayer), image739);
 
   menuJournal = gtk_menu_item_new_with_mnemonic (_("_Journal"));
   gtk_widget_show (menuJournal);
@@ -841,9 +861,9 @@ create_winMain (void)
   gtk_widget_show (journalLoadBackground);
   gtk_container_add (GTK_CONTAINER (menuJournal_menu), journalLoadBackground);
 
-  image684 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image684);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (journalLoadBackground), image684);
+  image740 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image740);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (journalLoadBackground), image740);
 
   journalScreenshot = gtk_menu_item_new_with_mnemonic (_("Background Screens_hot"));
   gtk_widget_show (journalScreenshot);
@@ -974,9 +994,9 @@ create_winMain (void)
   gtk_widget_show (toolsColor);
   gtk_container_add (GTK_CONTAINER (menuTools_menu), toolsColor);
 
-  image685 = gtk_image_new_from_stock ("gtk-select-color", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image685);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (toolsColor), image685);
+  image741 = gtk_image_new_from_stock ("gtk-select-color", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image741);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (toolsColor), image741);
 
   toolsColor_menu = gtk_menu_new ();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (toolsColor), toolsColor_menu);
@@ -1178,9 +1198,9 @@ create_winMain (void)
                               GDK_F, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image686 = gtk_image_new_from_stock ("gtk-select-font", GTK_ICON_SIZE_MENU);
-  gtk_widget_show (image686);
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (toolsTextFont), image686);
+  image742 = gtk_image_new_from_stock ("gtk-select-font", GTK_ICON_SIZE_MENU);
+  gtk_widget_show (image742);
+  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (toolsTextFont), image742);
 
   separator10 = gtk_separator_menu_item_new ();
   gtk_widget_show (separator10);
@@ -1952,6 +1972,11 @@ create_winMain (void)
   gtk_widget_show (scrolledwindowMain);
   gtk_box_pack_start (GTK_BOX (vboxMain), scrolledwindowMain, TRUE, TRUE, 0);
 
+  findBar = egg_find_bar_new1 ("findBar", "", "", 0, 0);
+  gtk_box_pack_start (GTK_BOX (vboxMain), findBar, FALSE, TRUE, 0);
+  GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_FOCUS);
+  GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_DEFAULT);
+
   hbox1 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox1);
   gtk_box_pack_start (GTK_BOX (vboxMain), hbox1, FALSE, FALSE, 0);
@@ -2048,6 +2073,9 @@ create_winMain (void)
                     NULL);
   g_signal_connect ((gpointer) editRedo, "activate",
                     G_CALLBACK (on_editRedo_activate),
+                    NULL);
+  g_signal_connect ((gpointer) find, "activate",
+                    G_CALLBACK (on_editFind_activate),
                     NULL);
   g_signal_connect ((gpointer) editCut, "activate",
                     G_CALLBACK (on_editCut_activate),
@@ -2568,7 +2596,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, menuFile_menu, "menuFile_menu");
   GLADE_HOOKUP_OBJECT (winMain, fileNew, "fileNew");
   GLADE_HOOKUP_OBJECT (winMain, fileNewBackground, "fileNewBackground");
-  GLADE_HOOKUP_OBJECT (winMain, image673, "image673");
+  GLADE_HOOKUP_OBJECT (winMain, image728, "image728");
   GLADE_HOOKUP_OBJECT (winMain, fileOpen, "fileOpen");
   GLADE_HOOKUP_OBJECT (winMain, fileSave, "fileSave");
   GLADE_HOOKUP_OBJECT (winMain, fileSaveAs, "fileSaveAs");
@@ -2585,7 +2613,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, mru7, "mru7");
   GLADE_HOOKUP_OBJECT (winMain, separator22, "separator22");
   GLADE_HOOKUP_OBJECT (winMain, filePrintOptions, "filePrintOptions");
-  GLADE_HOOKUP_OBJECT (winMain, image674, "image674");
+  GLADE_HOOKUP_OBJECT (winMain, image729, "image729");
   GLADE_HOOKUP_OBJECT (winMain, filePrint, "filePrint");
   GLADE_HOOKUP_OBJECT (winMain, filePrintPDF, "filePrintPDF");
   GLADE_HOOKUP_OBJECT (winMain, separator2, "separator2");
@@ -2595,6 +2623,9 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, editUndo, "editUndo");
   GLADE_HOOKUP_OBJECT (winMain, editRedo, "editRedo");
   GLADE_HOOKUP_OBJECT (winMain, separator3, "separator3");
+  GLADE_HOOKUP_OBJECT (winMain, find, "find");
+  GLADE_HOOKUP_OBJECT (winMain, image730, "image730");
+  GLADE_HOOKUP_OBJECT (winMain, separator26, "separator26");
   GLADE_HOOKUP_OBJECT (winMain, editCut, "editCut");
   GLADE_HOOKUP_OBJECT (winMain, editCopy, "editCopy");
   GLADE_HOOKUP_OBJECT (winMain, editPaste, "editPaste");
@@ -2612,26 +2643,26 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, viewZoomOut, "viewZoomOut");
   GLADE_HOOKUP_OBJECT (winMain, viewNormalSize, "viewNormalSize");
   GLADE_HOOKUP_OBJECT (winMain, viewPageWidth, "viewPageWidth");
-  GLADE_HOOKUP_OBJECT (winMain, image675, "image675");
+  GLADE_HOOKUP_OBJECT (winMain, image731, "image731");
   GLADE_HOOKUP_OBJECT (winMain, viewSetZoom, "viewSetZoom");
   GLADE_HOOKUP_OBJECT (winMain, separator5, "separator5");
   GLADE_HOOKUP_OBJECT (winMain, viewFirstPage, "viewFirstPage");
-  GLADE_HOOKUP_OBJECT (winMain, image676, "image676");
+  GLADE_HOOKUP_OBJECT (winMain, image732, "image732");
   GLADE_HOOKUP_OBJECT (winMain, viewPreviousPage, "viewPreviousPage");
-  GLADE_HOOKUP_OBJECT (winMain, image677, "image677");
+  GLADE_HOOKUP_OBJECT (winMain, image733, "image733");
   GLADE_HOOKUP_OBJECT (winMain, viewNotablePrevPage, "viewNotablePrevPage");
-  GLADE_HOOKUP_OBJECT (winMain, image678, "image678");
+  GLADE_HOOKUP_OBJECT (winMain, image734, "image734");
   GLADE_HOOKUP_OBJECT (winMain, viewNotableNextPage, "viewNotableNextPage");
-  GLADE_HOOKUP_OBJECT (winMain, image679, "image679");
+  GLADE_HOOKUP_OBJECT (winMain, image735, "image735");
   GLADE_HOOKUP_OBJECT (winMain, viewNextPage, "viewNextPage");
-  GLADE_HOOKUP_OBJECT (winMain, image680, "image680");
+  GLADE_HOOKUP_OBJECT (winMain, image736, "image736");
   GLADE_HOOKUP_OBJECT (winMain, viewLastPage, "viewLastPage");
-  GLADE_HOOKUP_OBJECT (winMain, image681, "image681");
+  GLADE_HOOKUP_OBJECT (winMain, image737, "image737");
   GLADE_HOOKUP_OBJECT (winMain, separator6, "separator6");
   GLADE_HOOKUP_OBJECT (winMain, viewShowLayer, "viewShowLayer");
-  GLADE_HOOKUP_OBJECT (winMain, image682, "image682");
+  GLADE_HOOKUP_OBJECT (winMain, image738, "image738");
   GLADE_HOOKUP_OBJECT (winMain, viewHideLayer, "viewHideLayer");
-  GLADE_HOOKUP_OBJECT (winMain, image683, "image683");
+  GLADE_HOOKUP_OBJECT (winMain, image739, "image739");
   GLADE_HOOKUP_OBJECT (winMain, menuJournal, "menuJournal");
   GLADE_HOOKUP_OBJECT (winMain, menuJournal_menu, "menuJournal_menu");
   GLADE_HOOKUP_OBJECT (winMain, journalNewPageBefore, "journalNewPageBefore");
@@ -2664,7 +2695,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, journalApplyAllPages, "journalApplyAllPages");
   GLADE_HOOKUP_OBJECT (winMain, separator23, "separator23");
   GLADE_HOOKUP_OBJECT (winMain, journalLoadBackground, "journalLoadBackground");
-  GLADE_HOOKUP_OBJECT (winMain, image684, "image684");
+  GLADE_HOOKUP_OBJECT (winMain, image740, "image740");
   GLADE_HOOKUP_OBJECT (winMain, journalScreenshot, "journalScreenshot");
   GLADE_HOOKUP_OBJECT (winMain, separator19, "separator19");
   GLADE_HOOKUP_OBJECT (winMain, journalDefaultBackground, "journalDefaultBackground");
@@ -2685,7 +2716,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, toolsHand, "toolsHand");
   GLADE_HOOKUP_OBJECT (winMain, separator16, "separator16");
   GLADE_HOOKUP_OBJECT (winMain, toolsColor, "toolsColor");
-  GLADE_HOOKUP_OBJECT (winMain, image685, "image685");
+  GLADE_HOOKUP_OBJECT (winMain, image741, "image741");
   GLADE_HOOKUP_OBJECT (winMain, toolsColor_menu, "toolsColor_menu");
   GLADE_HOOKUP_OBJECT (winMain, colorBlack, "colorBlack");
   GLADE_HOOKUP_OBJECT (winMain, colorBlue, "colorBlue");
@@ -2723,7 +2754,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, highlighterMedium, "highlighterMedium");
   GLADE_HOOKUP_OBJECT (winMain, highlighterThick, "highlighterThick");
   GLADE_HOOKUP_OBJECT (winMain, toolsTextFont, "toolsTextFont");
-  GLADE_HOOKUP_OBJECT (winMain, image686, "image686");
+  GLADE_HOOKUP_OBJECT (winMain, image742, "image742");
   GLADE_HOOKUP_OBJECT (winMain, separator10, "separator10");
   GLADE_HOOKUP_OBJECT (winMain, toolsDefaultPen, "toolsDefaultPen");
   GLADE_HOOKUP_OBJECT (winMain, toolsDefaultEraser, "toolsDefaultEraser");
@@ -2851,6 +2882,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, toolitem20, "toolitem20");
   GLADE_HOOKUP_OBJECT (winMain, fontButton, "fontButton");
   GLADE_HOOKUP_OBJECT (winMain, scrolledwindowMain, "scrolledwindowMain");
+  GLADE_HOOKUP_OBJECT (winMain, findBar, "findBar");
   GLADE_HOOKUP_OBJECT (winMain, hbox1, "hbox1");
   GLADE_HOOKUP_OBJECT (winMain, labelPage, "labelPage");
   GLADE_HOOKUP_OBJECT (winMain, spinPageNo, "spinPageNo");

@@ -19,6 +19,7 @@
 #include "xo-paint.h"
 #include "xo-print.h"
 #include "xo-shapes.h"
+#include "eggfindbar.h"
 
 void
 on_fileNew_activate                    (GtkMenuItem     *menuitem,
@@ -3697,4 +3698,30 @@ on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
   ui.button_switch_mapping = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
+
+
+void
+on_editFind_activate                   (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  
+  // Show the find widget...
+  gtk_widget_show(w);
+  findBar = EGG_FIND_BAR(w);
+  gtk_widget_grab_focus (w);
+  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
+}
+
+
+
+
+GtkWidget*
+egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
+                gint int1, gint int2)
+{
+  // glade wants to have a function with 4 parms... which we don't need
+  return egg_find_bar_new();
+}
 

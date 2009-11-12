@@ -18,6 +18,7 @@ xournal_SOURCES = \
 	xo-support.c xo-support.h \
 	xo-interface.c xo-interface.h \
 	xo-callbacks.c xo-callbacks.h \
+	eggfindbar.c 	eggfindbar.h \
 	xo-shapes.c xo-shapes.h
 
 xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS)

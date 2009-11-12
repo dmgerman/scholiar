@@ -648,3 +648,11 @@ on_viewNotablePrevPage_activate        (GtkMenuItem     *menuitem,
 void
 on_viewNotableNextPage_activate        (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+
+void
+on_editFind_activate                   (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+GtkWidget*
+egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
+                gint int1, gint int2);
