@@ -2581,6 +2581,12 @@ create_winMain (void)
   g_signal_connect ((gpointer) fontButton, "font_set",
                     G_CALLBACK (on_fontButton_font_set),
                     NULL);
+  g_signal_connect ((gpointer) findBar, "next",
+                    G_CALLBACK (on_find_bar_next),
+                    NULL);
+  g_signal_connect ((gpointer) findBar, "previous",
+                    G_CALLBACK (on_find_bar_prev),
+                    NULL);
   g_signal_connect ((gpointer) spinPageNo, "value_changed",
                     G_CALLBACK (on_spinPageNo_value_changed),
                     NULL);

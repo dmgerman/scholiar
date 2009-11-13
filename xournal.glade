@@ -3200,6 +3200,8 @@
 	  <property name="int1">0</property>
 	  <property name="int2">0</property>
 	  <property name="last_modification_time">Thu, 12 Nov 2009 22:52:17 GMT</property>
+	  <signal name="next" handler="on_find_bar_next" last_modification_time="Fri, 13 Nov 2009 01:48:53 GMT"/>
+	  <signal name="previous" handler="on_find_bar_prev" last_modification_time="Fri, 13 Nov 2009 06:41:59 GMT"/>
 	</widget>
 	<packing>
 	  <property name="padding">0</property>

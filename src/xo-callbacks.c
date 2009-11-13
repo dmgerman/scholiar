@@ -3725,3 +3725,177 @@ egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
   return egg_find_bar_new();
 }
 
+gboolean
+on_find_bar_next                       (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data)
+{
+
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  const char *st;
+  char temp[100];
+  int iCurrentPage;
+
+  gtk_widget_show(w);
+  findBar = EGG_FIND_BAR(w);
+  st = egg_find_bar_get_search_string(findBar);
+  if (strcmp(st, "") != 0) {
+    printf("Searching for %s\n", st);
+    GList *list;
+    /*
+      test finding pages
+    */
+    int i, nPages;
+
+    int beforePage  = -1;
+    int nextPage = -1;
+    int matches =0 ;
+    PopplerPage *pdfPage;
+
+    iCurrentPage = ui.pageno;
+    if (bgpdf.document != NULL) {
+      nPages = poppler_document_get_n_pages(bgpdf.document);
+      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage);
+      for (i=0; i< nPages; i++) {
+        // do not process the current page
+        if (i == iCurrentPage)
+          continue;
+        pdfPage = poppler_document_get_page(bgpdf.document, i);
+        if (pdfPage == NULL) {
+          printf("Could not retrieve page %d\n", i);
+          continue;
+        }
+        list = poppler_page_find_text(pdfPage, st);
+        if (list != NULL) {
+          matches = g_list_length (list);
+          printf("Page %d (out of %d), has %d matches\n", i+1, nPages, g_list_length (list));
+          // Free list
+          g_list_foreach (list, (GFunc) g_free, NULL);
+          g_list_free(list);
+          if (i < iCurrentPage) {
+            beforePage = i; 
+          } else {
+            nextPage = i;
+            break;
+          }
+        } else {
+          printf("Page %d has no match\n", i+1);
+        }
+      }
+      sprintf(temp, "%d matches", matches);
+      if (nextPage != -1) {
+        // we have a next page.
+        do_switch_page(nextPage, TRUE, FALSE);
+        egg_find_bar_set_status_text(findBar, temp);
+      } else if (beforePage != -1) {
+        // we have a previous page.
+        do_switch_page(beforePage, TRUE, FALSE);
+        egg_find_bar_set_status_text(findBar, temp);
+      } else {
+        // Not present
+        egg_find_bar_set_status_text(findBar, "Not found");
+      }
+    } else {
+      printf("Document has not pdf backgroun\n");
+    }
+
+  }
+  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
+
+  return TRUE;
+}
+
+
+
+
+
+gboolean
+on_find_bar_prev                       (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data)
+{
+
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  const char *st;
+  char temp[100];
+  int iCurrentPage;
+
+  gtk_widget_show(w);
+  findBar = EGG_FIND_BAR(w);
+  st = egg_find_bar_get_search_string(findBar);
+  if (strcmp(st, "") != 0) {
+    printf("Searching for %s\n", st);
+    GList *list;
+    /*
+      test finding pages
+    */
+    int i, nPages;
+
+    int prevPage = -1;
+    int matches = 0;
+    PopplerPage *pdfPage;
+
+    iCurrentPage = ui.pageno;
+    int searchedPage;
+    if (bgpdf.document != NULL) {
+      nPages = poppler_document_get_n_pages(bgpdf.document);
+      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage);
+      // moving backwards... so let us count backwards... now.. not all pages in the
+      
+      // searchPage points to the page we are currently searching at.
+
+      searchedPage = iCurrentPage;
+      for (i=0; i< nPages; i++) {
+        // we move one page back
+        searchedPage --;
+        // Roll to end of document if we hit end of doc
+        if (searchedPage < 0) {
+          searchedPage = nPages-1;
+        }
+        // do not process the current page
+        if (searchedPage == iCurrentPage)
+          continue;
+        pdfPage = poppler_document_get_page(bgpdf.document, searchedPage);
+        if (pdfPage == NULL) {
+          printf("Could not retrieve page %d\n", searchedPage);
+          continue;
+        }
+        list = poppler_page_find_text(pdfPage, st);
+        if (list != NULL) {
+          matches = g_list_length (list);
+          printf("Page %d (out of %d), has %d matches\n", iCurrentPage+1, nPages, g_list_length (list));
+          // Free list, we do not currently process it.
+          g_list_foreach (list, (GFunc) g_free, NULL);
+          g_list_free(list);
+          // we found something , so we stop
+          prevPage = searchedPage;
+          continue;
+        } else {
+          printf("Page %d has no match\n", i);
+        }
+      }
+      sprintf(temp, "%d matches", matches);
+      if (prevPage != -1) {
+        // we have a next page.
+        do_switch_page(prevPage, TRUE, FALSE);
+        egg_find_bar_set_status_text(findBar, temp);
+      } else {
+        // Not present
+        egg_find_bar_set_status_text(findBar, "Not found");
+      }
+    } else {
+      printf("Document has not pdf backgroun\n");
+    }
+
+  }
+  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
+
+  return TRUE;
+}
+
+
+
+
+

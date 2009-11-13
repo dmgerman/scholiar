@@ -2299,3 +2299,71 @@ void install_focus_hooks(GtkWidget *w, gpointer data)
   if(GTK_IS_CONTAINER(w))
     gtk_container_forall(GTK_CONTAINER(w), install_focus_hooks, data);
 }
+
+#ifdef adfasdf
+/* Code cloned from needs to be implemented but my gtk knowledge is to little */
+
+static void
+draw_rubberband (GtkWidget *widget, GdkWindow *window,
+		 const GdkRectangle *rect, guchar alpha)
+{
+	GdkGC *gc;
+	GdkPixbuf *pixbuf;
+	GdkColor *fill_color_gdk;
+	guint fill_color;
+
+	fill_color_gdk = gdk_color_copy (&GTK_WIDGET (widget)->style->base[GTK_STATE_SELECTED]);
+	fill_color = ev_gdk_color_to_rgb (fill_color_gdk) << 8 | alpha;
+
+	pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8,
+				 rect->width, rect->height);
+	gdk_pixbuf_fill (pixbuf, fill_color);
+
+	gdk_draw_pixbuf (window, NULL, pixbuf,
+			 0, 0,
+			 rect->x /*- EV_VIEW (widget)->scroll_x*/, 
+                         rect->y /*- EV_VIEW (widget)->scroll_y*/,
+			 rect->width, rect->height,
+			 GDK_RGB_DITHER_NONE,
+			 0, 0);
+
+	g_object_unref (pixbuf);
+
+	gc = gdk_gc_new (window);
+	gdk_gc_set_rgb_fg_color (gc, fill_color_gdk);
+	gdk_draw_rectangle (window, gc, FALSE,
+			    rect->x /* Should take into account scroll - EV_VIEW (widget)->scroll_x*/,
+                            rect->y /* scroll? EV_VIEW (widget)->scroll_y */,
+			    rect->width - 1,
+			    rect->height - 1);
+	g_object_unref (gc);
+
+	gdk_color_free (fill_color_gdk);
+}
+
+void
+highlight_find_results (GtkWidget *widget, int page)
+{
+	gint i, n_results = 0;
+
+	n_results = ev_view_find_get_n_results (view, page);
+
+	for (i = 0; i < n_results; i++) {
+		EvRectangle *rectangle;
+		GdkRectangle view_rectangle;
+		guchar alpha;
+
+		if (i == view->find_result && page == view->current_page) {
+			alpha = 0x90;
+		} else {
+			alpha = 0x20;
+		}
+
+		rectangle = ev_view_find_get_result (view, page, i);
+		doc_rect_to_view_rect (view, page, rectangle, &view_rectangle);
+		draw_rubberband (GTK_WIDGET (view), view->layout.bin_window,
+				 &view_rectangle, alpha);
+        }
+}
+
+#endif 

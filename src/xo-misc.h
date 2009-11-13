@@ -117,3 +117,10 @@ void install_focus_hooks(GtkWidget *w, gpointer data);
 #define RULING_SPACING 24.0
 #define RULING_BOTTOMMARGIN RULING_SPACING
 #define RULING_GRAPHSPACING 14.17
+
+
+static void       draw_rubberband                            (GtkWidget          *widget,
+							      GdkWindow          *window,
+							      const GdkRectangle *rect,
+							      guchar              alpha);
+
