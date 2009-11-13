@@ -656,3 +656,8 @@ on_editFind_activate                   (GtkMenuItem     *menuitem,
 GtkWidget*
 egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
                 gint int1, gint int2);
+
+gboolean
+on_find_bar_next                       (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data);
