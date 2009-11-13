@@ -2243,6 +2243,16 @@ void unset_flags(GtkWidget *w, gpointer flag)
     gtk_container_forall(GTK_CONTAINER(w), unset_flags, flag);
 }
 
+/* and recursively unset widget flags */
+
+void set_flags(GtkWidget *w, gpointer flag)
+{
+  GTK_WIDGET_SET_FLAGS(w, (GtkWidgetFlags)flag);
+  if(GTK_IS_CONTAINER(w))
+    gtk_container_forall(GTK_CONTAINER(w), set_flags, flag);
+}
+
+
 /* reset focus when a key or button press event reaches someone, or when the
    page-number spin button should relinquish control... */
 
@@ -2252,19 +2262,27 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     /* the event won't be processed since the hbox1 doesn't know what to do with it,
        so we might as well kill it and avoid confusing ourselves when it gets
        propagated further ... */
+  printf("Here I am 1\n");
     return TRUE;
   }
   if (w == GET_COMPONENT("spinPageNo")) {
     /* we let the spin button take care of itself, and don't steal its focus,
        unless the user presses Esc or Tab (in those cases we intervene) */
+  printf("Here I am 2\n");
     if (ev->type != GDK_KEY_PRESS) return FALSE;
     if (ev->key.keyval == GDK_Escape) 
        gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), ui.pageno+1); // abort
     else if (ev->key.keyval != GDK_Tab && ev->key.keyval != GDK_ISO_Left_Tab)
        return FALSE; // let the spin button process it
   }
-
+  if (gtk_widget_is_ancestor(w, GET_COMPONENT("findBar"))) {
+    // are we inside the findbar... then do not still focus
+    printf("Inside the findbar\n");
+    return FALSE;
+  }
   // otherwise, we want to make sure the canvas or text item gets focus back...
+  printf("Stealing focus\n");
+
   reset_focus();  
   return FALSE;
 }
