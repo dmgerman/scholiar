@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xournal 0.4.2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-02 16:42-0700\n"
+"POT-Creation-Date: 2009-11-12 23:08-0800\n"
 "PO-Revision-Date: 2009-05-09 21:36+0200\n"
 "Last-Translator: David Planella <david.planella@gmail.com>\n"
 "Language-Team: Catalan\n"
@@ -23,725 +23,760 @@ msgid ""
 "Usage: %s [filename.xoj]\n"
 msgstr ""
 
-#: src/main.c:291 src/xo-callbacks.c:105 src/xo-callbacks.c:156
-#: src/xo-callbacks.c:3126
+#: src/main.c:296 src/xo-callbacks.c:106 src/xo-callbacks.c:157
+#: src/xo-callbacks.c:3261
 #, c-format
 msgid "Error opening file '%s'"
 msgstr "S'ha produït un error en obrir el fitxer «%s»"
 
-#: src/xo-interface.c:350 src/xo-interface.c:2951 src/xo-misc.c:1405
+#: src/xo-interface.c:361 src/xo-interface.c:3053 src/xo-misc.c:1494
 msgid "Xournal"
 msgstr "Xournal"
 
-#: src/xo-interface.c:360
+#: src/xo-interface.c:371
 msgid "_File"
 msgstr "_Fitxer"
 
-#: src/xo-interface.c:371
+#: src/xo-interface.c:382
 msgid "Annotate PD_F"
 msgstr "Fes notes a un fitxer PD_F"
 
-#: src/xo-interface.c:396
+#: src/xo-interface.c:407
 msgid "Recent Doc_uments"
 msgstr "Doc_uments recents"
 
-#: src/xo-interface.c:403
+#: src/xo-interface.c:414
 msgid "0"
 msgstr "0"
 
-#: src/xo-interface.c:407
+#: src/xo-interface.c:418
 msgid "1"
 msgstr "1"
 
-#: src/xo-interface.c:411
+#: src/xo-interface.c:422
 msgid "2"
 msgstr "2"
 
-#: src/xo-interface.c:415
+#: src/xo-interface.c:426
 msgid "3"
 msgstr "3"
 
-#: src/xo-interface.c:419
+#: src/xo-interface.c:430
 msgid "4"
 msgstr "4"
 
-#: src/xo-interface.c:423
+#: src/xo-interface.c:434
 msgid "5"
 msgstr "5"
 
-#: src/xo-interface.c:427
+#: src/xo-interface.c:438
 msgid "6"
 msgstr "6"
 
-#: src/xo-interface.c:431
+#: src/xo-interface.c:442
 msgid "7"
 msgstr "7"
 
-#: src/xo-interface.c:440
+#: src/xo-interface.c:451
 msgid "Print Options"
 msgstr "Opcions d'impressió"
 
-#: src/xo-interface.c:455
+#: src/xo-interface.c:466
 msgid "_Export to PDF"
 msgstr "_Exporta a PDF"
 
-#: src/xo-interface.c:471
+#: src/xo-interface.c:482
 msgid "_Edit"
 msgstr "_Edita"
 
-#: src/xo-interface.c:516
+#: src/xo-interface.c:508
+#, fuzzy
+msgid "_Find"
+msgstr "_pautat"
+
+#: src/xo-interface.c:543
 msgid "_View"
 msgstr "_Visualitza"
 
-#: src/xo-interface.c:523
+#: src/xo-interface.c:550
 msgid "_Continuous"
 msgstr "_Continu"
 
-#: src/xo-interface.c:529
+#: src/xo-interface.c:556
 msgid "_One Page"
 msgstr "Pàgina ú_nica"
 
-#: src/xo-interface.c:540
+#: src/xo-interface.c:567
 msgid "Full Screen"
 msgstr "Pantalla completa"
 
-#: src/xo-interface.c:552
+#: src/xo-interface.c:579
 msgid "_Zoom"
 msgstr "_Ampliació"
 
-#: src/xo-interface.c:580
+#: src/xo-interface.c:607
 msgid "Page _Width"
 msgstr "Amplada de la _pàgina"
 
-#: src/xo-interface.c:591
+#: src/xo-interface.c:618
 msgid "_Set Zoom"
 msgstr "_Defineix l'ampliació"
 
-#: src/xo-interface.c:600
+#: src/xo-interface.c:627
 msgid "_First Page"
 msgstr "Pàgina _inicial"
 
-#: src/xo-interface.c:611
+#: src/xo-interface.c:638
 msgid "_Previous Page"
 msgstr "Pàgina an_terior"
 
-#: src/xo-interface.c:622
+#: src/xo-interface.c:649
+#, fuzzy
+msgid "Prev Notab_le Page"
+msgstr "Pàgina anterior"
+
+#: src/xo-interface.c:660
+#, fuzzy
+msgid "Next Nota_ble Page"
+msgstr "Pàgina següent"
+
+#: src/xo-interface.c:671
 msgid "_Next Page"
 msgstr "Pàgina _següent"
 
-#: src/xo-interface.c:633
+#: src/xo-interface.c:682
 msgid "_Last Page"
 msgstr "Pàgina _final"
 
-#: src/xo-interface.c:649
+#: src/xo-interface.c:698
 msgid "_Show Layer"
 msgstr "_Mostra la capa"
 
-#: src/xo-interface.c:657
+#: src/xo-interface.c:706
 msgid "_Hide Layer"
 msgstr "_Oculta la capa"
 
-#: src/xo-interface.c:665
+#: src/xo-interface.c:714
 msgid "_Journal"
 msgstr "_Diari"
 
-#: src/xo-interface.c:672
+#: src/xo-interface.c:721
 msgid "New Page _Before"
 msgstr "Pàgina nova a_bans"
 
-#: src/xo-interface.c:676
+#: src/xo-interface.c:725
 msgid "New Page _After"
 msgstr "Pàgina nova _després"
 
-#: src/xo-interface.c:680
+#: src/xo-interface.c:729
 msgid "New Page At _End"
 msgstr "Pàgina nova al _final"
 
-#: src/xo-interface.c:684
+#: src/xo-interface.c:733
 msgid "_Delete Page"
 msgstr "_Suprimeix la pàgina"
 
-#: src/xo-interface.c:693
+#: src/xo-interface.c:742
 msgid "_New Layer"
 msgstr "_Capa nova"
 
-#: src/xo-interface.c:697
+#: src/xo-interface.c:746
 msgid "Delete La_yer"
 msgstr "Suprimeix la ca_pa"
 
-#: src/xo-interface.c:701
+#: src/xo-interface.c:750
 msgid "_Flatten"
 msgstr "A_plana"
 
-#: src/xo-interface.c:710
+#: src/xo-interface.c:759
 msgid "Paper Si_ze"
 msgstr "Mida del _paper"
 
-#: src/xo-interface.c:714
+#: src/xo-interface.c:763
 msgid "Paper _Color"
 msgstr "_Color del paper"
 
-#: src/xo-interface.c:721
+#: src/xo-interface.c:770
 msgid "_white paper"
 msgstr "paper _blanc"
 
-#: src/xo-interface.c:727
+#: src/xo-interface.c:776
 msgid "_yellow paper"
 msgstr "paper _groc"
 
-#: src/xo-interface.c:733
+#: src/xo-interface.c:782
 msgid "_pink paper"
 msgstr "paper _rosa"
 
-#: src/xo-interface.c:739
+#: src/xo-interface.c:788
 msgid "_orange paper"
 msgstr "paper _taronja"
 
-#: src/xo-interface.c:745
+#: src/xo-interface.c:794
 msgid "_blue paper"
 msgstr "paper _blau"
 
-#: src/xo-interface.c:751
+#: src/xo-interface.c:800
 msgid "_green paper"
 msgstr "paper _verd"
 
-#: src/xo-interface.c:757 src/xo-interface.c:1025
+#: src/xo-interface.c:806 src/xo-interface.c:1075
 msgid "other..."
 msgstr "un altre..."
 
-#: src/xo-interface.c:761 src/xo-interface.c:797 src/xo-interface.c:1029
-#: src/xo-interface.c:1270 src/xo-interface.c:1346
+#: src/xo-interface.c:810 src/xo-interface.c:846 src/xo-interface.c:1079
+#: src/xo-interface.c:1321 src/xo-interface.c:1398
 msgid "NA"
 msgstr ""
 
-#: src/xo-interface.c:766
+#: src/xo-interface.c:815
 msgid "Paper _Style"
 msgstr "E_stil del paper"
 
-#: src/xo-interface.c:773
+#: src/xo-interface.c:822
 msgid "_plain"
 msgstr "_llis"
 
-#: src/xo-interface.c:779
+#: src/xo-interface.c:828
 msgid "_lined"
 msgstr "_pautat"
 
-#: src/xo-interface.c:785
+#: src/xo-interface.c:834
 msgid "_ruled"
 msgstr "_reglat"
 
-#: src/xo-interface.c:791
+#: src/xo-interface.c:840
 msgid "_graph"
 msgstr "_quadriculat"
 
-#: src/xo-interface.c:802
+#: src/xo-interface.c:851
 msgid "Apply _To All Pages"
 msgstr "Apli_ca a totes les pàgines"
 
-#: src/xo-interface.c:811
+#: src/xo-interface.c:860
 msgid "_Load Background"
 msgstr "_Carrega un fons"
 
-#: src/xo-interface.c:819
+#: src/xo-interface.c:868
 msgid "Background Screens_hot"
 msgstr "Ca_ptura de pantalla del fons"
 
-#: src/xo-interface.c:828
+#: src/xo-interface.c:877
 msgid "Default _Paper"
 msgstr "Paper p_redeterminat"
 
-#: src/xo-interface.c:832
+#: src/xo-interface.c:881
 msgid "Set As De_fault"
 msgstr "Defineix com a _predeterminat"
 
-#: src/xo-interface.c:836
+#: src/xo-interface.c:885
 msgid "_Tools"
 msgstr "Ei_nes"
 
-#: src/xo-interface.c:843 src/xo-interface.c:1206 src/xo-interface.c:1282
+#: src/xo-interface.c:892 src/xo-interface.c:1256 src/xo-interface.c:1333
 msgid "_Pen"
 msgstr "_Llapis"
 
-#: src/xo-interface.c:852 src/xo-interface.c:1212 src/xo-interface.c:1288
+#: src/xo-interface.c:901 src/xo-interface.c:1262 src/xo-interface.c:1339
 msgid "_Eraser"
 msgstr "_Esborrador"
 
-#: src/xo-interface.c:861 src/xo-interface.c:1218 src/xo-interface.c:1294
+#: src/xo-interface.c:910 src/xo-interface.c:1268 src/xo-interface.c:1345
 msgid "_Highlighter"
 msgstr "_Marcador fluorescent"
 
-#: src/xo-interface.c:870 src/xo-interface.c:1224 src/xo-interface.c:1300
+#: src/xo-interface.c:919 src/xo-interface.c:1274 src/xo-interface.c:1351
 msgid "_Text"
 msgstr "_Text"
 
-#: src/xo-interface.c:884
+#: src/xo-interface.c:933
 msgid "_Shape Recognizer"
 msgstr "_Reconeixedor de formes"
 
-#: src/xo-interface.c:891
+#: src/xo-interface.c:940
 msgid "Ru_ler"
 msgstr "Reg_le"
 
-#: src/xo-interface.c:903 src/xo-interface.c:1230 src/xo-interface.c:1306
+#: src/xo-interface.c:952 src/xo-interface.c:1280 src/xo-interface.c:1357
 msgid "Select Re_gion"
 msgstr "Selecciona una re_gió"
 
-#: src/xo-interface.c:912 src/xo-interface.c:1236 src/xo-interface.c:1312
+#: src/xo-interface.c:961 src/xo-interface.c:1286 src/xo-interface.c:1363
 msgid "Select _Rectangle"
 msgstr "Selecciona un _rectangle"
 
-#: src/xo-interface.c:921 src/xo-interface.c:1242 src/xo-interface.c:1318
+#: src/xo-interface.c:970 src/xo-interface.c:1292 src/xo-interface.c:1369
 msgid "_Vertical Space"
 msgstr "Espai _vertical"
 
-#: src/xo-interface.c:930 src/xo-interface.c:1248 src/xo-interface.c:1324
+#: src/xo-interface.c:979 src/xo-interface.c:1298 src/xo-interface.c:1375
 msgid "H_and Tool"
 msgstr "_Eina de mà"
 
-#: src/xo-interface.c:943
+#: src/xo-interface.c:993
 msgid "_Color"
 msgstr "_Color"
 
-#: src/xo-interface.c:954
+#: src/xo-interface.c:1004
 msgid "blac_k"
 msgstr "_negre"
 
-#: src/xo-interface.c:960
+#: src/xo-interface.c:1010
 msgid "_blue"
 msgstr "_blau"
 
-#: src/xo-interface.c:966
+#: src/xo-interface.c:1016
 msgid "_red"
 msgstr "_vermell"
 
-#: src/xo-interface.c:972
+#: src/xo-interface.c:1022
 msgid "_green"
 msgstr "v_erd"
 
-#: src/xo-interface.c:978
+#: src/xo-interface.c:1028
 msgid "gr_ay"
 msgstr "gri_s"
 
-#: src/xo-interface.c:989
+#: src/xo-interface.c:1039
 msgid "light bl_ue"
 msgstr "blau _cel"
 
-#: src/xo-interface.c:995
+#: src/xo-interface.c:1045
 msgid "light gr_een"
 msgstr "ve_rd clar"
 
-#: src/xo-interface.c:1001
+#: src/xo-interface.c:1051
 msgid "_magenta"
 msgstr "_magenta"
 
-#: src/xo-interface.c:1007
+#: src/xo-interface.c:1057
 msgid "_orange"
 msgstr "taron_ja"
 
-#: src/xo-interface.c:1013
+#: src/xo-interface.c:1063
 msgid "_yellow"
 msgstr "gro_c"
 
-#: src/xo-interface.c:1019
+#: src/xo-interface.c:1069
 msgid "_white"
 msgstr "b_lanc"
 
-#: src/xo-interface.c:1034
+#: src/xo-interface.c:1084
 msgid "Pen _Options"
 msgstr "_Opcions del llapis"
 
-#: src/xo-interface.c:1041
+#: src/xo-interface.c:1091
 msgid "_very fine"
 msgstr "mol_t prim"
 
-#: src/xo-interface.c:1047 src/xo-interface.c:1078 src/xo-interface.c:1126
+#: src/xo-interface.c:1097 src/xo-interface.c:1128 src/xo-interface.c:1176
 msgid "_fine"
 msgstr "_prim"
 
-#: src/xo-interface.c:1053 src/xo-interface.c:1084 src/xo-interface.c:1132
+#: src/xo-interface.c:1103 src/xo-interface.c:1134 src/xo-interface.c:1182
 msgid "_medium"
 msgstr "_mitjà"
 
-#: src/xo-interface.c:1059 src/xo-interface.c:1090 src/xo-interface.c:1138
+#: src/xo-interface.c:1109 src/xo-interface.c:1140 src/xo-interface.c:1188
 msgid "_thick"
 msgstr "_gruixut"
 
-#: src/xo-interface.c:1065
+#: src/xo-interface.c:1115
 msgid "ver_y thick"
 msgstr "_molt gruixut"
 
-#: src/xo-interface.c:1071
+#: src/xo-interface.c:1121
 msgid "Eraser Optio_ns"
 msgstr "Opcions de l'_esborrador"
 
-#: src/xo-interface.c:1101
+#: src/xo-interface.c:1151
 msgid "_standard"
 msgstr "e_stàndard"
 
-#: src/xo-interface.c:1107
+#: src/xo-interface.c:1157
 msgid "_whiteout"
 msgstr "nete_ja"
 
-#: src/xo-interface.c:1113
+#: src/xo-interface.c:1163
 msgid "_delete strokes"
 msgstr "su_primeix els traços"
 
-#: src/xo-interface.c:1119
+#: src/xo-interface.c:1169
 msgid "Highlighter Opt_ions"
 msgstr "Opc_ions del marcador fluorescent"
 
-#: src/xo-interface.c:1144
+#: src/xo-interface.c:1194
 msgid "Text _Font..."
 msgstr "_Tipus de lletra del text..."
 
-#: src/xo-interface.c:1160
+#: src/xo-interface.c:1210
 msgid "_Default Pen"
 msgstr "_Llapis predeterminat"
 
-#: src/xo-interface.c:1164
+#: src/xo-interface.c:1214
 msgid "Default Eraser"
 msgstr "Esborrador predeterminat"
 
-#: src/xo-interface.c:1168
+#: src/xo-interface.c:1218
 msgid "Default Highlighter"
 msgstr "Marcador fluorescent predeterminat"
 
-#: src/xo-interface.c:1172
+#: src/xo-interface.c:1222
 msgid "Default Te_xt"
 msgstr "Te_xt predeterminat"
 
-#: src/xo-interface.c:1176
+#: src/xo-interface.c:1226
 msgid "Set As Default"
 msgstr "Defineix-lo com a predeterminat"
 
-#: src/xo-interface.c:1180
+#: src/xo-interface.c:1230
 msgid "_Options"
 msgstr "_Opcions"
 
-#: src/xo-interface.c:1187
+#: src/xo-interface.c:1237
 msgid "Use _XInput"
 msgstr "Utilitza l'_XInput"
 
-#: src/xo-interface.c:1191
+#: src/xo-interface.c:1241
 msgid "_Eraser Tip"
 msgstr "Utilitza la goma del _llapis"
 
-#: src/xo-interface.c:1195
+#: src/xo-interface.c:1245
 msgid "_Pressure sensitivity"
 msgstr "Sensibilitat de la _pressió"
 
-#: src/xo-interface.c:1199
+#: src/xo-interface.c:1249
 msgid "Button _2 Mapping"
 msgstr "Mapatge del botó _2"
 
-#: src/xo-interface.c:1258 src/xo-interface.c:1334
+#: src/xo-interface.c:1309 src/xo-interface.c:1386
 msgid "_Link to Primary Brush"
 msgstr "_Vincula al pinzell primari"
 
-#: src/xo-interface.c:1264 src/xo-interface.c:1340
+#: src/xo-interface.c:1315 src/xo-interface.c:1392
 msgid "_Copy of Current Brush"
 msgstr "_Copia el pinzell actual"
 
-#: src/xo-interface.c:1275
+#: src/xo-interface.c:1326
 msgid "Button _3 Mapping"
 msgstr "Mapatge del botó _3"
 
-#: src/xo-interface.c:1351
+#: src/xo-interface.c:1403
 msgid "Buttons Switch Mappings"
 msgstr ""
 
-#: src/xo-interface.c:1360
+#: src/xo-interface.c:1412
 msgid "_Progressive Backgrounds"
 msgstr "Fons _progressius"
 
-#: src/xo-interface.c:1364
+#: src/xo-interface.c:1416
 msgid "Print Paper _Ruling"
 msgstr "Imprimeix les _línies del paper"
 
-#: src/xo-interface.c:1368
+#: src/xo-interface.c:1420
 msgid "Autoload pdf.xoj"
 msgstr ""
 
-#: src/xo-interface.c:1372
+#: src/xo-interface.c:1424
 msgid "Left-Handed Scrollbar"
 msgstr "Barra de desplaçament per a esquerrans"
 
-#: src/xo-interface.c:1376
+#: src/xo-interface.c:1428
 msgid "Shorten _Menus"
 msgstr "Escurça els _menús"
 
-#: src/xo-interface.c:1385
+#: src/xo-interface.c:1437
 msgid "A_uto-Save Preferences"
 msgstr "Desa les preferències a_utomàticament"
 
-#: src/xo-interface.c:1389
+#: src/xo-interface.c:1441
 msgid "_Save Preferences"
 msgstr "_Desa les preferències"
 
-#: src/xo-interface.c:1393
+#: src/xo-interface.c:1445
 msgid "_Help"
 msgstr "A_juda"
 
-#: src/xo-interface.c:1404
+#: src/xo-interface.c:1456
 msgid "_About"
 msgstr "_Quant a"
 
-#: src/xo-interface.c:1417
+#: src/xo-interface.c:1469
 msgid "Save"
 msgstr "Desa"
 
-#: src/xo-interface.c:1422
+#: src/xo-interface.c:1474
 msgid "New"
 msgstr "Nova"
 
-#: src/xo-interface.c:1427
+#: src/xo-interface.c:1479
 msgid "Open"
 msgstr "Obre"
 
-#: src/xo-interface.c:1440
+#: src/xo-interface.c:1492
 msgid "Cut"
 msgstr "Retalla"
 
-#: src/xo-interface.c:1445
+#: src/xo-interface.c:1497
 msgid "Copy"
 msgstr "Copia"
 
-#: src/xo-interface.c:1450
+#: src/xo-interface.c:1502
 msgid "Paste"
 msgstr "Enganxa"
 
-#: src/xo-interface.c:1463
+#: src/xo-interface.c:1515
 msgid "Undo"
 msgstr "Desfés"
 
-#: src/xo-interface.c:1468
+#: src/xo-interface.c:1520
 msgid "Redo"
 msgstr "Refés"
 
-#: src/xo-interface.c:1481
+#: src/xo-interface.c:1533
 msgid "First Page"
 msgstr "Primera pàgina"
 
-#: src/xo-interface.c:1486
+#: src/xo-interface.c:1538
 msgid "Previous Page"
 msgstr "Pàgina anterior"
 
-#: src/xo-interface.c:1491
+#: src/xo-interface.c:1542
+#, fuzzy
+msgid "JumpBack"
+msgstr "Negre"
+
+#: src/xo-interface.c:1545
+#, fuzzy
+msgid "Previous Notable Page"
+msgstr "Pàgina anterior"
+
+#: src/xo-interface.c:1550
+#, fuzzy
+msgid "Next Notable Page"
+msgstr "Pàgina següent"
+
+#: src/xo-interface.c:1555
 msgid "Next Page"
 msgstr "Pàgina següent"
 
-#: src/xo-interface.c:1496
+#: src/xo-interface.c:1560
 msgid "Last Page"
 msgstr "Pàgina final"
 
-#: src/xo-interface.c:1509
+#: src/xo-interface.c:1573
 msgid "Zoom Out"
 msgstr "Redueix"
 
-#: src/xo-interface.c:1514 src/xo-interface.c:3045
+#: src/xo-interface.c:1578 src/xo-interface.c:3145
 msgid "Page Width"
 msgstr "Amplada de la pàgina"
 
-#: src/xo-interface.c:1520
+#: src/xo-interface.c:1584
 msgid "Zoom In"
 msgstr "Amplia"
 
-#: src/xo-interface.c:1525
+#: src/xo-interface.c:1589
 msgid "Normal Size"
 msgstr "Mida normal"
 
-#: src/xo-interface.c:1530 src/xo-interface.c:3004
+#: src/xo-interface.c:1594 src/xo-interface.c:3104
 msgid "Set Zoom"
 msgstr "Definiu l'ampliació"
 
-#: src/xo-interface.c:1539
+#: src/xo-interface.c:1603
 msgid "Toggle Fullscreen"
 msgstr "Commuta la pantalla completa"
 
-#: src/xo-interface.c:1548
+#: src/xo-interface.c:1612
 #, fuzzy
 msgid "Pencil"
 msgstr "Llapis"
 
-#: src/xo-interface.c:1554
+#: src/xo-interface.c:1618
 msgid "Pen"
 msgstr "Llapis"
 
-#: src/xo-interface.c:1559 src/xo-interface.c:1565
+#: src/xo-interface.c:1623 src/xo-interface.c:1629
 msgid "Eraser"
 msgstr "Esborrador"
 
-#: src/xo-interface.c:1570 src/xo-interface.c:1576
+#: src/xo-interface.c:1634 src/xo-interface.c:1640
 msgid "Highlighter"
 msgstr "Marcador fluorescent"
 
-#: src/xo-interface.c:1581 src/xo-interface.c:1587
+#: src/xo-interface.c:1645 src/xo-interface.c:1651
 msgid "Text"
 msgstr "Text"
 
-#: src/xo-interface.c:1592 src/xo-interface.c:1598
+#: src/xo-interface.c:1656 src/xo-interface.c:1662
+#, fuzzy
+msgid "Image"
+msgstr "_magenta"
+
+#: src/xo-interface.c:1667 src/xo-interface.c:1673
 msgid "Shape Recognizer"
 msgstr "Reconeixedor de formes"
 
-#: src/xo-interface.c:1601 src/xo-interface.c:1607
+#: src/xo-interface.c:1676 src/xo-interface.c:1682
 msgid "Ruler"
 msgstr "Regle"
 
-#: src/xo-interface.c:1618 src/xo-interface.c:1624
+#: src/xo-interface.c:1693 src/xo-interface.c:1699
 msgid "Select Region"
 msgstr "Selecciona una regió"
 
-#: src/xo-interface.c:1629 src/xo-interface.c:1635
+#: src/xo-interface.c:1704 src/xo-interface.c:1710
 msgid "Select Rectangle"
 msgstr "Selecciona un rectangle"
 
-#: src/xo-interface.c:1640 src/xo-interface.c:1646
+#: src/xo-interface.c:1715 src/xo-interface.c:1721
 msgid "Vertical Space"
 msgstr "Espai vertical"
 
-#: src/xo-interface.c:1651
+#: src/xo-interface.c:1726
 msgid "Hand Tool"
 msgstr "Eina de mà"
 
-#: src/xo-interface.c:1670 src/xo-interface.c:1674
+#: src/xo-interface.c:1745 src/xo-interface.c:1748
 msgid "Default"
 msgstr "Predeterminat"
 
-#: src/xo-interface.c:1678 src/xo-interface.c:1681
+#: src/xo-interface.c:1752 src/xo-interface.c:1755
 msgid "Default Pen"
 msgstr "Llapis predeterminat"
 
-#: src/xo-interface.c:1692 src/xo-interface.c:1700
+#: src/xo-interface.c:1766 src/xo-interface.c:1773
 msgid "Fine"
 msgstr "Prim"
 
-#: src/xo-interface.c:1705 src/xo-interface.c:1713
+#: src/xo-interface.c:1778 src/xo-interface.c:1785
 msgid "Medium"
 msgstr "Mitjà"
 
-#: src/xo-interface.c:1718 src/xo-interface.c:1726
+#: src/xo-interface.c:1790 src/xo-interface.c:1797
 msgid "Thick"
 msgstr "Gruixut"
 
-#: src/xo-interface.c:1745 src/xo-interface.c:1752
+#: src/xo-interface.c:1816 src/xo-interface.c:1822
 msgid "Black"
 msgstr "Negre"
 
-#: src/xo-interface.c:1757 src/xo-interface.c:1764
+#: src/xo-interface.c:1827 src/xo-interface.c:1833
 msgid "Blue"
 msgstr "Blau"
 
-#: src/xo-interface.c:1769 src/xo-interface.c:1776
+#: src/xo-interface.c:1838 src/xo-interface.c:1844
 msgid "Red"
 msgstr "Vermell"
 
-#: src/xo-interface.c:1781 src/xo-interface.c:1788
+#: src/xo-interface.c:1849 src/xo-interface.c:1855
 msgid "Green"
 msgstr "Verd"
 
-#: src/xo-interface.c:1793 src/xo-interface.c:1800
+#: src/xo-interface.c:1860 src/xo-interface.c:1866
 msgid "Gray"
 msgstr "Gris"
 
-#: src/xo-interface.c:1805 src/xo-interface.c:1812
+#: src/xo-interface.c:1871 src/xo-interface.c:1877
 msgid "Light Blue"
 msgstr "Blau cel"
 
-#: src/xo-interface.c:1817 src/xo-interface.c:1824
+#: src/xo-interface.c:1882 src/xo-interface.c:1888
 msgid "Light Green"
 msgstr "Verd clar"
 
-#: src/xo-interface.c:1829 src/xo-interface.c:1836
+#: src/xo-interface.c:1893 src/xo-interface.c:1899
 msgid "Magenta"
 msgstr "Magenta"
 
-#: src/xo-interface.c:1841 src/xo-interface.c:1848
+#: src/xo-interface.c:1904 src/xo-interface.c:1910
 msgid "Orange"
 msgstr "Taronja"
 
-#: src/xo-interface.c:1853 src/xo-interface.c:1860
+#: src/xo-interface.c:1915 src/xo-interface.c:1921
 msgid "Yellow"
 msgstr "Groc"
 
-#: src/xo-interface.c:1865 src/xo-interface.c:1872
+#: src/xo-interface.c:1926 src/xo-interface.c:1932
 msgid "White"
 msgstr "Blanc"
 
-#: src/xo-interface.c:1919
+#: src/xo-interface.c:1984
 msgid "  Page  "
 msgstr "  Pàgina  "
 
-#: src/xo-interface.c:1927
+#: src/xo-interface.c:1992
 msgid "Set page number"
 msgstr "Defineix el número de pàgina"
 
-#: src/xo-interface.c:1931
+#: src/xo-interface.c:1996
 msgid " of n"
 msgstr " de n"
 
-#: src/xo-interface.c:1939
+#: src/xo-interface.c:2004
 msgid "  Layer:  "
 msgstr "  Capa:  "
 
-#: src/xo-interface.c:2826
+#: src/xo-interface.c:2926
 msgid "Set Paper Size"
 msgstr "Estableix la mida del paper"
 
-#: src/xo-interface.c:2838
+#: src/xo-interface.c:2938
 msgid "Standard paper sizes:"
 msgstr "Mides de paper estàndard:"
 
-#: src/xo-interface.c:2846
+#: src/xo-interface.c:2946
 msgid "A4"
 msgstr "A4"
 
-#: src/xo-interface.c:2847
+#: src/xo-interface.c:2947
 msgid "A4 (landscape)"
 msgstr "A4 (apaïsat)"
 
-#: src/xo-interface.c:2848
+#: src/xo-interface.c:2948
 msgid "US Letter"
 msgstr "Carta nord-americana"
 
-#: src/xo-interface.c:2849
+#: src/xo-interface.c:2949
 msgid "US Letter (landscape)"
 msgstr "Carta nord-americana (apaïsat)"
 
-#: src/xo-interface.c:2850
+#: src/xo-interface.c:2950
 msgid "Custom"
 msgstr "Personalitzada"
 
-#: src/xo-interface.c:2856
+#: src/xo-interface.c:2956
 #, fuzzy
 msgid "Width:"
 msgstr "Amplada de la pàgina"
 
-#: src/xo-interface.c:2865
+#: src/xo-interface.c:2966
 #, fuzzy
 msgid "Height:"
 msgstr "Alçada de la pàgina"
 
-#: src/xo-interface.c:2877
+#: src/xo-interface.c:2979
 msgid "cm"
 msgstr "cm"
 
-#: src/xo-interface.c:2878
+#: src/xo-interface.c:2980
 msgid "in"
 msgstr "in"
 
-#: src/xo-interface.c:2879
+#: src/xo-interface.c:2981
 msgid "pixels"
 msgstr "píxels"
 
-#: src/xo-interface.c:2880
+#: src/xo-interface.c:2982
 msgid "points"
 msgstr "punts"
 
-#: src/xo-interface.c:2940
+#: src/xo-interface.c:3042
 msgid "About Xournal"
 msgstr "Quant al Xournal"
 
-#: src/xo-interface.c:2956
+#: src/xo-interface.c:3057
 #, fuzzy
 msgid ""
 "Written by Denis Auroux\n"
@@ -751,99 +786,100 @@ msgstr ""
 "Creat per Denis Auroux\n"
 "       http://xournal.sourceforge.net/       "
 
-#: src/xo-interface.c:3020
+#: src/xo-interface.c:3120
 msgid "Zoom: "
 msgstr "Ampliació: "
 
-#: src/xo-interface.c:3033
+#: src/xo-interface.c:3133
 msgid "%"
 msgstr ""
 
-#: src/xo-interface.c:3038
+#: src/xo-interface.c:3138
 msgid "Normal size (100%)"
 msgstr "Mida normal (100%)"
 
-#: src/xo-interface.c:3052
+#: src/xo-interface.c:3152
 msgid "Page Height"
 msgstr "Alçada de la pàgina"
 
 #. user aborted on save confirmation
-#: src/xo-callbacks.c:51 src/xo-file.c:665
+#: src/xo-callbacks.c:52 src/xo-file.c:745
 msgid "Open PDF"
 msgstr "Obre un fitxer PDF"
 
-#: src/xo-callbacks.c:59 src/xo-callbacks.c:132 src/xo-callbacks.c:231
-#: src/xo-callbacks.c:385 src/xo-callbacks.c:1444 src/xo-file.c:673
+#: src/xo-callbacks.c:60 src/xo-callbacks.c:133 src/xo-callbacks.c:232
+#: src/xo-callbacks.c:386 src/xo-callbacks.c:1550 src/xo-file.c:753
+#: src/xo-misc.c:560 src/xo-paint.c:1459
 msgid "All files"
 msgstr "Tots els fitxers"
 
-#: src/xo-callbacks.c:62 src/xo-callbacks.c:388 src/xo-file.c:676
+#: src/xo-callbacks.c:63 src/xo-callbacks.c:389 src/xo-file.c:756
 msgid "PDF files"
 msgstr "Fitxers PDF"
 
-#: src/xo-callbacks.c:70 src/xo-callbacks.c:1467
+#: src/xo-callbacks.c:71 src/xo-callbacks.c:1573
 msgid "Attach file to the journal"
 msgstr "Adjunta el fitxer al diari"
 
 #. user aborted on save confirmation
-#: src/xo-callbacks.c:124
+#: src/xo-callbacks.c:125
 msgid "Open Journal"
 msgstr "Obre un diari"
 
-#: src/xo-callbacks.c:135 src/xo-callbacks.c:234
+#: src/xo-callbacks.c:136 src/xo-callbacks.c:235
 msgid "Xournal files"
 msgstr "Fitxers del Xournal"
 
-#: src/xo-callbacks.c:184 src/xo-callbacks.c:279
+#: src/xo-callbacks.c:185 src/xo-callbacks.c:280
 #, c-format
 msgid "Error saving file '%s'"
 msgstr "S'ha produït un error en desar el fitxer «%s»"
 
-#: src/xo-callbacks.c:203
+#: src/xo-callbacks.c:204
 msgid "Save Journal"
 msgstr "Desa el diari"
 
-#: src/xo-callbacks.c:260 src/xo-callbacks.c:406
+#: src/xo-callbacks.c:261 src/xo-callbacks.c:407
 #, c-format
 msgid "Should the file %s be overwritten?"
 msgstr "Voleu sobreescriure el fitxer %s?"
 
-#: src/xo-callbacks.c:359
+#: src/xo-callbacks.c:360
 msgid "Export to PDF"
 msgstr "Exporta a PDF"
 
-#: src/xo-callbacks.c:419
+#: src/xo-callbacks.c:420
 #, c-format
 msgid "Error creating file '%s'"
 msgstr "S'ha produït un error en crear el fitxer «%s»"
 
-#: src/xo-callbacks.c:1371
+#: src/xo-callbacks.c:1477
 #, fuzzy
 msgid "Pick a Paper Color"
 msgstr "_Color del paper"
 
-#: src/xo-callbacks.c:1436
+#: src/xo-callbacks.c:1542
 msgid "Open Background"
 msgstr "Obre un fons"
 
-#: src/xo-callbacks.c:1452
+#: src/xo-callbacks.c:1558
 msgid "Bitmap files"
 msgstr "Fitxers de mapa de bits"
 
-#: src/xo-callbacks.c:1460
+#: src/xo-callbacks.c:1566
 msgid "PS/PDF files (as bitmaps)"
 msgstr "Fitxers PS/PDF (com a mapes de bits)"
 
-#: src/xo-callbacks.c:1490
+#: src/xo-callbacks.c:1596
 #, c-format
 msgid "Error opening background '%s'"
 msgstr "S'ha produït un error en obrir el fons «%s»"
 
-#: src/xo-callbacks.c:2036
+#: src/xo-callbacks.c:2168
 msgid "Select Font"
 msgstr "Seleccioneu el tipus de lletra"
 
-#: src/xo-callbacks.c:2434
+#: src/xo-callbacks.c:2566
 msgid ""
 "Drawing is not allowed on the background layer.\n"
 " Switching to Layer 1."
@@ -861,349 +897,366 @@ msgstr "No s'ha trobat el fitxer de mapa de píxels: %s"
 msgid "Could not write background '%s'. Continuing anyway."
 msgstr ""
 
-#: src/xo-file.c:252
+#: src/xo-file.c:262
 #, c-format
 msgid "Invalid file contents"
 msgstr "Els continguts del fitxer no són vàlids"
 
-#: src/xo-file.c:402
+#: src/xo-file.c:412
 #, c-format
 msgid "Could not open background '%s'. Setting background to white."
 msgstr ""
 
-#: src/xo-file.c:660
+#: src/xo-file.c:740
 #, c-format
 msgid ""
 "Could not open background '%s'.\n"
 "Select another file?"
 msgstr ""
 
-#: src/xo-file.c:806
+#: src/xo-file.c:909
 #, c-format
 msgid "Could not open background '%s'."
 msgstr ""
 
-#: src/xo-file.c:1033
+#: src/xo-file.c:1137
 msgid "Unable to render one or more PDF pages."
 msgstr ""
 
-#: src/xo-file.c:1439
+#: src/xo-file.c:1543
 msgid " the display resolution, in pixels per inch"
 msgstr ""
 
-#: src/xo-file.c:1442
+#: src/xo-file.c:1546
 msgid " the initial zoom level, in percent"
 msgstr ""
 
-#: src/xo-file.c:1445
+#: src/xo-file.c:1549
 msgid " maximize the window at startup (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1448
+#: src/xo-file.c:1552
 msgid " start in full screen mode (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1451
+#: src/xo-file.c:1555
 msgid " the window width in pixels (when not maximized)"
 msgstr ""
 
-#: src/xo-file.c:1454
+#: src/xo-file.c:1558
 msgid " the window height in pixels"
 msgstr ""
 
-#: src/xo-file.c:1457
+#: src/xo-file.c:1561
 msgid " scrollbar step increment (in pixels)"
 msgstr ""
 
-#: src/xo-file.c:1460
+#: src/xo-file.c:1564
 msgid " the step increment in the zoom dialog box"
 msgstr ""
 
-#: src/xo-file.c:1463
+#: src/xo-file.c:1567
 msgid " the multiplicative factor for zoom in/out"
 msgstr ""
 
-#: src/xo-file.c:1466
+#: src/xo-file.c:1570
 msgid " document view (true = continuous, false = single page)"
 msgstr ""
 
-#: src/xo-file.c:1469
+#: src/xo-file.c:1573
 msgid " use XInput extensions (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1472
+#: src/xo-file.c:1576
 msgid " discard Core Pointer events in XInput mode (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1475
+#: src/xo-file.c:1579
 msgid " always map eraser tip to eraser (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1478
+#: src/xo-file.c:1582
 msgid ""
 " buttons 2 and 3 switch mappings instead of drawing (useful for some "
 "tablets) (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1481
+#: src/xo-file.c:1585
 msgid ""
 " automatically load filename.pdf.xoj instead of filename.pdf (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1484
+#: src/xo-file.c:1588
 msgid " default path for open/save (leave blank for current directory)"
 msgstr ""
 
-#: src/xo-file.c:1487
+#: src/xo-file.c:1591
 msgid " use pressure sensitivity to control pen stroke width (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1490
+#: src/xo-file.c:1594
 msgid " minimum width multiplier"
 msgstr ""
 
-#: src/xo-file.c:1493
+#: src/xo-file.c:1597
 msgid " maximum width multiplier"
 msgstr ""
 
-#: src/xo-file.c:1496
+#: src/xo-file.c:1600
 msgid ""
 " interface components from top to bottom\n"
 " valid values: drawarea menu main_toolbar pen_toolbar statusbar"
 msgstr ""
 
-#: src/xo-file.c:1499
+#: src/xo-file.c:1603
 msgid " interface components in fullscreen mode, from top to bottom"
 msgstr ""
 
-#: src/xo-file.c:1502
+#: src/xo-file.c:1606
 msgid " interface has left-handed scrollbar (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1505
+#: src/xo-file.c:1609
 msgid " hide some unwanted menu or toolbar items (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1508
+#: src/xo-file.c:1612
 msgid ""
 " interface items to hide (customize at your own risk!)\n"
 " see source file xo-interface.c for a list of item names"
 msgstr ""
 
-#: src/xo-file.c:1511
+#: src/xo-file.c:1615
 msgid ""
 " highlighter opacity (0 to 1, default 0.5)\n"
 " warning: opacity level is not saved in xoj files!"
 msgstr ""
 
-#: src/xo-file.c:1514
+#: src/xo-file.c:1618
 msgid " auto-save preferences on exit (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1518
+#: src/xo-file.c:1622
 msgid " the default page width, in points (1/72 in)"
 msgstr ""
 
-#: src/xo-file.c:1521
+#: src/xo-file.c:1625
 msgid " the default page height, in points (1/72 in)"
 msgstr ""
 
-#: src/xo-file.c:1524
+#: src/xo-file.c:1628
 msgid " the default paper color"
 msgstr ""
 
-#: src/xo-file.c:1529
+#: src/xo-file.c:1633
 msgid " the default paper style (plain, lined, ruled, or graph)"
 msgstr ""
 
-#: src/xo-file.c:1532
+#: src/xo-file.c:1636
 msgid " apply paper style changes to all pages (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1535
+#: src/xo-file.c:1639
 msgid " preferred unit (cm, in, px, pt)"
 msgstr ""
 
-#: src/xo-file.c:1538
+#: src/xo-file.c:1642
 msgid " include paper ruling when printing or exporting to PDF (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1541
+#: src/xo-file.c:1645
 msgid " just-in-time update of page backgrounds (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1544
+#: src/xo-file.c:1648
 msgid ""
 " bitmap resolution of PS/PDF backgrounds rendered using ghostscript (dpi)"
 msgstr ""
 
-#: src/xo-file.c:1547
+#: src/xo-file.c:1651
 msgid ""
 " bitmap resolution of PDF backgrounds when printing with libgnomeprint (dpi)"
 msgstr ""
 
-#: src/xo-file.c:1551
+#: src/xo-file.c:1655
 msgid ""
 " selected tool at startup (pen, eraser, highlighter, selectrect, vertspace, "
 "hand)"
 msgstr ""
 
-#: src/xo-file.c:1554
+#: src/xo-file.c:1658
 msgid " default pen color"
 msgstr ""
 
-#: src/xo-file.c:1559
+#: src/xo-file.c:1663
 msgid " default pen thickness (fine = 1, medium = 2, thick = 3)"
 msgstr ""
 
-#: src/xo-file.c:1562
+#: src/xo-file.c:1666
 msgid " default pen is in ruler mode (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1565
+#: src/xo-file.c:1669
 msgid " default pen is in shape recognizer mode (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1568
+#: src/xo-file.c:1672
 msgid " default eraser thickness (fine = 1, medium = 2, thick = 3)"
 msgstr ""
 
-#: src/xo-file.c:1571
+#: src/xo-file.c:1675
 msgid " default eraser mode (standard = 0, whiteout = 1, strokes = 2)"
 msgstr ""
 
-#: src/xo-file.c:1574
+#: src/xo-file.c:1678
 msgid " default highlighter color"
 msgstr ""
 
-#: src/xo-file.c:1579
+#: src/xo-file.c:1683
 msgid " default highlighter thickness (fine = 1, medium = 2, thick = 3)"
 msgstr ""
 
-#: src/xo-file.c:1582
+#: src/xo-file.c:1686
 msgid " default highlighter is in ruler mode (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1585
+#: src/xo-file.c:1689
 msgid " default highlighter is in shape recognizer mode (true/false)"
 msgstr ""
 
-#: src/xo-file.c:1588
+#: src/xo-file.c:1692
 msgid ""
 " button 2 tool (pen, eraser, highlighter, text, selectrect, vertspace, hand)"
 msgstr ""
 
-#: src/xo-file.c:1591
+#: src/xo-file.c:1695
 msgid ""
 " button 2 brush linked to primary brush (true/false) (overrides all other "
 "settings)"
 msgstr ""
 
-#: src/xo-file.c:1594
+#: src/xo-file.c:1698
 msgid " button 2 brush color (for pen or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1601
+#: src/xo-file.c:1705
 msgid " button 2 brush thickness (pen, eraser, or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1605
+#: src/xo-file.c:1709
 msgid " button 2 ruler mode (true/false) (for pen or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1609
+#: src/xo-file.c:1713
 msgid " button 2 shape recognizer mode (true/false) (pen or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1613
+#: src/xo-file.c:1717
 msgid " button 2 eraser mode (eraser only)"
 msgstr ""
 
-#: src/xo-file.c:1616
+#: src/xo-file.c:1720
 msgid ""
 " button 3 tool (pen, eraser, highlighter, text, selectrect, vertspace, hand)"
 msgstr ""
 
-#: src/xo-file.c:1619
+#: src/xo-file.c:1723
 msgid ""
 " button 3 brush linked to primary brush (true/false) (overrides all other "
 "settings)"
 msgstr ""
 
-#: src/xo-file.c:1622
+#: src/xo-file.c:1726
 msgid " button 3 brush color (for pen or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1629
+#: src/xo-file.c:1733
 msgid " button 3 brush thickness (pen, eraser, or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1633
+#: src/xo-file.c:1737
 msgid " button 3 ruler mode (true/false) (for pen or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1637
+#: src/xo-file.c:1741
 msgid " button 3 shape recognizer mode (true/false) (pen or highlighter only)"
 msgstr ""
 
-#: src/xo-file.c:1641
+#: src/xo-file.c:1745
 msgid " button 3 eraser mode (eraser only)"
 msgstr ""
 
-#: src/xo-file.c:1645
+#: src/xo-file.c:1749
 msgid " thickness of the various pens (in points, 1 pt = 1/72 in)"
 msgstr ""
 
-#: src/xo-file.c:1651
+#: src/xo-file.c:1755
 msgid " thickness of the various erasers (in points, 1 pt = 1/72 in)"
 msgstr ""
 
-#: src/xo-file.c:1656
+#: src/xo-file.c:1760
 msgid " thickness of the various highlighters (in points, 1 pt = 1/72 in)"
 msgstr ""
 
-#: src/xo-file.c:1661
+#: src/xo-file.c:1765
 msgid " name of the default font"
 msgstr ""
 
-#: src/xo-file.c:1664
+#: src/xo-file.c:1768
 msgid " default font size"
 msgstr ""
 
-#: src/xo-file.c:1842
+#: src/xo-file.c:1946
 msgid ""
 " Xournal configuration file.\n"
 " This file is generated automatically upon saving preferences.\n"
 " Use caution when editing this file manually.\n"
 msgstr ""
 
-#: src/xo-misc.c:1274
+#: src/xo-misc.c:549 src/xo-paint.c:1484
+#, fuzzy, c-format
+msgid "Error opening image '%s'"
+msgstr "S'ha produït un error en obrir el fitxer «%s»"
+
+#: src/xo-misc.c:552
+msgid "Specify new image location"
+msgstr ""
+
+#: src/xo-misc.c:563 src/xo-paint.c:1462
+msgid "supported image files"
+msgstr ""
+
+#: src/xo-misc.c:1362
 #, c-format
 msgid " of %d"
 msgstr " de %d"
 
-#: src/xo-misc.c:1279
+#: src/xo-misc.c:1367
 msgid "Background"
 msgstr "Fons"
 
-#: src/xo-misc.c:1287
+#: src/xo-misc.c:1375
 #, c-format
 msgid "Layer %d"
 msgstr "Capa %d"
 
-#: src/xo-misc.c:1411
+#: src/xo-misc.c:1500
 #, c-format
 msgid "Xournal - %s"
 msgstr "Xournal - %s"
 
-#: src/xo-misc.c:1663
+#: src/xo-misc.c:1752
 #, c-format
 msgid "Save changes to '%s'?"
 msgstr "Voleu desar els canvis al fitxer «%s»?"
 
-#: src/xo-misc.c:1664
+#: src/xo-misc.c:1753
 msgid "Untitled"
 msgstr "Sense títol"
+
+#: src/xo-paint.c:1451
+msgid "Insert Image"
+msgstr ""
 
 #~ msgid "Discard _Core Events"
 #~ msgstr "Descarta els esdeveniments _primaris"

@@ -2366,4 +2366,50 @@ highlight_find_results (GtkWidget *widget, int page)
         }
 }
 
+static void
+doc_rect_to_view_rect (EvView       *view,
+                       int           page,
+		       EvRectangle  *doc_rect,
+		       GdkRectangle *view_rect)
+{
+	GdkRectangle page_area;
+	GtkBorder border;
+	double x, y, w, h;
+	gdouble width, height;
+
+	get_doc_page_size (view, page, &width, &height);
+
+	if (view->rotation == 0) {
+		x = doc_rect->x1;
+		y = doc_rect->y1;
+		w = doc_rect->x2 - doc_rect->x1;
+		h = doc_rect->y2 - doc_rect->y1;
+	} else if (view->rotation == 90) {
+		x = width - doc_rect->y2;
+		y = doc_rect->x1;
+		w = doc_rect->y2 - doc_rect->y1;
+		h = doc_rect->x2 - doc_rect->x1;
+	} else if (view->rotation == 180) {
+		x = width - doc_rect->x2;
+		y = height - doc_rect->y2;
+		w = doc_rect->x2 - doc_rect->x1;
+		h = doc_rect->y2 - doc_rect->y1;
+	} else if (view->rotation == 270) {
+		x = doc_rect->y1;
+		y = height - doc_rect->x2;
+		w = doc_rect->y2 - doc_rect->y1;
+		h = doc_rect->x2 - doc_rect->x1;
+	} else {
+		g_assert_not_reached ();
+	}
+
+	get_page_extents (view, page, &page_area, &border);
+
+	view_rect->x = x * view->scale + page_area.x;
+	view_rect->y = y * view->scale + page_area.y;
+	view_rect->width = w * view->scale;
+	view_rect->height = h * view->scale;
+}
+
+
 #endif 
