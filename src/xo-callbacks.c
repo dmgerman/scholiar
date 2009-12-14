@@ -3725,21 +3725,14 @@ egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
   return egg_find_bar_new();
 }
 
-// There functions are currently for debugging benefit only
-void display_rectangle(PopplerRectangle  *doc_rect)
-{
-  printf("Rectangle location (%8.2f,%8.2f)(%8.2f,%8.2f)\n",  doc_rect->x1,
-         doc_rect->y1,
-         doc_rect->x2,
-         doc_rect->y2);
-
-}
+// Display the pdf matches. Shoudl probably be moved to xo-misc.c 
 
 gboolean find_pdf_matches(const char *st, int searchedPage)
 {
   GList *l;
   int matches = 0 ;
   double height;
+  double width;
   GList *list;
   PopplerPage *pdfPage;
   
@@ -3750,7 +3743,7 @@ gboolean find_pdf_matches(const char *st, int searchedPage)
   }
   list = poppler_page_find_text(pdfPage, st);
   if (list != NULL) {
-    poppler_page_get_size (pdfPage, NULL, &height);
+    poppler_page_get_size (pdfPage, &width, &height);
     matches = g_list_length (list);
 
     printf("Page %d has %d matches\n", searchedPage+1, matches);
@@ -3760,10 +3753,18 @@ gboolean find_pdf_matches(const char *st, int searchedPage)
       PopplerRectangle *rect = (PopplerRectangle *)l->data;
       gdouble           tmp;
       
+      // PDF coordinates are bottom up, so swap.
       tmp = rect->y1;
       rect->y1 = height - rect->y2;
       rect->y2 = height - tmp;
-      display_rectangle(rect);
+      /* display_rectangle */
+      printf("Rectangle location (%8.2f\%,%8.2f\%)(%8.2f\%,%8.2f\%)\n",  
+             rect->x1/width,
+             rect->y1/height,
+             rect->x2/width,
+             rect->y2/height);
+
+
     }
   } else {
     printf("Page %d has no match\n", searchedPage+1);
@@ -3797,7 +3798,7 @@ on_find_bar_next                       (GtkWidget       *widget,
     iCurrentPage = ui.pageno;
     if (bgpdf.document != NULL) {
       nPages = poppler_document_get_n_pages(bgpdf.document);
-      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage);
+      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
 
       searchedPage = iCurrentPage;
       for (i=0; nextPage == -1 && i< nPages; i++) {
@@ -3865,7 +3866,7 @@ on_find_bar_prev                       (GtkWidget       *widget,
     int searchedPage;
     if (bgpdf.document != NULL) {
       nPages = poppler_document_get_n_pages(bgpdf.document);
-      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage);
+      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
       // moving backwards... so let us count backwards... now.. not all pages in the
       
       // searchPage points to the page we are currently searching at.
