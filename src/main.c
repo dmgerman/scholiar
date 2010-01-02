@@ -22,7 +22,7 @@ static const char **fileArguments = NULL;
 
 static GOptionEntry entries[] = 
 {
-  { "page", 'n', 0, G_OPTION_ARG_INT, &openAtPageNumber, "Jump to Page", "N" },
+  { "page", 'p', 0, G_OPTION_ARG_INT, &openAtPageNumber, "Jump to Page", "N" },
   { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &fileArguments, NULL, N_("[FILE...]") },
   { NULL }
 };
