@@ -331,7 +331,7 @@ void init_stuff (int argc, char *argv[])
     gtk_widget_destroy(w);
   }
   // jump to desired page, if requested...
-  if (openAtPageNumber > 0) {
+  if (openAtPageNumber > 1) {
     //fprintf(stderr, "Jumping to page %d out of %d pages \n", openAtPageNumber, journal.npages);
     if (openAtPageNumber > journal.npages)
       // if user wants to jump too far away, then use last page
