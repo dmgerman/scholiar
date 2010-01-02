@@ -8,6 +8,7 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
+#include <assert.h>
 
 #include "xournal.h"
 #include "xo-interface.h"
@@ -2413,3 +2414,48 @@ doc_rect_to_view_rect (EvView       *view,
 
 
 #endif 
+
+
+static gint is_unchanged_uri_char(char c)
+	
+
+{
+  switch (c) {
+  case '(':
+  case ')':
+  case ' ':
+  case ',':
+  case '/':
+    return 0;
+  default:
+    return 1;
+  }
+}
+
+void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri)
+{
+  int i;
+  int k;
+  
+  k = 0;
+  assert(encoded_uri != NULL);
+  assert(uri != NULL);
+  for(i = 0; i < strlen(uri) ; i++) {
+    if (is_unchanged_uri_char(uri[i])) {
+      if (k + 2 >= bufsize)
+        break;
+      encoded_uri[k++] = uri[i];
+    }
+    else {
+      char * hexa = "0123456789ABCDEF";
+      
+      if (k + 4 >= bufsize)
+        break;
+      encoded_uri[k++] = '%';
+      encoded_uri[k++] = hexa[uri[i] / 16];
+      encoded_uri[k++] = hexa[uri[i] % 16];
+    }
+  }
+  encoded_uri[k] = 0;
+}
+

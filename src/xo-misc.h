@@ -124,3 +124,21 @@ static void       draw_rubberband                            (GtkWidget         
 							      const GdkRectangle *rect,
 							      guchar              alpha);
 
+static gint is_unchanged_uri_char(char c)
+	
+
+{
+	switch (c) {
+		case '(':
+		case ')':
+		case ' ':
+		case ',':
+		case '/':
+			return 0;
+		default:
+			return 1;
+	}
+}
+
+void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri);
+

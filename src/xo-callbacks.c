@@ -9,6 +9,7 @@
 #include <time.h>
 #include <glib/gstdio.h>
 #include <gdk/gdkkeysyms.h>
+#include <assert.h>
 
 #include "xournal.h"
 #include "xo-callbacks.h"
@@ -902,6 +903,45 @@ on_editDelete_activate                 (GtkMenuItem     *menuitem,
   end_text();
   selection_delete();
 }
+
+
+
+void
+on_editRemember_activate                 (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  char temp[1000];
+  char tempFileName[1200];
+  char *fileName;
+  GError  *error = NULL;
+  GtkWidget *dialog;
+
+
+  // Use pdf name by default, otherwise use xournal name
+  if (bgpdf.filename == NULL) {
+    if (ui.filename == NULL) {
+      dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
+                                      GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, 
+                                      _("You must save the file first"));
+      gtk_dialog_run(GTK_DIALOG(dialog));
+      gtk_widget_destroy(dialog);
+      return; // don't do anything
+    } else {
+      fileName = ui.filename;
+    }
+  } else {
+    fileName = bgpdf.filename->s;
+  }
+  encode_uri(tempFileName, 1000, fileName);
+
+  sprintf(temp, "emacsclient 'org-protocol://remember://docview:%s::%d'", tempFileName,ui.pageno+1);
+
+  if (!g_spawn_command_line_async (temp, &error)) {
+    g_printerr ("Cannot start emacsclient: %s\n", error->message);
+    g_error_free (error);
+  }
+}
+
 
 
 void
