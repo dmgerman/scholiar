@@ -16,6 +16,19 @@
 #include "xo-paint.h"
 #include "xo-shapes.h"
 
+static gint openAtPageNumber = 1;
+static const char **fileArguments = NULL;
+
+
+static GOptionEntry entries[] = 
+{
+  { "page", 'n', 0, G_OPTION_ARG_INT, &openAtPageNumber, "Jump to Page", "N" },
+  { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &fileArguments, NULL, N_("[FILE...]") },
+  { NULL }
+};
+
+
+
 GtkWidget *winMain;
 GnomeCanvas *canvas;
 
@@ -36,6 +49,8 @@ void init_stuff (int argc, char *argv[])
   struct Brush *b;
   gboolean can_xinput, success;
   gchar *tmppath, *tmpfn;
+  GError  *error = NULL;
+  GOptionContext *context;
 
   // create some data structures needed to populate the preferences
   ui.default_page.bg = g_new(struct Background, 1);
@@ -61,11 +76,14 @@ void init_stuff (int argc, char *argv[])
   ui.default_page.bg->canvas_item = NULL;
   ui.layerbox_length = 0;
 
+  /*
+    This code has been superceded by code below
   if (argc > 2 || (argc == 2 && argv[1][0] == '-')) {
     printf(_("Invalid command line parameters.\n"
            "Usage: %s [filename.xoj]\n"), argv[0]);
     gtk_exit(0);
   }
+  */
    
   undo = NULL; redo = NULL;
   journal.pages = NULL;
@@ -273,16 +291,31 @@ void init_stuff (int argc, char *argv[])
   
   init_mru();
 
+  // here is the command line "option" is handled
+
+  context = g_option_context_new ("Xournal");
+  g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
+  g_option_context_add_group (context, gtk_get_option_group (TRUE));
+  if (!g_option_context_parse (context, &argc, &argv, &error)) {
+    g_printerr ("Cannot parse arguments: %s\n", error->message);
+    g_error_free (error);
+    g_option_context_free (context);
+    gtk_exit(0);
+  }
+  g_option_context_free (context);
+
   // and finally, open a file specified on the command line
   // (moved here because display parameters weren't initialized yet...)
   
-  if (argc == 1) return;
+  // if no file was provided, we are done
+  if (fileArguments == NULL || fileArguments[0] == NULL) return;
+  //  fprintf(stderr, "Fiel name %s\n", fileArguments[0]);
   set_cursor_busy(TRUE);
-  if (g_path_is_absolute(argv[1]))
-    tmpfn = g_strdup(argv[1]);
+  if (g_path_is_absolute(fileArguments[0]))
+    tmpfn = g_strdup(fileArguments[0]);
   else {
     tmppath = g_get_current_dir();
-    tmpfn = g_build_filename(tmppath, argv[1], NULL);
+    tmpfn = g_build_filename(tmppath, fileArguments[0], NULL);
     g_free(tmppath);
   }
   success = open_journal(tmpfn);
@@ -290,12 +323,20 @@ void init_stuff (int argc, char *argv[])
   set_cursor_busy(FALSE);
   if (!success) {
 	  #ifdef IMAGE_DEBUG
-	  printf("error opening file '%s'\n",argv[1]);
+	  printf("error opening file '%s'\n",fileArguments[0]);
 	  #endif
     w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), argv[1]);
+       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), fileArguments[0]);
     gtk_dialog_run(GTK_DIALOG(w));
     gtk_widget_destroy(w);
+  }
+  // jump to desired page, if requested...
+  if (openAtPageNumber > 0) {
+    //fprintf(stderr, "Jumping to page %d out of %d pages \n", openAtPageNumber, journal.npages);
+    if (openAtPageNumber > journal.npages)
+      // if user wants to jump too far away, then use last page
+      openAtPageNumber = journal.npages;
+    do_switch_page(openAtPageNumber - 1, TRUE, TRUE);
   }
 }
 
