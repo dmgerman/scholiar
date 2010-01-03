@@ -942,6 +942,37 @@ on_editRemember_activate                 (GtkMenuItem     *menuitem,
   }
 }
 
+void
+on_editInEvince_activate                 (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  char temp[1000];
+  char tempFileName[1200];
+  char *fileName;
+  GError  *error = NULL;
+  GtkWidget *dialog;
+
+
+  // Use pdf name by default, otherwise use xournal name
+  if (bgpdf.filename == NULL) {
+    dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, 
+                                    _("This feature is only available for annotating PDFs"));
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return; // don't do anything
+  } else {
+    fileName = bgpdf.filename->s;
+  }
+  sprintf(temp, "evince  '%s' -p %d",  bgpdf.filename->s ,ui.pageno+1);
+
+  if (!g_spawn_command_line_async (temp, &error)) {
+    g_printerr ("Cannot start evince: %s\n", error->message);
+    g_error_free (error);
+  }
+}
+
+
 
 
 void

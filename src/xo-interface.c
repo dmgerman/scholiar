@@ -71,6 +71,7 @@ create_winMain (void)
   GtkWidget *editPaste;
   GtkWidget *editDelete;
   GtkWidget *editRemember;
+  GtkWidget *editInEvince;
   GtkWidget *menuView;
   GtkWidget *menuView_menu;
   GSList *viewContinuous_group = NULL;
@@ -542,14 +543,14 @@ create_winMain (void)
                               GTK_ACCEL_VISIBLE);
 
 
-  editRemember = gtk_image_menu_item_new_with_mnemonic(_("Remember"));
+  editRemember = gtk_image_menu_item_new_with_mnemonic(_("_Remember"));
   gtk_widget_show (editRemember);
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), editRemember);
-  /*
-  gtk_widget_add_accelerator (editRemember, "activate", accel_group,
-                              GDK_equal, (GdkModifierType) GDK_CONTROL_MASK,
-                              GTK_ACCEL_VISIBLE);
-  */
+
+  editInEvince = gtk_image_menu_item_new_with_mnemonic(_("open in _Evince"));
+  gtk_widget_show (editInEvince);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editInEvince);
+
   menuView = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_widget_show (menuView);
   gtk_container_add (GTK_CONTAINER (menubar), menuView);
@@ -2101,6 +2102,12 @@ create_winMain (void)
                     NULL);
   g_signal_connect ((gpointer) editRemember, "activate",
                     G_CALLBACK (on_editRemember_activate),
+                    NULL);
+  g_signal_connect ((gpointer) editInEvince, "activate",
+                    G_CALLBACK (on_editInEvince_activate),
+                    NULL);
+  g_signal_connect ((gpointer) editInEvince, "activate",
+                    G_CALLBACK (on_editInEvince_activate),
                     NULL);
   g_signal_connect ((gpointer) viewContinuous, "toggled",
                     G_CALLBACK (on_viewContinuous_activate),
