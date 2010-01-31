@@ -2417,19 +2417,8 @@ doc_rect_to_view_rect (EvView       *view,
 
 
 static gint is_unchanged_uri_char(char c)
-	
-
 {
-  switch (c) {
-  case '(':
-  case ')':
-  case ' ':
-  case ',':
-  case '/':
-    return 0;
-  default:
-    return 1;
-  }
+  return isalnum(c);
 }
 
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri)
