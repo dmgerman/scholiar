@@ -124,5 +124,5 @@ static void       draw_rubberband                            (GtkWidget         
 							      const GdkRectangle *rect,
 							      guchar              alpha);
 
-void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri);
+void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 

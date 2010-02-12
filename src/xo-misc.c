@@ -2282,7 +2282,7 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     return FALSE;
   }
   // otherwise, we want to make sure the canvas or text item gets focus back...
-  printf("Stealing focus\n");
+  //  printf("Stealing focus\n");
 
   reset_focus();  
   return FALSE;
@@ -2421,7 +2421,7 @@ static gint is_unchanged_uri_char(char c)
   return isalnum(c);
 }
 
-void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri)
+void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri, int len)
 {
   int i;
   int k;
@@ -2429,7 +2429,7 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri)
   k = 0;
   assert(encoded_uri != NULL);
   assert(uri != NULL);
-  for(i = 0; i < strlen(uri) ; i++) {
+  for(i = 0; i < len ; i++) {
     if (is_unchanged_uri_char(uri[i])) {
       if (k + 2 >= bufsize)
         break;
@@ -2437,12 +2437,16 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri)
     }
     else {
       char * hexa = "0123456789ABCDEF";
-      
+      unsigned int temp = (unsigned char) uri[i];
+      /*
+      fprintf(stderr, "Values ori [%d] int [%d] / [%d] per [%d]\n", uri[i], temp,
+              temp/16, temp%16);
+      */
       if (k + 4 >= bufsize)
         break;
       encoded_uri[k++] = '%';
-      encoded_uri[k++] = hexa[uri[i] / 16];
-      encoded_uri[k++] = hexa[uri[i] % 16];
+      encoded_uri[k++] = hexa[temp / 16];
+      encoded_uri[k++] = hexa[temp % 16];
     }
   }
   encoded_uri[k] = 0;
