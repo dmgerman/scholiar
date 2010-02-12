@@ -1,3 +1,17 @@
+2010-02-12  dmg  <dmg@uvic.ca>
+
+	* src/xo-interface.c, src/xo-callbacks.c (on_editRemember_activate): Added support for
+	store, link
+
+	* src/xo-misc.c (intercept_activate_events): Commented out a
+	debugging string.
+
+	* src/xo-callbacks.c (on_editRemember_activate): Added conversion
+	of filenames to utf8.
+
+	* src/xo-misc.c (encode_uri): Fixed bug with characters with first
+	bit on.
+
 Version 0.4.5 (Oct 2, 2009):
   - bugfixes for GTK+ 2.16/2.17 issues with xinput events
   - various minor UI bugfixes

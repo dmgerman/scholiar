@@ -71,6 +71,7 @@ create_winMain (void)
   GtkWidget *editPaste;
   GtkWidget *editDelete;
   GtkWidget *editRemember;
+  GtkWidget *editStoreLink;
   GtkWidget *editInEvince;
   GtkWidget *menuView;
   GtkWidget *menuView_menu;
@@ -546,6 +547,11 @@ create_winMain (void)
   editRemember = gtk_image_menu_item_new_with_mnemonic(_("_Remember"));
   gtk_widget_show (editRemember);
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), editRemember);
+
+  editStoreLink = gtk_image_menu_item_new_with_mnemonic(_("_Store Link"));
+  gtk_widget_show (editStoreLink);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editStoreLink);
+
 
   editInEvince = gtk_image_menu_item_new_with_mnemonic(_("open in _Evince"));
   gtk_widget_show (editInEvince);
@@ -2102,7 +2108,11 @@ create_winMain (void)
                     NULL);
   g_signal_connect ((gpointer) editRemember, "activate",
                     G_CALLBACK (on_editRemember_activate),
-                    NULL);
+                    "remember");
+  g_signal_connect ((gpointer) editStoreLink, "activate",
+                    G_CALLBACK (on_editRemember_activate),
+                    "store-link");
+
   g_signal_connect ((gpointer) editInEvince, "activate",
                     G_CALLBACK (on_editInEvince_activate),
                     NULL);

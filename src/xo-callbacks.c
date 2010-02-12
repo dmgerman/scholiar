@@ -910,12 +910,13 @@ void
 on_editRemember_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  char temp[1000];
-  char tempFileName[1200];
+  char temp[FILENAME_MAX * 3 + 100];
+  char tempFileName[FILENAME_MAX * 3];
   char *fileName;
   GError  *error = NULL;
   GtkWidget *dialog;
-
+  gchar *utf8FileName;
+  int bytesWritten;
 
   // Use pdf name by default, otherwise use xournal name
   if (bgpdf.filename == NULL) {
@@ -932,15 +933,21 @@ on_editRemember_activate                 (GtkMenuItem     *menuitem,
   } else {
     fileName = bgpdf.filename->s;
   }
-  encode_uri(tempFileName, 1000, fileName);
+  utf8FileName  = g_filename_to_utf8(fileName, -1, NULL, &bytesWritten, NULL);
 
-  sprintf(temp, "emacsclient 'org-protocol://remember://docview:%s::%d'", tempFileName,ui.pageno+1);
-
+  encode_uri(tempFileName, FILENAME_MAX * 3, utf8FileName, bytesWritten);
+  sprintf(temp, "emacsclient 'org-protocol://%s://docview:%s::%d'", (char*)user_data, tempFileName,ui.pageno+1);
+  fprintf(stderr, "%s [%s]\n", temp, (char*)user_data);
   if (!g_spawn_command_line_async (temp, &error)) {
     g_printerr ("Cannot start emacsclient: %s\n", error->message);
     g_error_free (error);
   }
 }
+
+
+
+
+
 
 void
 on_editInEvince_activate                 (GtkMenuItem     *menuitem,
@@ -3829,7 +3836,7 @@ gboolean find_pdf_matches(const char *st, int searchedPage)
       rect->y1 = height - rect->y2;
       rect->y2 = height - tmp;
       /* display_rectangle */
-      printf("Rectangle location (%8.2f\%,%8.2f\%)(%8.2f\%,%8.2f\%)\n",  
+      printf("Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
              rect->x1/width,
              rect->y1/height,
              rect->x2/width,
