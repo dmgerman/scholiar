@@ -2115,9 +2115,6 @@ create_winMain (void)
   g_signal_connect ((gpointer) editInEvince, "activate",
                     G_CALLBACK (on_editInEvince_activate),
                     NULL);
-  g_signal_connect ((gpointer) editInEvince, "activate",
-                    G_CALLBACK (on_editInEvince_activate),
-                    NULL);
   g_signal_connect ((gpointer) viewContinuous, "toggled",
                     G_CALLBACK (on_viewContinuous_activate),
                     NULL);
