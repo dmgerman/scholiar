@@ -972,10 +972,10 @@ on_editInEvince_activate                 (GtkMenuItem     *menuitem,
   } else {
     fileName = bgpdf.filename->s;
   }
-  sprintf(temp, "evince -i %d '%s' ",  ui.pageno, bgpdf.filename->s);
+  sprintf(temp, ui.pdf_viewer_cmd,  ui.pageno, bgpdf.filename->s);
   //  printf("%s\n", temp);
   if (!g_spawn_command_line_async (temp, &error)) {
-    g_printerr ("Cannot start evince: %s\n", error->message);
+    g_printerr ("Cannot start pdf viewer: %s\n", error->message);
     g_error_free (error);
   }
 }

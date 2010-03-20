@@ -37,6 +37,8 @@ const char *file_domain_names[3] = {"absolute", "attach", "clone"};
 const char *unit_names[4] = {"cm", "in", "px", "pt"};
 int PDFTOPPM_PRINTING_DPI, GS_BITMAP_DPI;
 
+#define DEFAULT_PDF_VIEWER "evince -i %d '%s' "
+
 // creates a new empty journal
 
 void new_journal(void)
@@ -1449,7 +1451,7 @@ void init_config_default(void)
   ui.width_maximum_multiplier = 1.25;
   ui.button_switch_mapping = FALSE;
   ui.autoload_pdf_xoj = FALSE;
-  
+  ui.pdf_viewer_cmd = DEFAULT_PDF_VIEWER;
   // the default UI vertical order
   ui.vertical_order[0][0] = 1; 
   ui.vertical_order[0][1] = 2; 
@@ -1617,6 +1619,9 @@ void save_config_to_file(void)
   update_keyval("general", "autosave_prefs",
     _(" auto-save preferences on exit (true/false)"),
     g_strdup(ui.auto_save_prefs?"true":"false"));
+  update_keyval("general", "pdf_viewer",
+    _(" command line to run the pdf viewer in a given page. Should contain %d %s (page number, filename), see example"),
+    g_strdup((ui.pdf_viewer_cmd!=NULL)?ui.pdf_viewer_cmd:DEFAULT_PDF_VIEWER));
 
   update_keyval("paper", "width",
     _(" the default page width, in points (1/72 in)"),
