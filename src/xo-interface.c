@@ -2112,7 +2112,6 @@ create_winMain (void)
   g_signal_connect ((gpointer) editStoreLink, "activate",
                     G_CALLBACK (on_editRemember_activate),
                     "store-link");
-
   g_signal_connect ((gpointer) editInEvince, "activate",
                     G_CALLBACK (on_editInEvince_activate),
                     NULL);

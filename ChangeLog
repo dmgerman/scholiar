@@ -1,5 +1,8 @@
 2010-02-12  dmg  <dmg@uvic.ca>
 
+	* src/xo-callbacks.c (on_editRemember_activate): Forgot to release
+	some memory
+
 	* src/xo-interface.c, src/xo-callbacks.c (on_editRemember_activate): Added support for
 	store, link
 

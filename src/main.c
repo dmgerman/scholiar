@@ -20,13 +20,16 @@ static gint openAtPageNumber = 1;
 static const char **fileArguments = NULL;
 
 
-static GOptionEntry entries[] = 
+static gchar* exportPdfFile;
+static gboolean show_gui = TRUE;
+
+static GOptionEntry entries[] =
 {
   { "page", 'p', 0, G_OPTION_ARG_INT, &openAtPageNumber, "Jump to Page", "N" },
-  { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &fileArguments, NULL, N_("[FILE...]") },
+  { "export-pdf", 'A', 0, G_OPTION_ARG_STRING, &exportPdfFile, "Export document to a PDF file", "FILENAME" },
+  { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &fileArguments, NULL, N_("[FILE]") },
   { NULL }
 };
-
 
 
 GtkWidget *winMain;
@@ -36,6 +39,8 @@ struct Journal journal; // the journal
 struct BgPdf bgpdf;  // the PDF loader stuff
 struct UIData ui;   // the user interface data
 struct UndoItem *undo, *redo; // the undo and redo stacks
+  GError  *error = NULL;
+  GOptionContext *context;
 
 double DEFAULT_ZOOM;
 
@@ -76,21 +81,53 @@ void init_stuff (int argc, char *argv[])
   ui.default_page.bg->canvas_item = NULL;
   ui.layerbox_length = 0;
 
-  /*
-    This code has been superceded by code below
-  if (argc > 2 || (argc == 2 && argv[1][0] == '-')) {
-    printf(_("Invalid command line parameters.\n"
-           "Usage: %s [filename.xoj]\n"), argv[0]);
-    gtk_exit(0);
+  // parse command line options
+  context = g_option_context_new ("");
+  g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
+  g_option_context_add_group (context, gtk_get_option_group (TRUE));
+  if (!g_option_context_parse (context, &argc, &argv, &error)) {
+      printf(_("option parsing failed: %s\n"), error->message);
+      exit (1);
   }
-  */
-   
+  
   undo = NULL; redo = NULL;
   journal.pages = NULL;
   bgpdf.status = STATUS_NOT_INIT;
 
-  new_journal();  
+  new_journal();
+
+  if(exportPdfFile) {
+    show_gui = FALSE;
+  }
+
+  if (fileArguments == NULL) {
+    if(exportPdfFile) {
+       // If exporting having a file to open is essential
+       printf(_("Path to xoj file mssing\n"));
+       exit(2);
+     }
+  } else {
+    if (g_path_is_absolute(fileArguments[0])) {  
+      tmpfn = g_strdup(fileArguments[0]);
+    } else {
+      tmppath = g_get_current_dir();
+      tmpfn = g_build_filename(tmppath, fileArguments[0], NULL);
+      g_free(tmppath);
+    }
+
+    success = open_journal(tmpfn);
+    g_free(tmpfn);
+  }
   
+  if (!success && !show_gui) { // GUI error is showed later
+    printf(_("Error opening file '%s'"), argv[1]);
+    exit(2);
+  }
+
+  if(exportPdfFile) {
+     exit(print_to_pdf(exportPdfFile));
+  }
+
   ui.cur_item_type = ITEM_NONE;
   ui.cur_item = NULL;
   ui.cur_path.coords = NULL;
@@ -304,12 +341,12 @@ void init_stuff (int argc, char *argv[])
   }
   g_option_context_free (context);
 
-  // and finally, open a file specified on the command line
-  // (moved here because display parameters weren't initialized yet...)
+  // show error if loading file failed
   
   // if no file was provided, we are done
   if (fileArguments == NULL || fileArguments[0] == NULL) return;
   //  fprintf(stderr, "Fiel name %s\n", fileArguments[0]);
+  /*
   set_cursor_busy(TRUE);
   if (g_path_is_absolute(fileArguments[0]))
     tmpfn = g_strdup(fileArguments[0]);
@@ -321,10 +358,17 @@ void init_stuff (int argc, char *argv[])
   success = open_journal(tmpfn);
   g_free(tmpfn);
   set_cursor_busy(FALSE);
+  */
   if (!success) {
 	  #ifdef IMAGE_DEBUG
 	  printf("error opening file '%s'\n",fileArguments[0]);
 	  #endif
+  
+   // jump to desired page
+   if (openAtPageNumber > journal.npages) {
+     openAtPageNumber = journal.npages;
+   }
+   do_switch_page(openAtPageNumber - 1, TRUE, TRUE);
     w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
        GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), fileArguments[0]);
     gtk_dialog_run(GTK_DIALOG(w));
