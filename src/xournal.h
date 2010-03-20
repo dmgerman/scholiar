@@ -187,6 +187,8 @@ typedef struct Item {
 #define ITEM_RECOGNIZER 23
 #define ITEM_IMAGE 24
 
+#define ITEM_MOVE_PAGE 90
+
 typedef struct Layer {
   GList *items; // the items on the layer, from bottom to top
   int nitems;

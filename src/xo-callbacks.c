@@ -637,6 +637,10 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
     update_text_item_displayfont(undo->item);
     update_item_bbox(undo->item);
   }
+  else if (undo->type == ITEM_MOVE_PAGE) {
+    do_switch_page(undo->val, TRUE, TRUE);
+  }
+
   
   // move item from undo to redo stack
   u = undo;
@@ -855,6 +859,9 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
       "fill-color-rgba", redo->item->brush.color_rgba, NULL);
     update_text_item_displayfont(redo->item);
     update_item_bbox(redo->item);
+  }
+  else if (redo->type == ITEM_MOVE_PAGE) {
+    do_switch_page(redo->val, TRUE, TRUE);
   }
   
   // move item from redo to undo stack
@@ -1094,6 +1101,10 @@ on_viewFirstPage_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
+  prepare_new_undo();
+  undo->type = ITEM_MOVE_PAGE;
+  undo->val = ui.pageno;
+
   do_switch_page(0, TRUE, FALSE);
 }
 
@@ -1104,6 +1115,10 @@ on_viewPreviousPage_activate           (GtkMenuItem     *menuitem,
 {
   end_text();
   if (ui.pageno == 0) return;
+  prepare_new_undo();
+  undo->type = ITEM_MOVE_PAGE;
+  undo->val = ui.pageno;
+
   do_switch_page(ui.pageno-1, TRUE, FALSE);
 }
 
@@ -1117,6 +1132,11 @@ on_viewNotableNextPage_activate            (GtkMenuItem     *menuitem,
   struct Page *pg;
   struct Layer *layer;
   GList *pagelist, *layerlist;
+
+  prepare_new_undo();
+  undo->type = ITEM_MOVE_PAGE;
+  undo->val = ui.pageno;
+
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
     for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
@@ -1153,6 +1173,11 @@ on_viewNotablePrevPage_activate            (GtkMenuItem     *menuitem,
   struct Page *pg;
   struct Layer *layer;
   GList *pagelist, *layerlist;
+
+  prepare_new_undo();
+  undo->type = ITEM_MOVE_PAGE;
+  undo->val = ui.pageno;
+
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
     for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
@@ -1196,6 +1221,10 @@ on_viewNextPage_activate               (GtkMenuItem     *menuitem,
     on_journalNewPageEnd_activate(menuitem, user_data);
     return;
   }
+  prepare_new_undo();
+  undo->type = ITEM_MOVE_PAGE;
+  undo->val = ui.pageno;
+
   do_switch_page(ui.pageno+1, TRUE, FALSE);
 }
 
@@ -1205,6 +1234,10 @@ on_viewLastPage_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
+  prepare_new_undo();
+  undo->type = ITEM_MOVE_PAGE;
+  undo->val = ui.pageno;
+
   do_switch_page(journal.npages-1, TRUE, FALSE);
 }
 
