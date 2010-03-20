@@ -951,7 +951,7 @@ on_editRemember_activate                 (GtkMenuItem     *menuitem,
 
 
 void
-on_editInEvince_activate                 (GtkMenuItem     *menuitem,
+on_editInPDFViewer_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   char temp[1000];

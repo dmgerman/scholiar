@@ -72,7 +72,7 @@ create_winMain (void)
   GtkWidget *editDelete;
   GtkWidget *editRemember;
   GtkWidget *editStoreLink;
-  GtkWidget *editInEvince;
+  GtkWidget *editInPDFViewer;
   GtkWidget *menuView;
   GtkWidget *menuView_menu;
   GSList *viewContinuous_group = NULL;
@@ -553,9 +553,9 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), editStoreLink);
 
 
-  editInEvince = gtk_image_menu_item_new_with_mnemonic(_("open in _Evince"));
-  gtk_widget_show (editInEvince);
-  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editInEvince);
+  editInPDFViewer = gtk_image_menu_item_new_with_mnemonic(_("open in _PDFViewer"));
+  gtk_widget_show (editInPDFViewer);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editInPDFViewer);
 
   menuView = gtk_menu_item_new_with_mnemonic (_("_View"));
   gtk_widget_show (menuView);
@@ -2112,8 +2112,8 @@ create_winMain (void)
   g_signal_connect ((gpointer) editStoreLink, "activate",
                     G_CALLBACK (on_editRemember_activate),
                     "store-link");
-  g_signal_connect ((gpointer) editInEvince, "activate",
-                    G_CALLBACK (on_editInEvince_activate),
+  g_signal_connect ((gpointer) editInPDFViewer, "activate",
+                    G_CALLBACK (on_editInPDFViewer_activate),
                     NULL);
   g_signal_connect ((gpointer) viewContinuous, "toggled",
                     G_CALLBACK (on_viewContinuous_activate),
