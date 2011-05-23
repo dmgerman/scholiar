@@ -25,6 +25,7 @@
 #include "xo-misc.h"
 #include "xo-file.h"
 #include "xo-paint.h"
+#include "xo-print.h"
 
 const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "", "selectrect", "vertspace", "hand"};
 const char *color_names[COLOR_MAX] = {"black", "blue", "red", "green",
@@ -220,12 +221,10 @@ gboolean save_journal(const char *filename)
   gzclose(f);
   setlocale(LC_NUMERIC, "");
 
-  printf("Finished writing to the file [%s]\n", filename);
   // if we want to autoexport, this is the place to do it
   if (ui.autoexport_pdf) {
     char pdfName[PATH_MAX+10];
     sprintf(pdfName, "%s.pdf", filename);
-    printf("Exporting to [%s]\n", pdfName);
     print_to_pdf(pdfName);
   }
 

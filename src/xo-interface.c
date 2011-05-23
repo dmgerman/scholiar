@@ -2844,6 +2844,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, optionsShortenMenus, "optionsShortenMenus");
   GLADE_HOOKUP_OBJECT (winMain, separator21, "separator21");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoSavePrefs, "optionsAutoSavePrefs");
+  GLADE_HOOKUP_OBJECT (winMain, optionsAutoExportPdf, "optionsAutoExportPdf");
   GLADE_HOOKUP_OBJECT (winMain, optionsSavePreferences, "optionsSavePreferences");
   GLADE_HOOKUP_OBJECT (winMain, menuHelp, "menuHelp");
   GLADE_HOOKUP_OBJECT (winMain, menuHelp_menu, "menuHelp_menu");
