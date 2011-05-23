@@ -255,6 +255,7 @@ create_winMain (void)
   GtkWidget *optionsProgressiveBG;
   GtkWidget *optionsPrintRuling;
   GtkWidget *optionsAutoloadPdfXoj;
+  GtkWidget *optionsAutoExportPdf;
   GtkWidget *optionsLeftHanded;
   GtkWidget *optionsShortenMenus;
   GtkWidget *separator21;
@@ -1438,6 +1439,10 @@ create_winMain (void)
   gtk_widget_show (optionsAutoloadPdfXoj);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsAutoloadPdfXoj);
 
+  optionsAutoExportPdf = gtk_check_menu_item_new_with_mnemonic (_("Auto e_xport PDF .xoj.pdf"));
+  gtk_widget_show (optionsAutoExportPdf);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsAutoExportPdf);
+
   optionsLeftHanded = gtk_check_menu_item_new_with_mnemonic (_("Left-Handed Scrollbar"));
   gtk_widget_show (optionsLeftHanded);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsLeftHanded);
@@ -2442,6 +2447,10 @@ create_winMain (void)
   g_signal_connect ((gpointer) optionsAutoloadPdfXoj, "activate",
                     G_CALLBACK (on_optionsAutoloadPdfXoj_activate),
                     NULL);
+  g_signal_connect ((gpointer) optionsAutoExportPdf, "activate",
+                    G_CALLBACK (on_optionsAutoExportPdf_activate),
+                    NULL);
+
   g_signal_connect ((gpointer) optionsLeftHanded, "toggled",
                     G_CALLBACK (on_optionsLeftHanded_activate),
                     NULL);

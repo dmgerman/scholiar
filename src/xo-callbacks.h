@@ -617,6 +617,10 @@ on_optionsAutoloadPdfXoj_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_optionsAutoExportPdf_activate      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
 on_fontButton_font_set                 (GtkFontButton   *fontbutton,
                                         gpointer         user_data);
 
