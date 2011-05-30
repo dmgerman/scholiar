@@ -1617,6 +1617,9 @@ void save_config_to_file(void)
   update_keyval("general", "interface_fullscreen",
     _(" interface components in fullscreen mode, from top to bottom"),
     verbose_vertical_order(ui.vertical_order[1]));
+  update_keyval("general", "touch_screen_as_hand_tool",
+    _(" always use the touch screen as the hand tool (true/false) requires stylus tool to draw"),
+    g_strdup(ui.touch_as_handtool?"true":"false"));
   update_keyval("general", "interface_lefthanded",
     _(" interface has left-handed scrollbar (true/false)"),
     g_strdup(ui.left_handed?"true":"false"));
@@ -1994,7 +1997,9 @@ void load_config_from_file(void)
 
   parse_keyval_vorderlist("general", "interface_order", ui.vertical_order[0]);
   parse_keyval_vorderlist("general", "interface_fullscreen", ui.vertical_order[1]);
+  parse_keyval_boolean("general", "touch_screen_as_hand_tool", &ui.touch_as_handtool);
   parse_keyval_boolean("general", "interface_lefthanded", &ui.left_handed);
+
   parse_keyval_boolean("general", "shorten_menus", &ui.shorten_menus);
   if (parse_keyval_string("general", "shorten_menu_items", &str))
     if (str!=NULL) { g_free(ui.shorten_menu_items); ui.shorten_menu_items = str; }

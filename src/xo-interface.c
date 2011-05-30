@@ -256,6 +256,7 @@ create_winMain (void)
   GtkWidget *optionsPrintRuling;
   GtkWidget *optionsAutoloadPdfXoj;
   GtkWidget *optionsAutoExportPdf;
+  GtkWidget *optionsTouchAsHandTool;
   GtkWidget *optionsLeftHanded;
   GtkWidget *optionsShortenMenus;
   GtkWidget *separator21;
@@ -1443,6 +1444,10 @@ create_winMain (void)
   gtk_widget_show (optionsAutoExportPdf);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsAutoExportPdf);
 
+  optionsTouchAsHandTool = gtk_check_menu_item_new_with_mnemonic (_("Always use _Touch screen as hand tool"));
+  gtk_widget_show (optionsTouchAsHandTool);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsTouchAsHandTool);
+
   optionsLeftHanded = gtk_check_menu_item_new_with_mnemonic (_("Left-Handed Scrollbar"));
   gtk_widget_show (optionsLeftHanded);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsLeftHanded);
@@ -2451,6 +2456,10 @@ create_winMain (void)
                     G_CALLBACK (on_optionsAutoExportPdf_activate),
                     NULL);
 
+  g_signal_connect ((gpointer) optionsTouchAsHandTool, "activate",
+                    G_CALLBACK (on_optionsTouchAsHandTool_activate),
+                    NULL);
+
   g_signal_connect ((gpointer) optionsLeftHanded, "toggled",
                     G_CALLBACK (on_optionsLeftHanded_activate),
                     NULL);
@@ -2845,6 +2854,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, separator21, "separator21");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoSavePrefs, "optionsAutoSavePrefs");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoExportPdf, "optionsAutoExportPdf");
+  GLADE_HOOKUP_OBJECT (winMain, optionsTouchAsHandTool, "optionsTouchAsHandTool");
   GLADE_HOOKUP_OBJECT (winMain, optionsSavePreferences, "optionsSavePreferences");
   GLADE_HOOKUP_OBJECT (winMain, menuHelp, "menuHelp");
   GLADE_HOOKUP_OBJECT (winMain, menuHelp_menu, "menuHelp_menu");
