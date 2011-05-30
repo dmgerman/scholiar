@@ -2,7 +2,7 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <poppler/glib/poppler.h>
 
-// #define INPUT_DEBUG
+//#define INPUT_DEBUG
 /* uncomment this line if you experience event-processing problems
    and want to list the input events received by xournal. Caution, lots
    of output (redirect to a file). */
@@ -280,6 +280,7 @@ typedef struct UIData {
   double startup_zoom;
   gboolean autoload_pdf_xoj;
   gboolean autoexport_pdf;
+
 #if GLIB_CHECK_VERSION(2,6,0)
   GKeyFile *config_data;
 #endif
@@ -289,6 +290,7 @@ typedef struct UIData {
   gulong resize_signal_handler;
   gdouble hiliter_opacity;
   guint hiliter_alpha_mask;
+  gboolean touch_as_handtool; // do we always use the touch screen as handtool
   gboolean left_handed; // left-handed mode?
   gboolean auto_save_prefs; // auto-save preferences ?
   gboolean shorten_menus; // shorten menus ?
