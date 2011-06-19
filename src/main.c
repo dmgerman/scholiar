@@ -15,6 +15,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-shapes.h"
+#include "xo-print.h"
 
 static gint openAtPageNumber = 1;
 static const char **fileArguments = NULL;

@@ -126,3 +126,5 @@ static void       draw_rubberband                            (GtkWidget         
 
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 
+void unset_flags(GtkWidget *w, gpointer flag);
+void set_flags(GtkWidget *w, gpointer flag);

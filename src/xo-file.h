@@ -26,6 +26,7 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain);
 
 void bgpdf_create_page_with_bg(int pageno, struct BgPdfPage *bgpg);
 void bgpdf_update_bg(int pageno, struct BgPdfPage *bgpg);
+void bgpdf_search_append_page(pageMatchesType *pageMatches) ;
 
 void init_mru(void);
 void update_mru_menu(void);
@@ -36,3 +37,5 @@ void save_mru_list(void);
 void init_config_default(void);
 void load_config_from_file(void);
 void save_config_to_file(void);
+
+

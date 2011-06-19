@@ -2,6 +2,8 @@
 #  include <config.h>
 #endif
 
+#include <assert.h>
+
 #include <signal.h>
 #include <memory.h>
 #include <string.h>
@@ -26,6 +28,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-print.h"
+#include "xo-shapes.h"
 
 const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "", "selectrect", "vertspace", "hand"};
 const char *color_names[COLOR_MAX] = {"black", "blue", "red", "green",
@@ -281,7 +284,6 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   char *ptr, *tmpptr;
   struct Background *tmpbg;
   char *tmpbg_filename;
-  gdouble val;
   GtkWidget *dialog;
   
   if (!strcmp(element_name, "title") || !strcmp(element_name, "xournal")) {
@@ -1158,6 +1160,88 @@ gboolean bgpdf_scheduler_callback(gpointer data)
   return FALSE; // we're done
 }
 
+void bgpdf_search_term_set(const char *st)
+{
+  if (bgpdf.searchData.term != NULL) {
+    g_free(bgpdf.searchData.term);
+  }
+  bgpdf.searchData.term = g_strdup(st);
+
+}
+
+// Append a page of results to the list of results
+void bgpdf_search_append_page_results(const int pageNo, GList *list) 
+{
+  pageMatchesType *match = NULL;
+  // if empty, g_list_append initializes the list
+  match = g_malloc(sizeof(*match));
+  match->pageNo = pageNo;
+  match->matches = list;
+  match->count = g_list_length(list);
+  bgpdf.searchData.totalMatches += match->count;
+  bgpdf.searchData.pagesWithMatches ++;
+  bgpdf.searchData.pageMatches = g_list_append(bgpdf.searchData.pageMatches,
+                                               match);
+
+}
+
+void bgpdf_search_append_page(pageMatchesType *pageMatches) 
+{
+  bgpdf.searchData.pageMatches = g_list_append(bgpdf.searchData.pageMatches, pageMatches);
+  bgpdf.searchData.totalMatches += pageMatches->count;
+  bgpdf.searchData.pagesWithMatches++;
+}
+
+
+
+void bgpdf_search_print(void) 
+{
+  GList *l;
+  GList *l2;
+
+  if (bgpdf.searchData.term == NULL)
+    return;
+  printf("Search term [%s]. Found [%d] times in [%d] pages \n", 
+         bgpdf.searchData.term, 
+         bgpdf.searchData.totalMatches, 
+         bgpdf.searchData.pagesWithMatches );
+  for (l = bgpdf.searchData.pageMatches; l && l->data; l = g_list_next (l)) {
+    pageMatchesType *pageMatches = (pageMatchesType *)l->data;
+    printf("Page (%d) Matches (%d)\n", pageMatches->pageNo, pageMatches->count);
+    for (l2 = pageMatches->matches; l && l->data; l = g_list_next (l)) {
+      PopplerRectangle *rect = (PopplerRectangle *)l->data;
+        printf("   Rectangle location (%12.5f:%12.5f) (%12.5f:%12.5f)\n",  
+               rect->x1, rect->y1,rect->x2,rect->y2);
+      
+    }
+    
+  }
+
+  
+}
+
+
+// Initialize the PDF search  data structures
+static void bgpdf_search_data_init(void)
+{
+  bgpdf.searchData.totalMatches = 0;
+  bgpdf.searchData.pagesWithMatches = 0;
+  bgpdf.searchData.term = NULL;
+  bgpdf.searchData.pageMatches = NULL;
+}
+
+// Free any memory allocated by the searching
+static void bgpdf_search_data_release(void)
+{
+  // write code to release searching data
+  if (bgpdf.searchData.term != NULL) {
+    g_free(bgpdf.searchData.term);
+    bgpdf.searchData.term = NULL;
+  }
+  assert(bgpdf.searchData.term == NULL);
+  assert(bgpdf.searchData.pageMatches == NULL);
+}
+
 /* make a request */
 
 gboolean add_bgpdf_request(int pageno, double zoom)
@@ -1217,6 +1301,7 @@ void shutdown_bgpdf(void)
     g_object_unref(bgpdf.document);
     bgpdf.document = NULL;
   }
+  bgpdf_search_data_release();
 
   bgpdf.status = STATUS_NOT_INIT;
 }
@@ -1302,6 +1387,8 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
       update_canvas_bg(pg);
     }
   }
+  bgpdf_search_data_init();
+
   update_page_stuff();
   rescale_bg_pixmaps(); // this actually requests the pages !!
   return TRUE;

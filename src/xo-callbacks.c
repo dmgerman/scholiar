@@ -3859,49 +3859,78 @@ egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
 
 // Display the pdf matches. Shoudl probably be moved to xo-misc.c 
 
-gboolean find_pdf_matches(const char *st, int searchedPage)
+int find_pdf_matches(const char *st)
 {
-  GList *l;
-  int matches = 0 ;
-  double height;
-  double width;
-  GList *list;
-  PopplerPage *pdfPage;
-  
-  pdfPage = poppler_document_get_page(bgpdf.document, searchedPage);
-  if (pdfPage == NULL) {
-    printf("Could not retrieve page %d\n", searchedPage);
-    return 0;
-  }
-  list = poppler_page_find_text(pdfPage, st);
-  if (list != NULL) {
-    poppler_page_get_size (pdfPage, &width, &height);
-    matches = g_list_length (list);
+  GList *list = NULL;
+  GList *l = NULL;
+  PopplerPage *pdfPage = NULL;
+  int currPage;
+  int nMatches = 0 ;
+  int nPages = 0;
 
-    printf("Page %d has %d matches\n", searchedPage+1, matches);
+  assert(bgpdf.document != NULL);
 
-    // Free list
-    for (l = list; l && l->data; l = g_list_next (l)) {
-      PopplerRectangle *rect = (PopplerRectangle *)l->data;
-      gdouble           tmp;
+  bgpdf_search_term_set(st);
+
+  nPages = poppler_document_get_n_pages(bgpdf.document);
+
+  for (currPage=0;  currPage< nPages; currPage++) {
+    // find matches in this page
+    pdfPage = poppler_document_get_page(bgpdf.document, currPage);
+    if (pdfPage != NULL && 
+        (list = poppler_page_find_text(pdfPage, st)) != NULL) {
+      double height;
+      double width;
+      pageMatchesType *matches=NULL;
+
+      // We found text;
+
+      nPages++;
+
+      matches = g_malloc(sizeof(*matches));
+      matches->pageNo = currPage;
+      matches->matches = list;
+      matches->count = g_list_length (list);
+      // increment the total count
+      nMatches += matches->count;
+
+      // we have a page, get its size, well use it later
+      poppler_page_get_size (pdfPage, &width, &height);
+
+      // list contains the matches in this given page
       
-      // PDF coordinates are bottom up, so swap.
-      tmp = rect->y1;
-      rect->y1 = height - rect->y2;
-      rect->y2 = height - tmp;
-      /* display_rectangle */
-      printf("Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
-             rect->x1/width,
-             rect->y1/height,
-             rect->x2/width,
-             rect->y2/height);
+      printf("Page %d has %d matches\n", currPage, matches->count);
 
+      // Fix the coordinates of each match
+      
+      for (l = list; l && l->data; l = g_list_next (l)) {
+        PopplerRectangle *rect = (PopplerRectangle *)l->data;
+        gdouble           tmp;
+        
+        // PDF coordinates are bottom up, so swap.
+        // but the locations are backwards...
 
+        tmp = rect->y1;
+        rect->y1 = height - rect->y2;
+        rect->y2 = height - tmp;
+
+        /* display_rectangle */
+        printf("Page %d Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
+               currPage,
+               rect->x1/width,
+               rect->y1/height,
+               rect->x2/width,
+               rect->y2/height);
+        
+        // we need to save the rectangle in a new list
+        
+      } // for loop
+      // save the results
+      bgpdf_search_append_page(matches);
     }
-  } else {
-    printf("Page %d has no match\n", searchedPage+1);
-  }
-  return matches;
+  } 
+  printf("Document has [%d] matches in %d pages\n", nMatches, nPages);
+  return nMatches;
 }
 
 
@@ -3931,23 +3960,7 @@ on_find_bar_next                       (GtkWidget       *widget,
     if (bgpdf.document != NULL) {
       nPages = poppler_document_get_n_pages(bgpdf.document);
       printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
-
-      searchedPage = iCurrentPage;
-      for (i=0; nextPage == -1 && i< nPages; i++) {
-        // we move one page forward
-        searchedPage++;
-        // Roll to the beginning if we hit end of doc
-        if (searchedPage >= nPages) {
-          searchedPage = 0;
-        }
-        // do not process the current page
-        if (searchedPage == iCurrentPage)
-          continue;
-        // Find and print
-        if ((matches = find_pdf_matches(st, searchedPage)) > 0) {
-          nextPage = searchedPage;
-        }
-      } // end of for loop
+      matches = find_pdf_matches(st);
       sprintf(temp, "%d matches", matches);
       if (nextPage != -1) {
         // we have a next page.
@@ -3978,63 +3991,7 @@ on_find_bar_prev                       (GtkWidget       *widget,
                                         gpointer         user_data)
 {
 
-  GtkWidget *w = GET_COMPONENT("findBar");
-  EggFindBar *findBar;
-  const char *st;
-  char temp[100];
-  int iCurrentPage;
-  int i, nPages;
-  int prevPage = -1;
-  int searchedPage;
-  int matches;
-
-  gtk_widget_show(w);
-  findBar = EGG_FIND_BAR(w);
-  st = egg_find_bar_get_search_string(findBar);
-  if (strcmp(st, "") != 0) {
-    printf("Prev Searching for %s\n", st);
-
-    iCurrentPage = ui.pageno;
-    int searchedPage;
-    if (bgpdf.document != NULL) {
-      nPages = poppler_document_get_n_pages(bgpdf.document);
-      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
-      // moving backwards... so let us count backwards... now.. not all pages in the
-      
-      // searchPage points to the page we are currently searching at.
-
-      searchedPage = iCurrentPage;
-      for (i=0; prevPage== -1 && i< nPages; i++) {
-        // we move one page back
-        searchedPage --;
-        // Roll to end of document if we hit end of doc
-        if (searchedPage < 0) {
-          searchedPage = nPages-1;
-        }
-        // do not process the current page
-        if (searchedPage == iCurrentPage)
-          continue;
-
-        if ((matches = find_pdf_matches(st, searchedPage)) > 0) {
-          prevPage = searchedPage;
-        }
-      } // end of for loop
-      sprintf(temp, "%d matches", matches);
-      if (prevPage != -1) {
-        // we have a next page.
-        printf("Jumping to page %d\n", prevPage+1);
-        do_switch_page(prevPage, TRUE, FALSE);
-        egg_find_bar_set_status_text(findBar, temp);
-      } else {
-        // Not present
-        egg_find_bar_set_status_text(findBar, "Not found");
-      }
-    } else {
-      printf("Document has not pdf backgroun\n");
-    }
-
-  }
-  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
+  // this function has to be rewritten
 
   return TRUE;
 }

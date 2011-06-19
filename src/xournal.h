@@ -52,6 +52,19 @@ typedef struct Refstring {
    and a background. Each layer is a list of items, from bottom to top.
 */
 
+typedef struct pageMatchesType {
+  int pageNo;
+  int count;
+  GList *matches;
+} pageMatchesType;
+
+typedef struct searchPdfDataType {
+  int totalMatches;
+  int pagesWithMatches;
+  gchar *term;
+  GList *pageMatches;
+} searchDataType;
+
 typedef struct Background {
   int type;
   GnomeCanvasItem *canvas_item;
@@ -358,6 +371,7 @@ typedef struct BgPdf {
   GList *requests; // a list of BgPdfRequest structures
   gboolean has_failed; // has failed in the past...
   PopplerDocument *document; // the poppler document
+  searchDataType searchData;
 } BgPdf;
 
 #define STATUS_NOT_INIT 0
