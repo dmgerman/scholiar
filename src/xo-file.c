@@ -1169,28 +1169,6 @@ void bgpdf_search_term_set(const char *st)
 
 }
 
-// Append a page of results to the list of results
-void bgpdf_search_append_page_results(const int pageNo, GList *list) 
-{
-  pageMatchesType *match = NULL;
-  // if empty, g_list_append initializes the list
-  match = g_malloc(sizeof(*match));
-  match->pageNo = pageNo;
-  match->matches = list;
-  match->count = g_list_length(list);
-  bgpdf.searchData.totalMatches += match->count;
-  bgpdf.searchData.pagesWithMatches ++;
-  bgpdf.searchData.pageMatches = g_list_append(bgpdf.searchData.pageMatches,
-                                               match);
-
-}
-
-void bgpdf_search_append_page(pageMatchesType *pageMatches) 
-{
-  bgpdf.searchData.pageMatches = g_list_append(bgpdf.searchData.pageMatches, pageMatches);
-  bgpdf.searchData.totalMatches += pageMatches->count;
-  bgpdf.searchData.pagesWithMatches++;
-}
 
 
 
@@ -1589,6 +1567,7 @@ void init_config_default(void)
 #if GTK_CHECK_VERSION(2,10,0)
   ui.print_settings = NULL;
 #endif
+  searchLayer = NULL;
   
 }
 

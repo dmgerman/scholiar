@@ -3961,6 +3961,14 @@ on_find_bar_next                       (GtkWidget       *widget,
       nPages = poppler_document_get_n_pages(bgpdf.document);
       printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
       matches = find_pdf_matches(st);
+
+      // we know need to add the layer to the document
+      if (matches) {
+        // we found something... render it
+        document_render_pdf_matches();
+      }
+
+
       sprintf(temp, "%d matches", matches);
       if (nextPage != -1) {
         // we have a next page.

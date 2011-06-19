@@ -290,6 +290,10 @@ void delete_page(struct Page *pg)
     delete_layer(l);
     pg->layers = g_list_delete_link(pg->layers, pg->layers);
   }
+
+  if (pg->searchLayer != NULL)
+    delete_layer(pg->searchLayer);
+
   if (pg->group!=NULL) gtk_object_destroy(GTK_OBJECT(pg->group));
               // this also destroys the background's canvas items
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
@@ -2452,3 +2456,62 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri, int len)
   encoded_uri[k] = 0;
 }
 
+void page_search_draw_text_match(Page *pg, PopplerRectangle * rect) 
+{
+  //gnome_canvas_item_new(ui.cur_layer->group,
+  Layer *searchLayer = &(pg->searchLayer);
+  struct Item * searchItem = (struct Item *)g_malloc(sizeof(*searchItem));
+
+
+  searchItem->type = ITEM_SELECTRECT;
+  searchItem->path = NULL;
+
+  searchItem->canvas_item = gnome_canvas_item_new(searchLayer->group,
+      gnome_canvas_rect_get_type(), "width-pixels", 2, 
+      "fill-color-rgba", 0xffff0080,
+      "x1", rect->x1, "x2", rect->x2, "y1", rect->y1, "y2", rect->y2, NULL);
+  searchLayer->items = g_list_append(searchLayer->items, searchItem);
+  searchLayer->nitems++;
+}
+
+
+
+void page_search_layer_set(Page *pg, GList *matches)
+{
+  // add the given matches to the current page
+
+  // make sure the current layer is empty
+  if (pg->searchLayer != NULL)
+    delete_layer(pg->searchLayer);
+  
+  searchLayer = g_new(struct Layer, 1);
+  searchLayer->items = NULL;
+  searchLayer->nitems = 0;
+  searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
+
+  // add the layer to the canvas (I don't understand the semantics
+
+  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(searchLayer->group), pg->bg->canvas_item);      
+
+  for (l = matches; l && l->data; l = g_list_next (l)) {
+    PopplerRectangle *rect = (PopplerRectangle *)l->data;
+    draw_text_match(rect);
+#ifdef PRINTF_DEBUG
+    printf("Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
+           rect->x1,
+           rect->y1,
+           rect->x2,
+           rect->y2);
+#endif
+    // We don't need it any more
+
+
+
+}
+
+
+void document_render_pdf_matches(void)
+{
+  // go through every page in the results...
+  // and create and add a layer to each page
+}
