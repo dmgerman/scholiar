@@ -118,12 +118,16 @@ void install_focus_hooks(GtkWidget *w, gpointer data);
 #define RULING_GRAPHSPACING 14.17
 
 
-static void       draw_rubberband                            (GtkWidget          *widget,
-							      GdkWindow          *window,
-							      const GdkRectangle *rect,
-							      guchar              alpha);
-
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 
 void unset_flags(GtkWidget *w, gpointer flag);
 void set_flags(GtkWidget *w, gpointer flag);
+
+
+void ui_search_term_init(void);
+void ui_search_term_release(void);
+void ui_search_term_set(const char *st);
+void ui_search_print(void) ;
+
+
+void page_search_draw_match(Page *pg, PopplerRectangle * rect) ;

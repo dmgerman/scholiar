@@ -58,12 +58,11 @@ typedef struct Refstring {
 //   GList *matches;
 // } pageMatchesType;
 // 
-// typedef struct searchPdfDataType {
-//   int totalMatches;
-//   int pagesWithMatches;
-//   gchar *term;
-//   GList *pageMatches;
-// } searchDataType;
+typedef struct searchDataType {
+  int totalMatches;
+  int pagesWithMatches;
+  gchar *term;
+} searchDataType;
 
 typedef struct Background {
   int type;
@@ -211,7 +210,7 @@ typedef struct Layer {
 typedef struct Page {
   GList *layers; // the layers on the page
   int nlayers;
-  Layer searchLayer;
+  Layer  *searchLayer;
   double height, width;
   double hoffset, voffset; // offsets of canvas group rel. to canvas root
   struct Background *bg;
@@ -222,6 +221,7 @@ typedef struct Journal {
   GList *pages;  // the pages in the journal
   int npages;
   int last_attach_no; // for naming of attached backgrounds
+  char *searchTerm;
 } Journal;
 
 typedef struct Selection {
@@ -313,6 +313,7 @@ typedef struct UIData {
 #if GTK_CHECK_VERSION(2,10,0)
   GtkPrintSettings *print_settings;
 #endif
+  searchDataType searchData;
 } UIData;
 
 #define BRUSH_LINKED 0

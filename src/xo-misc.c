@@ -9,6 +9,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include "xournal.h"
 #include "xo-interface.h"
@@ -39,15 +40,33 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
 
 // some manipulation functions
 
+void init_layer(struct Layer *l)
+{
+  l->items = NULL;
+  l->nitems = 0;
+}
+
+void init_search_layer(struct Layer *searchLayer)
+{
+  assert(searchLayer != NULL);
+  init_layer(searchLayer);
+
+  // We need to add layer to  page
+}
+
 struct Page *new_page(struct Page *template)
 {
   struct Page *pg = (struct Page *) g_memdup(template, sizeof(struct Page));
   struct Layer *l = g_new(struct Layer, 1);
   
-  l->items = NULL;
-  l->nitems = 0;
+  init_layer(l);
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
+
+  pg->searchLayer = g_new(struct Layer, 1);
+  init_search_layer(pg->searchLayer);
+
+
   pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
   pg->bg->canvas_item = NULL;
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
@@ -73,10 +92,15 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
   struct Page *pg = g_new(struct Page, 1);
   struct Layer *l = g_new(struct Layer, 1);
   
-  l->items = NULL;
-  l->nitems = 0;
+  init_layer(l);
+
+
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
+
+  pg->searchLayer = g_new(struct Layer, 1);
+  init_search_layer(pg->searchLayer);
+
   pg->bg = bg;
   pg->bg->canvas_item = NULL;
   pg->height = height;
@@ -85,9 +109,16 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
       gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
   make_page_clipbox(pg);
   update_canvas_bg(pg);
+
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
+  pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
+
+  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
+
+  update_canvas_bg(pg);
+
   return pg;
 }
 
@@ -291,8 +322,7 @@ void delete_page(struct Page *pg)
     pg->layers = g_list_delete_link(pg->layers, pg->layers);
   }
 
-  if (pg->searchLayer != NULL)
-    delete_layer(pg->searchLayer);
+  delete_layer(pg->searchLayer);
 
   if (pg->group!=NULL) gtk_object_destroy(GTK_OBJECT(pg->group));
               // this also destroys the background's canvas items
@@ -307,7 +337,9 @@ void delete_page(struct Page *pg)
 void delete_layer(struct Layer *l)
 {
   struct Item *item;
-  
+
+  if (l == NULL) return;
+
   while (l->items!=NULL) {
     item = (struct Item *)l->items->data;
     if (item->type == ITEM_STROKE && item->path != NULL) 
@@ -636,10 +668,8 @@ void update_canvas_bg(struct Page *pg)
 {
   GnomeCanvasGroup *group;
   GnomeCanvasPoints *seg;
-  GdkPixbuf *scaled_pix;
   double *pt;
   double x, y;
-  int w, h;
   gboolean is_well_scaled;
   
   if (pg->bg->canvas_item != NULL)
@@ -2456,12 +2486,14 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri, int len)
   encoded_uri[k] = 0;
 }
 
-void page_search_draw_text_match(Page *pg, PopplerRectangle * rect) 
+void page_search_draw_match(Page *pg, PopplerRectangle * rect) 
 {
   //gnome_canvas_item_new(ui.cur_layer->group,
-  Layer *searchLayer = &(pg->searchLayer);
+  Layer *searchLayer = pg->searchLayer;
+
   struct Item * searchItem = (struct Item *)g_malloc(sizeof(*searchItem));
 
+  assert(searchLayer != NULL);
 
   searchItem->type = ITEM_SELECTRECT;
   searchItem->path = NULL;
@@ -2476,13 +2508,20 @@ void page_search_draw_text_match(Page *pg, PopplerRectangle * rect)
 
 
 
+void _search_page_set(int currPage, GList *matches)
+{
+  
+}
+
 void page_search_layer_set(Page *pg, GList *matches)
 {
   // add the given matches to the current page
+  Layer *searchLayer = pg->searchLayer;
+  GList *l;
 
   // make sure the current layer is empty
-  if (pg->searchLayer != NULL)
-    delete_layer(pg->searchLayer);
+  if (searchLayer != NULL)
+    delete_layer(searchLayer);
   
   searchLayer = g_new(struct Layer, 1);
   searchLayer->items = NULL;
@@ -2495,23 +2534,49 @@ void page_search_layer_set(Page *pg, GList *matches)
 
   for (l = matches; l && l->data; l = g_list_next (l)) {
     PopplerRectangle *rect = (PopplerRectangle *)l->data;
-    draw_text_match(rect);
-#ifdef PRINTF_DEBUG
-    printf("Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
-           rect->x1,
-           rect->y1,
-           rect->x2,
-           rect->y2);
-#endif
-    // We don't need it any more
-
-
-
+    page_search_draw_match(pg, rect);
+  }
 }
 
 
-void document_render_pdf_matches(void)
+// Initialize the PDF search  data structures
+void ui_search_term_init(void)
 {
-  // go through every page in the results...
-  // and create and add a layer to each page
+  ui.searchData.totalMatches = 0;
+  ui.searchData.pagesWithMatches = 0;
+  ui.searchData.term = NULL;
 }
+
+// Free any memory allocated by the searching
+void ui_search_term_release(void)
+{
+  // write code to release searching data
+  if (ui.searchData.term != NULL) {
+    g_free(ui.searchData.term);
+    ui.searchData.term = NULL;
+  }
+  ui.searchData.totalMatches = 0;
+  ui.searchData.pagesWithMatches = 0;
+}
+
+void ui_search_term_set(const char *st)
+{
+  if (ui.searchData.term != NULL) {
+    g_free(ui.searchData.term);
+  }
+  ui.searchData.term = g_strdup(st);
+}
+
+
+void ui_search_print(void) 
+{
+  if (ui.searchData.term == NULL)
+    return;
+
+  printf("Search term [%s]. Found [%d] times in [%d] pages \n", 
+         ui.searchData.term, 
+         ui.searchData.totalMatches, 
+         ui.searchData.pagesWithMatches );
+  
+}
+

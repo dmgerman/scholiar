@@ -43,6 +43,8 @@ int PDFTOPPM_PRINTING_DPI, GS_BITMAP_DPI;
 
 #define DEFAULT_PDF_VIEWER "evince -i %d '%s' "
 
+
+
 // creates a new empty journal
 
 void new_journal(void)
@@ -50,6 +52,7 @@ void new_journal(void)
   journal.npages = 1;
   journal.pages = g_list_append(NULL, new_page(&ui.default_page));
   journal.last_attach_no = 0;
+
   ui.pageno = 0;
   ui.layerno = 0;
   ui.cur_page = (struct Page *) journal.pages->data;
@@ -248,6 +251,7 @@ gboolean close_journal(void)
   clear_undo_stack();
 
   shutdown_bgpdf();
+  
   delete_journal(&journal);
   
   return TRUE;
@@ -1160,65 +1164,9 @@ gboolean bgpdf_scheduler_callback(gpointer data)
   return FALSE; // we're done
 }
 
-void bgpdf_search_term_set(const char *st)
-{
-  if (bgpdf.searchData.term != NULL) {
-    g_free(bgpdf.searchData.term);
-  }
-  bgpdf.searchData.term = g_strdup(st);
-
-}
 
 
 
-
-void bgpdf_search_print(void) 
-{
-  GList *l;
-  GList *l2;
-
-  if (bgpdf.searchData.term == NULL)
-    return;
-  printf("Search term [%s]. Found [%d] times in [%d] pages \n", 
-         bgpdf.searchData.term, 
-         bgpdf.searchData.totalMatches, 
-         bgpdf.searchData.pagesWithMatches );
-  for (l = bgpdf.searchData.pageMatches; l && l->data; l = g_list_next (l)) {
-    pageMatchesType *pageMatches = (pageMatchesType *)l->data;
-    printf("Page (%d) Matches (%d)\n", pageMatches->pageNo, pageMatches->count);
-    for (l2 = pageMatches->matches; l && l->data; l = g_list_next (l)) {
-      PopplerRectangle *rect = (PopplerRectangle *)l->data;
-        printf("   Rectangle location (%12.5f:%12.5f) (%12.5f:%12.5f)\n",  
-               rect->x1, rect->y1,rect->x2,rect->y2);
-      
-    }
-    
-  }
-
-  
-}
-
-
-// Initialize the PDF search  data structures
-static void bgpdf_search_data_init(void)
-{
-  bgpdf.searchData.totalMatches = 0;
-  bgpdf.searchData.pagesWithMatches = 0;
-  bgpdf.searchData.term = NULL;
-  bgpdf.searchData.pageMatches = NULL;
-}
-
-// Free any memory allocated by the searching
-static void bgpdf_search_data_release(void)
-{
-  // write code to release searching data
-  if (bgpdf.searchData.term != NULL) {
-    g_free(bgpdf.searchData.term);
-    bgpdf.searchData.term = NULL;
-  }
-  assert(bgpdf.searchData.term == NULL);
-  assert(bgpdf.searchData.pageMatches == NULL);
-}
 
 /* make a request */
 
@@ -1279,7 +1227,6 @@ void shutdown_bgpdf(void)
     g_object_unref(bgpdf.document);
     bgpdf.document = NULL;
   }
-  bgpdf_search_data_release();
 
   bgpdf.status = STATUS_NOT_INIT;
 }
@@ -1365,7 +1312,6 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
       update_canvas_bg(pg);
     }
   }
-  bgpdf_search_data_init();
 
   update_page_stuff();
   rescale_bg_pixmaps(); // this actually requests the pages !!
@@ -1567,7 +1513,7 @@ void init_config_default(void)
 #if GTK_CHECK_VERSION(2,10,0)
   ui.print_settings = NULL;
 #endif
-  searchLayer = NULL;
+  ui_search_term_init();
   
 }
 

@@ -300,9 +300,7 @@ on_filePrint_activate                  (GtkMenuItem     *menuitem,
   GtkPrintOperation *print;
   GtkPrintOperationResult res;
   
-  int fromPage, toPage;
-  int response;
-  char *in_fn, *p;
+  char *p;
 
   end_text();
   if (!gtk_check_version(2, 10, 0)) {
@@ -962,7 +960,6 @@ on_editInPDFViewer_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   char temp[1000];
-  char tempFileName[1200];
   char *fileName;
   GError  *error = NULL;
   GtkWidget *dialog;
@@ -1581,7 +1578,6 @@ on_papercolorOther_activate            (GtkMenuItem     *menuitem,
 {
   GtkWidget *dialog;
   GtkColorSelection *colorsel;
-  gint result;
   guint rgba;
   GdkColor gdkcolor;
   
@@ -3870,36 +3866,30 @@ int find_pdf_matches(const char *st)
 
   assert(bgpdf.document != NULL);
 
-  bgpdf_search_term_set(st);
+  ui_search_term_set(st);
 
   nPages = poppler_document_get_n_pages(bgpdf.document);
+
 
   for (currPage=0;  currPage< nPages; currPage++) {
     // find matches in this page
     pdfPage = poppler_document_get_page(bgpdf.document, currPage);
     if (pdfPage != NULL && 
         (list = poppler_page_find_text(pdfPage, st)) != NULL) {
+
+      // The page exists, and we have match
+
       double height;
       double width;
-      pageMatchesType *matches=NULL;
+      Page *page;
 
-      // We found text;
+      // find page
+      page = g_list_nth_data(journal.pages, currPage);
+      assert(page != NULL);
 
-      nPages++;
-
-      matches = g_malloc(sizeof(*matches));
-      matches->pageNo = currPage;
-      matches->matches = list;
-      matches->count = g_list_length (list);
-      // increment the total count
-      nMatches += matches->count;
 
       // we have a page, get its size, well use it later
       poppler_page_get_size (pdfPage, &width, &height);
-
-      // list contains the matches in this given page
-      
-      printf("Page %d has %d matches\n", currPage, matches->count);
 
       // Fix the coordinates of each match
       
@@ -3923,10 +3913,12 @@ int find_pdf_matches(const char *st)
                rect->y2/height);
         
         // we need to save the rectangle in a new list
-        
+        page_search_draw_match(page, rect) ;
+
+
+
       } // for loop
       // save the results
-      bgpdf_search_append_page(matches);
     }
   } 
   printf("Document has [%d] matches in %d pages\n", nMatches, nPages);
@@ -3965,7 +3957,7 @@ on_find_bar_next                       (GtkWidget       *widget,
       // we know need to add the layer to the document
       if (matches) {
         // we found something... render it
-        document_render_pdf_matches();
+        //        document_render_pdf_matches();
       }
 
 
