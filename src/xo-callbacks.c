@@ -3866,13 +3866,15 @@ int find_pdf_matches(const char *st)
 
   assert(bgpdf.document != NULL);
 
+  // If there are search items, we have to delete them...
+  journal_reset_search_layer(&journal);
+
   ui_search_term_set(st);
 
   nPages = poppler_document_get_n_pages(bgpdf.document);
 
-
   for (currPage=0;  currPage< nPages; currPage++) {
-    // find matches in this page
+    // find matches in currPage
     pdfPage = poppler_document_get_page(bgpdf.document, currPage);
     if (pdfPage != NULL && 
         (list = poppler_page_find_text(pdfPage, st)) != NULL) {
@@ -3897,6 +3899,8 @@ int find_pdf_matches(const char *st)
         PopplerRectangle *rect = (PopplerRectangle *)l->data;
         gdouble           tmp;
         
+        // Count matches
+        nMatches++;
         // PDF coordinates are bottom up, so swap.
         // but the locations are backwards...
 
@@ -3918,6 +3922,8 @@ int find_pdf_matches(const char *st)
 
 
       } // for loop
+      // Force redraw
+      gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
       // save the results
     }
   } 

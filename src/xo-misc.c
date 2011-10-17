@@ -46,13 +46,30 @@ void init_layer(struct Layer *l)
   l->nitems = 0;
 }
 
-void init_search_layer(struct Layer *searchLayer)
+void init_search_layer(Page *pg)
 {
-  assert(searchLayer != NULL);
-  init_layer(searchLayer);
-
+  pg->searchLayer = g_new(struct Layer, 1);
+  assert(pg->searchLayer != NULL);
+  init_layer(pg->searchLayer);
+  pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
+  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
   // We need to add layer to  page
 }
+
+void journal_reset_search_layer(struct Journal *j)
+{
+  struct Page *pg;
+  GList *pagelist;
+
+  for (pagelist =j->pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    // easiest is to delete
+    delete_layer(pg->searchLayer);
+    // then recreate an empty one
+    init_search_layer(pg);
+  }
+}
+
 
 struct Page *new_page(struct Page *template)
 {
@@ -63,9 +80,9 @@ struct Page *new_page(struct Page *template)
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
 
+  // We will probably not allow to search in non-pdf files...
+  // at least not for the time being
   pg->searchLayer = g_new(struct Layer, 1);
-  init_search_layer(pg->searchLayer);
-
 
   pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
   pg->bg->canvas_item = NULL;
@@ -80,6 +97,9 @@ struct Page *new_page(struct Page *template)
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
+  init_search_layer(pg->searchLayer);
+
+
   return pg;
 }
 
@@ -98,8 +118,6 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
 
-  pg->searchLayer = g_new(struct Layer, 1);
-  init_search_layer(pg->searchLayer);
 
   pg->bg = bg;
   pg->bg->canvas_item = NULL;
@@ -113,9 +131,7 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
-  pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
-
-  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
+  init_search_layer(pg);
 
   update_canvas_bg(pg);
 
