@@ -2165,10 +2165,10 @@ void hide_unimplemented(void)
 {
   gtk_widget_hide(GET_COMPONENT("filePrintOptions"));
   gtk_widget_hide(GET_COMPONENT("journalFlatten"));  
-  gtk_widget_hide(GET_COMPONENT("toolsSelectRegion"));
-  gtk_widget_hide(GET_COMPONENT("buttonSelectRegion"));
-  gtk_widget_hide(GET_COMPONENT("button2SelectRegion"));
-  gtk_widget_hide(GET_COMPONENT("button3SelectRegion"));
+ // gtk_widget_hide(GET_COMPONENT("toolsSelectRegion"));
+ // gtk_widget_hide(GET_COMPONENT("buttonSelectRegion"));
+ // gtk_widget_hide(GET_COMPONENT("button2SelectRegion"));
+ // gtk_widget_hide(GET_COMPONENT("button3SelectRegion"));
   gtk_widget_hide(GET_COMPONENT("helpIndex")); 
 
   /* config file only works with glib 2.6 and beyond */
