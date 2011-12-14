@@ -61,6 +61,10 @@ on_editDelete_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_editInsertImage_activate                 (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
 on_editRemember_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 

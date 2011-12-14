@@ -1435,6 +1435,97 @@ void process_font_sel(gchar *str)
 }
 
 /************ IMAGE FUNCTIONS **************/
+void paste_image(GdkEvent *event, struct Item *item)
+{
+  double pt[2];
+  GtkTextBuffer *buffer;
+  GnomeCanvasItem *canvas_item;
+  GdkColor color;
+  GtkWidget *dialog;
+  GtkFileFilter *filt_all;
+  GtkFileFilter *filt_gdkimage;
+  char *filename;
+  GdkPixbuf *pixbuf;
+  double scale=1;
+  gboolean clipboard_has_image;
+  
+  get_pointer_coords(event, pt);
+  
+  clipboard_has_image = gtk_clipboard_wait_is_image_available(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+  if(clipboard_has_image) {
+    printf("IMAGE READY ON CLIPBOARD\n");
+    pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+    if(pixbuf==NULL){
+	  /* open failed */
+      ui.cur_item = NULL;
+      ui.cur_item_type = ITEM_NONE;
+      return;
+    }
+    
+    if (item==NULL) {
+      item = g_new(struct Item, 1);
+      item->type = ITEM_IMAGE;
+      item->image_path = filename;
+	  printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path);
+    item->canvas_item = NULL;
+    item->bbox.left = pt[0];
+    item->bbox.top = pt[1];
+    item->image = pixbuf;
+    if(1>(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image)) //set scale so that it does not extend too far to the right
+	scale=(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image);
+    if(scale>(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image)) //set scale so that it does not extend too far to the bottom
+	scale=(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image);
+    item->image_scaled=gdk_pixbuf_scale_simple(item->image,
+					scale*gdk_pixbuf_get_width(item->image),
+					scale*gdk_pixbuf_get_height(item->image),
+					GDK_INTERP_HYPER);
+    item->bbox.right = pt[0]+gdk_pixbuf_get_width(item->image_scaled);
+    item->bbox.bottom = pt[1]+gdk_pixbuf_get_height(item->image_scaled);
+    g_memmove(&(item->brush), ui.cur_brush, sizeof(struct Brush));
+    ui.cur_layer->items = g_list_append(ui.cur_layer->items, item);
+    ui.cur_layer->nitems++;
+    }
+  
+  item->type = ITEM_IMAGE;
+  ui.cur_item = item;
+  
+  
+  canvas_item = gnome_canvas_item_new(ui.cur_layer->group,
+                             GNOME_TYPE_CANVAS_PIXBUF,
+				"anchor",GTK_ANCHOR_NW,
+				"height-in-pixels",0,
+				"width-in-pixels",0,
+				"x-in-pixels",0,
+				"y-in-pixels",0,
+				"pixbuf",item->image_scaled,
+				"x", item->bbox.left, 
+				"y", item->bbox.top,
+				"height",item->bbox.bottom-item->bbox.top, 
+				"width", item->bbox.right-item->bbox.left,  
+				NULL);
+
+  if (item->canvas_item!=NULL) {
+    lower_canvas_item_to(ui.cur_layer->group, canvas_item, item->canvas_item);
+    gtk_object_destroy(GTK_OBJECT(item->canvas_item));
+  }
+  item->canvas_item = canvas_item;
+
+  // add undo information
+  prepare_new_undo();
+  undo->type = ITEM_IMAGE;
+  undo->item = ui.cur_item;
+  undo->layer = ui.cur_layer;
+  
+  ui.cur_item = NULL;
+  ui.cur_item_type = ITEM_NONE;
+
+  } else {
+    printf("NO IMAGE YET\n");
+  }
+  
+}
+
+
 void insert_image(GdkEvent *event, struct Item *item)
 {
   double pt[2];
