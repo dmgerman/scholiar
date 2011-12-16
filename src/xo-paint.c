@@ -1449,6 +1449,7 @@ void paste_image(GdkEvent *event, struct Item *item)
   double scale=1;
   gboolean clipboard_has_image;
   char *paste_fname_base = "paste_";
+  GError *error = NULL; //for debugging img quality
 
   get_pointer_coords(event, pt);
   
@@ -1481,14 +1482,20 @@ void paste_image(GdkEvent *event, struct Item *item)
     /* 					GDK_INTERP_HYPER); */
     /* g_object_unref(pixbuf); */
     item->image = pixbuf;
+    /* gdk_pixbuf_save(item->image,"/tmp/testpixbuf1","png", &error, NULL); */
     if(1>(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image)) //set scale so that it does not extend too far to the right
 	scale=(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image);
     if(scale>(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image)) //set scale so that it does not extend too far to the bottom
 	scale=(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image);
-    item->image_scaled=gdk_pixbuf_scale_simple(item->image,
-					scale*gdk_pixbuf_get_width(item->image),
-					scale*gdk_pixbuf_get_height(item->image),
-					GDK_INTERP_HYPER);
+    /* gdk_pixbuf_save(item->image,"/tmp/testpixbuf2","png", &error, NULL); */
+    if(scale == 1)
+      item->image_scaled=gdk_pixbuf_copy(item->image);
+    else
+      item->image_scaled=gdk_pixbuf_scale_simple(item->image,
+						 scale*gdk_pixbuf_get_width(item->image),
+						 scale*gdk_pixbuf_get_height(item->image),
+						 GDK_INTERP_HYPER);
+    /* gdk_pixbuf_save(item->image_scaled,"/tmp/testpixbuf3","png", &error, NULL); */
     item->bbox.right = pt[0]+gdk_pixbuf_get_width(item->image_scaled);
     item->bbox.bottom = pt[1]+gdk_pixbuf_get_height(item->image_scaled);
     g_memmove(&(item->brush), ui.cur_brush, sizeof(struct Brush));

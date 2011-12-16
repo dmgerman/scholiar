@@ -90,7 +90,6 @@ gboolean save_journal(const char *filename)
   char *tmpfn, *tmpstr, *tmpfn_img_path, *tmpfn_img_dir, *tmpfn_img_file;
   char dbg_buffer[1000];
   char *tmpfn_full_path, *tmpfn_full_path2, *tmpfn_full_path3, *tmpstr_write;
-  char *dbg_tmpfn_full_path, *dbg_tmpfn_full_path2;
   int buflen;
   char *img_extension;
   gboolean success, img_success;
