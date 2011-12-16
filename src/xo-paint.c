@@ -602,6 +602,24 @@ gboolean start_resizesel(GdkEvent *event)
           ui.selection->resizing_top  || ui.selection->resizing_bottom)) 
       return FALSE;
 
+    // fix aspect ratio if we are near a corner
+    if ((ui.selection->resizing_left || ui.selection->resizing_right) &&
+	(ui.selection->resizing_top  || ui.selection->resizing_bottom)) {
+      ui.selection->fix_aspect_ratio = TRUE;
+      ui.selection->aspect_ratio = fabs((ui.selection->bbox.right - ui.selection->bbox.left) / 
+					(ui.selection->bbox.top - ui.selection->bbox.bottom));
+      if (ui.selection->resizing_left && ui.selection->resizing_bottom)
+	ui.selection->corner_id = 00;
+      else if (ui.selection->resizing_left && ui.selection->resizing_top)
+	ui.selection->corner_id = 01;
+      else if (ui.selection->resizing_right && ui.selection->resizing_top)
+	ui.selection->corner_id = 11;
+      else
+	ui.selection->corner_id = 10;
+    } else 
+      ui.selection->fix_aspect_ratio = FALSE;
+
+
     ui.cur_item_type = ITEM_RESIZESEL;
     ui.selection->new_y1 = ui.selection->bbox.top;
     ui.selection->new_y2 = ui.selection->bbox.bottom;
@@ -732,13 +750,90 @@ void continue_movesel(GdkEvent *event)
 void continue_resizesel(GdkEvent *event)
 {
   double pt[2];
+  double new_ar, old_ar;
+  int new_width, old_width, new_height, old_height;
 
   get_pointer_coords(event, pt);
+  old_ar = ui.selection->aspect_ratio;
+  old_width = (int)fabs(ui.selection->bbox.right - ui.selection->bbox.left);
+  old_height = (int)fabs(ui.selection->bbox.top - ui.selection->bbox.bottom);
 
-  if (ui.selection->resizing_top) ui.selection->new_y1 = pt[1];
-  if (ui.selection->resizing_bottom) ui.selection->new_y2 = pt[1];
-  if (ui.selection->resizing_left) ui.selection->new_x1 = pt[0];
-  if (ui.selection->resizing_right) ui.selection->new_x2 = pt[0];
+  if (ui.selection->resizing_top) {
+    ui.selection->new_y1 = pt[1];
+    new_height = (int) fabs(ui.selection->bbox.bottom - pt[1]);
+    new_width = old_width;
+  }
+  if (ui.selection->resizing_bottom){
+    ui.selection->new_y2 = pt[1];
+    new_height = (int) fabs(ui.selection->bbox.top - pt[1]);
+    new_width = old_width;
+  } 
+  if (ui.selection->resizing_left) {
+    ui.selection->new_x1 = pt[0];
+    new_width = (int) fabs(ui.selection->bbox.right - pt[0]);
+    new_height = old_height;
+  }
+  if (ui.selection->resizing_right) {
+    ui.selection->new_x2 = pt[0];
+    new_width = (int) fabs(ui.selection->bbox.left - pt[0]);
+    new_height = old_height;
+  }
+  
+  new_ar = (double) new_width / new_height;
+
+  if (ui.selection->fix_aspect_ratio) 
+    switch (ui.selection->corner_id) {
+    case 00:
+      if ((new_width < old_width && new_ar < old_ar)
+	  || (new_width > old_width && new_ar > old_ar)) {
+	//recompute y2
+	new_height = (int) new_width / old_ar;
+	ui.selection->new_y2 = ui.selection->bbox.top + new_height;
+      } else {
+	//recompute x1
+	new_width = (int) new_height * old_ar;
+	ui.selection->new_x1 = ui.selection->bbox.right - new_width;
+      }
+      break;
+    case 01:
+      if ((new_width < old_width && new_ar < old_ar)
+	  || (new_width > old_width && new_ar > old_ar)) {
+	//recompute y1
+	new_height = (int) new_width / old_ar;
+	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
+      } else {
+	//recompute x1
+	new_width = (int) new_height * old_ar;
+	ui.selection->new_x1 = ui.selection->bbox.right - new_width;
+      }
+      break;
+    case 10:
+      if ((new_width < old_width && new_ar < old_ar)
+	  || (new_width > old_width && new_ar > old_ar)) {
+	//recompute y2
+	new_height = (int) new_width / old_ar;
+	ui.selection->new_y2 = ui.selection->bbox.top + new_height;
+      } else {
+	//recompute x2
+	new_width = (int) new_height * old_ar;
+	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
+      }
+      break;
+    case 11:
+      if ((new_width < old_width && new_ar < old_ar)
+	  || (new_width > old_width && new_ar > old_ar)) {
+	//recompute y1
+	new_height = (int) new_width / old_ar;
+	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
+      } else {
+	//recompute x2
+	new_width = (int) new_height * old_ar;
+	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
+      }
+      break;
+    default:
+      break;
+    }
 
   gnome_canvas_item_set(ui.selection->canvas_item, 
     "x1", ui.selection->new_x1, "x2", ui.selection->new_x2,
@@ -1472,7 +1567,7 @@ void paste_image(GdkEvent *event, struct Item *item)
       item->image_path = g_malloc(strlen(paste_fname_base) + 11 * sizeof(char));
       strcpy(item->image_path, paste_fname_base);
       sprintf(&(item->image_path[strlen(paste_fname_base)]),"%d",item->image_id);
-	  printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path);
+	  /* printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path); */
     item->canvas_item = NULL;
     item->bbox.left = pt[0];
     item->bbox.top = pt[1];

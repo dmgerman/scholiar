@@ -176,8 +176,8 @@ void clear_redo_stack(void)
     }
     else if (redo->type == ITEM_IMAGE) {
       g_free(redo->item->image_path);
-      g_free(redo->item->image);
-      g_free(redo->item->image_scaled);
+      g_object_unref(redo->item->image);
+      g_object_unref(redo->item->image_scaled);
       g_free(redo->item);
     }
     else if (redo->type == ITEM_ERASURE || redo->type == ITEM_RECOGNIZER) {

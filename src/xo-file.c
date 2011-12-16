@@ -756,8 +756,6 @@ void xoj_parser_text(GMarkupParseContext *context,
     buf = g_malloc(text_len+1);
     g_snprintf(buf, text_len + 1, "%s", text);
     buf[text_len] = '\0';
-    printf("I saw an image counter set to %*s\n",text_len,text);
-    printf("buf of length %d contains %s and converted is %d\n",text_len + 1, buf, (int)g_ascii_strtoll(buf,NULL,10));
     tmpJournal.image_id_counter = (int)g_ascii_strtoll(buf,NULL,10);
     g_free(buf);
   }

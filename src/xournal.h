@@ -233,6 +233,9 @@ typedef struct Selection {
   struct Layer *layer; // the layer on which the selection lives
   double anchor_x, anchor_y, last_x, last_y; // for selection motion
   gboolean resizing_top, resizing_bottom, resizing_left, resizing_right; // for selection resizing
+  gboolean fix_aspect_ratio;
+  double aspect_ratio;
+  int corner_id;
   double new_x1, new_x2, new_y1, new_y2; // for selection resizing
   GnomeCanvasItem *canvas_item; // if the selection box is on screen 
   GList *items; // the selected items (a list of struct Item)
