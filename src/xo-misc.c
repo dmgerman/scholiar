@@ -322,6 +322,7 @@ void delete_page(struct Page *pg)
     pg->layers = g_list_delete_link(pg->layers, pg->layers);
   }
 
+  pg->searchLayer->group = NULL;
   delete_layer(pg->searchLayer);
 
   if (pg->group!=NULL) gtk_object_destroy(GTK_OBJECT(pg->group));
@@ -356,7 +357,10 @@ void delete_layer(struct Layer *l)
     g_free(item);
     l->items = g_list_delete_link(l->items, l->items);
   }
-  if (l->group!= NULL) gtk_object_destroy(GTK_OBJECT(l->group));
+  if (l->group!= NULL) {
+    printf("the group is not null\n");
+    gtk_object_destroy(GTK_OBJECT(l->group));
+  }
   g_free(l);
 }
 

@@ -923,6 +923,7 @@ on_editInsertImage_activate             (GtkMenuItem     *menuitem,
   }
 
   if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  ui.image_from_file = TRUE;
   if (ui.toolno[ui.cur_mapping] == TOOL_IMAGE) return;
 
   ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
@@ -2000,6 +2001,7 @@ on_toolsImage_activate                  (GtkMenuItem     *menuitem,
   }
   
   if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
+  ui.image_from_file = FALSE;
   if (ui.toolno[ui.cur_mapping] == TOOL_IMAGE) return;
   
   ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
@@ -2754,8 +2756,10 @@ on_canvas_button_press_event           (GtkWidget       *widget,
     start_text((GdkEvent *)event, NULL);
   }
   else if (ui.toolno[mapping] == TOOL_IMAGE) {
-    /* insert_image((GdkEvent *)event, NULL); */
-    paste_image((GdkEvent *)event, NULL);
+    if (ui.image_from_file)
+      insert_image((GdkEvent *)event, NULL);
+    else
+      paste_image((GdkEvent *)event, NULL);
   }
   return FALSE;
 }

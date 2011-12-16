@@ -17,7 +17,7 @@
    "tiny file dialog" syndrome, without hurting those with well-behaved
    versions of GTK+. Comment out if you'd prefer not to include this fix. */
 
-//#define IMAGE_DEBUG  //this is for debugging of the "insert image" patch
+#define IMAGE_DEBUG  //this is for debugging of the "insert image" patch
 
 // PREF FILES INFO
 
@@ -167,6 +167,8 @@ typedef struct Item {
   GtkWidget *widget; // the widget while text is being edited (ITEM_TEMP_TEXT)
   // the following fields for ITEM_IMAGE:
   gchar *image_path;
+  gboolean image_pasted;
+  unsigned int image_id;
   GdkPixbuf* image;  // original image for print and resizing quality
   GdkPixbuf* image_scaled; // scaled pixbuf for display
 } Item;
@@ -222,6 +224,7 @@ typedef struct Journal {
   int npages;
   int last_attach_no; // for naming of attached backgrounds
   char *searchTerm;
+  unsigned int image_id_counter;
 } Journal;
 
 typedef struct Selection {
@@ -314,6 +317,7 @@ typedef struct UIData {
   GtkPrintSettings *print_settings;
 #endif
   searchDataType searchData;
+  gboolean image_from_file; // inserting image from clipboard (default) or file?
 } UIData;
 
 #define BRUSH_LINKED 0

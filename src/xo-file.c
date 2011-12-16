@@ -52,6 +52,7 @@ void new_journal(void)
   journal.npages = 1;
   journal.pages = g_list_append(NULL, new_page(&ui.default_page));
   journal.last_attach_no = 0;
+  journal.image_id_counter = 1000;
 
   ui.pageno = 0;
   ui.layerno = 0;
@@ -86,11 +87,17 @@ gboolean save_journal(const char *filename)
   struct Layer *layer;
   struct Item *item;
   int i, is_clone;
-  char *tmpfn, *tmpstr;
-  gboolean success;
+  char *tmpfn, *tmpstr, *tmpfn_img_path, *tmpfn_img_dir, *tmpfn_img_file;
+  char dbg_buffer[1000];
+  char *tmpfn_full_path, *tmpfn_full_path2, *tmpfn_full_path3, *tmpstr_write;
+  char *dbg_tmpfn_full_path, *dbg_tmpfn_full_path2;
+  int buflen;
+  char *img_extension;
+  gboolean success, img_success;
   FILE *tmpf;
   GList *pagelist, *layerlist, *itemlist, *list;
   GtkWidget *dialog;
+  GError *error = NULL;
   
   f = gzopen(filename, "w");
   if (f==NULL) return FALSE;
@@ -101,6 +108,7 @@ gboolean save_journal(const char *filename)
   gzprintf(f, "<?xml version=\"1.0\" standalone=\"no\"?>\n"
      "<xournal version=\"" VERSION "\">\n"
      "<title>Xournal document - see http://math.mit.edu/~auroux/software/xournal/</title>\n");
+  gzprintf(f, "<imageIdCount>%d</imageIdCount>\n", journal.image_id_counter);
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
     gzprintf(f, "<page width=\"%.2f\" height=\"%.2f\">\n", pg->width, pg->height);
@@ -209,13 +217,46 @@ gboolean save_journal(const char *filename)
           g_free(tmpstr);
         }
 	if (item->type == ITEM_IMAGE) {
-          tmpstr = g_markup_escape_text(item->image_path, -1);
-          gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
-          gzprintf(f, "\">%s</image>\n", tmpstr);
-		
-	  #ifdef IMAGE_DEBUG
-	  printf("saved image '%s'  image_path: '%s'\n",tmpstr,item->image_path);
-	  #endif
+	  if (! item->image_pasted) {
+	    tmpstr = g_markup_escape_text(item->image_path, -1);
+	  } else {
+	    img_extension = "png";	
+	    tmpfn_img_path = g_path_get_dirname(filename);
+	    tmpfn_img_dir = g_path_get_basename(filename);
+	    buflen = strlen(tmpfn_img_path) + strlen(tmpfn_img_dir) + strlen(item->image_path) + strlen(img_extension) + 6;
+	    tmpfn_full_path = g_malloc(buflen);
+	    g_snprintf(tmpfn_full_path, buflen, "%s/.%s/%s.%s", tmpfn_img_path, tmpfn_img_dir, item->image_path, img_extension);
+	    tmpfn_full_path2 = g_strdup(tmpfn_full_path);
+	    tmpfn_full_path3 = strrchr(tmpfn_full_path2, '/');
+	    *tmpfn_full_path3 = '\0';
+
+	    /* tmpfn_full_path="/tmp/fixedpath.png"; */
+	    /* tmpfn_full_path2="/tmp/"; */
+	    img_success = gdk_pixbuf_save(item->image,tmpfn_full_path,img_extension, &error, NULL);
+	    tmpstr = g_markup_escape_text(tmpfn_full_path, -1);
+	    if (error) {
+	      if (!g_file_test(tmpfn_full_path2, G_FILE_TEST_EXISTS)) {
+		g_print ("Creating %s directory. \n", tmpfn_full_path2);
+		g_mkdir(tmpfn_full_path2, 0755);
+	      } 
+	      g_clear_error(&error);
+	      img_success = gdk_pixbuf_save(item->image,tmpfn_full_path,img_extension, &error, NULL);
+	    }
+
+	    /* img_success = gdk_pixbuf_save(item->image,"/tmp/test.png","png", &error, NULL); */
+#ifdef IMAGE_DEBUG
+	    printf("saved image '%s'  image_path: '%s'\n",tmpstr,item->image_path);
+	    printf("WRITING IMAGE '%d' TO: path '%s',  dir '%s'\n",item->image_id,tmpfn_img_path,tmpfn_img_dir);
+	    printf("DIRECTORY '%s'\n", tmpfn_full_path2);
+	    printf("WRITING IMAGE TO: path '%s'\n",tmpfn_full_path);
+#endif
+	    g_free(tmpfn_img_path);
+	    g_free(tmpfn_img_dir);
+	    g_free(tmpfn_full_path);
+	    g_free(tmpfn_full_path2);
+	  }
+	  gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
+	  gzprintf(f, "\">%s</image>\n", tmpstr);
           g_free(tmpstr);
         }
       }
@@ -290,7 +331,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   char *tmpbg_filename;
   GtkWidget *dialog;
   
-  if (!strcmp(element_name, "title") || !strcmp(element_name, "xournal")) {
+  if (!strcmp(element_name, "title") || !strcmp(element_name, "xournal") || !strcmp(element_name, "imageIdCount")) {
     if (tmpPage != NULL) {
       *error = xoj_invalid();
       return;
@@ -701,14 +742,26 @@ void xoj_parser_end_element(GMarkupParseContext *context,
   }
 }
 
+
+
 void xoj_parser_text(GMarkupParseContext *context,
    const gchar *text, gsize text_len, gpointer user_data, GError **error)
 {
   const gchar *element_name, *ptr;
   int n;
+  char *buf; int i;
   
   element_name = g_markup_parse_context_get_element(context);
   if (element_name == NULL) return;
+  if (strcmp(element_name,"imageIdCount") == 0) {
+    buf = g_malloc(text_len+1);
+    g_snprintf(buf, text_len + 1, "%s", text);
+    buf[text_len] = '\0';
+    printf("I saw an image counter set to %*s\n",text_len,text);
+    printf("buf of length %d contains %s and converted is %d\n",text_len + 1, buf, (int)g_ascii_strtoll(buf,NULL,10));
+    tmpJournal.image_id_counter = (int)g_ascii_strtoll(buf,NULL,10);
+    g_free(buf);
+  }
   if (!strcmp(element_name, "stroke")) {
     cleanup_numeric((gchar *)text);
     ptr = text;

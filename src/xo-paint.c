@@ -1448,7 +1448,8 @@ void paste_image(GdkEvent *event, struct Item *item)
   GdkPixbuf *pixbuf;
   double scale=1;
   gboolean clipboard_has_image;
-  
+  char *paste_fname_base = "paste_";
+
   get_pointer_coords(event, pt);
   
   clipboard_has_image = gtk_clipboard_wait_is_image_available(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
@@ -1465,7 +1466,11 @@ void paste_image(GdkEvent *event, struct Item *item)
     if (item==NULL) {
       item = g_new(struct Item, 1);
       item->type = ITEM_IMAGE;
-      item->image_path = filename;
+      item->image_pasted = TRUE;
+      item->image_id = journal.image_id_counter++;
+      item->image_path = g_malloc(strlen(paste_fname_base) + 11 * sizeof(char));
+      strcpy(item->image_path, paste_fname_base);
+      sprintf(&(item->image_path[strlen(paste_fname_base)]),"%d",item->image_id);
 	  printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path);
     item->canvas_item = NULL;
     item->bbox.left = pt[0];
@@ -1590,6 +1595,7 @@ void insert_image(GdkEvent *event, struct Item *item)
     item->bbox.left = pt[0];
     item->bbox.top = pt[1];
     item->image = pixbuf;
+    item->image_pasted = FALSE;
     if(1>(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image)) //set scale so that it does not extend too far to the right
 	scale=(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image);
     if(scale>(ui.cur_page->height-item->bbox.top)/gdk_pixbuf_get_height(item->image)) //set scale so that it does not extend too far to the bottom
