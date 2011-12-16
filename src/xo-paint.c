@@ -1475,6 +1475,11 @@ void paste_image(GdkEvent *event, struct Item *item)
     item->canvas_item = NULL;
     item->bbox.left = pt[0];
     item->bbox.top = pt[1];
+    /* item->image = gdk_pixbuf_scale_simple(pixbuf, */
+    /* 					gdk_pixbuf_get_width(pixbuf) / ui.zoom, */
+    /* 					gdk_pixbuf_get_height(pixbuf) / ui.zoom, */
+    /* 					GDK_INTERP_HYPER); */
+    /* g_object_unref(pixbuf); */
     item->image = pixbuf;
     if(1>(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image)) //set scale so that it does not extend too far to the right
 	scale=(ui.cur_page->width-item->bbox.left)/gdk_pixbuf_get_width(item->image);
