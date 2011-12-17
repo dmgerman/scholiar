@@ -757,26 +757,26 @@ void continue_resizesel(GdkEvent *event)
   old_ar = ui.selection->aspect_ratio;
   old_width = (int)fabs(ui.selection->bbox.right - ui.selection->bbox.left);
   old_height = (int)fabs(ui.selection->bbox.top - ui.selection->bbox.bottom);
+  new_height = old_height;
+  new_width = old_width;
 
   if (ui.selection->resizing_top) {
     ui.selection->new_y1 = pt[1];
     new_height = (int) fabs(ui.selection->bbox.bottom - pt[1]);
-    new_width = old_width;
+      /* printf("RESIZE TOP, OW=%d, NW=%d, OH=%d, NH=%d\n",old_width,new_width,old_height,new_height); */
   }
   if (ui.selection->resizing_bottom){
     ui.selection->new_y2 = pt[1];
     new_height = (int) fabs(ui.selection->bbox.top - pt[1]);
-    new_width = old_width;
   } 
   if (ui.selection->resizing_left) {
     ui.selection->new_x1 = pt[0];
     new_width = (int) fabs(ui.selection->bbox.right - pt[0]);
-    new_height = old_height;
   }
   if (ui.selection->resizing_right) {
     ui.selection->new_x2 = pt[0];
     new_width = (int) fabs(ui.selection->bbox.left - pt[0]);
-    new_height = old_height;
+    /* printf("RESIZE RIGHT, OW=%d, NW=%d, OH=%d, NH=%d\n",old_width,new_width,old_height,new_height); */
   }
   
   new_ar = (double) new_width / new_height;
@@ -822,11 +822,15 @@ void continue_resizesel(GdkEvent *event)
     case 11:
       if ((new_width < old_width && new_ar < old_ar)
 	  || (new_width > old_width && new_ar > old_ar)) {
+	/* printf("11 ADJ Y: OW=%d, NW=%d, D=%d, OAR=%.2f, NAR=%.2f, D=%.2f\n",old_width,new_width,(new_width-old_width),old_ar,new_ar,(old_ar-new_ar)); */
+
 	//recompute y1
 	new_height = (int) new_width / old_ar;
 	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
       } else {
 	//recompute x2
+	   printf("11 ADJ X: OW=%d, NW=%d, D=%d, OAR=%.2f, NAR=%.2f, D=%.2f\n",old_width,new_width,(new_width-old_width),old_ar,new_ar,(old_ar-new_ar));
+
 	new_width = (int) new_height * old_ar;
 	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
       }
