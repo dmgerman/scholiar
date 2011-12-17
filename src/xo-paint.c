@@ -525,7 +525,6 @@ void finalize_selectregion(void)
   bpath = gnome_canvas_path_def_bpath(ui.selection->closedlassopath); 
   vpath = art_bez_path_to_vec(bpath, 0.25); 
   lassosvp = art_svp_from_vpath(vpath); 
-  art_free(bpath);
   art_free(vpath);
 
   // hit test in lasso selection.
