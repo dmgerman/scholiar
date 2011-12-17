@@ -493,10 +493,18 @@ void start_selectrect(GdkEvent *event)
 
 void finalize_selectrect(void)
 {
-  double x1, x2, y1, y2;
+  double x1, x2, y1, y2, xmax, xmin, ymax, ymin, minwidth, minheight;
   GList *itemlist;
   struct Item *item;
-
+  gboolean SHRINK_BBOX = TRUE;
+  double DEFAULT_PADDING = 2;
+  double xpadding, ypadding;
+  double MIN_SEL_SCALE = 0.01;
+  xmax = ymax = - HUGE_VAL;
+  xmin = ymin = HUGE_VAL;
+  minwidth = MIN_SEL_SCALE*ui.screen_width;
+  minheight = MIN_SEL_SCALE*ui.screen_height;
+  
   
   ui.cur_item_type = ITEM_NONE;
 
@@ -519,8 +527,23 @@ void finalize_selectrect(void)
     if (item->bbox.left >= x1 && item->bbox.right <= x2 &&
           item->bbox.top >= y1 && item->bbox.bottom <= y2) {
       ui.selection->items = g_list_append(ui.selection->items, item); 
+
+      if (item->bbox.left < xmin) xmin = item->bbox.left;
+      if (item->bbox.right > xmax) xmax = item->bbox.right;
+      if (item->bbox.top < ymin) ymin = item->bbox.top;
+      if (item->bbox.bottom > ymax) ymax = item->bbox.bottom;
+      if (xmax - xmin < minwidth) 
+	xpadding = (minwidth - (xmax - xmin)) / 2;
+      else
+	xpadding = DEFAULT_PADDING;
+      if (ymax - ymin < minheight) 
+	ypadding = (minheight - (ymax - ymin)) / 2;
+      else
+	ypadding = DEFAULT_PADDING;
     }
   }
+  xmax += xpadding; xmin -= xpadding;
+  ymax += ypadding; ymin -= ypadding;
   
   if (ui.selection->items == NULL) {
     // if we clicked inside a text zone ?  
@@ -534,8 +557,18 @@ void finalize_selectrect(void)
     }
   }
   
-  if (ui.selection->items == NULL) reset_selection();
-  else make_dashed(ui.selection->canvas_item);
+  if (ui.selection->items == NULL) 
+    reset_selection();
+  else {
+    if (SHRINK_BBOX) {
+      ui.selection->bbox.top = ymin;   ui.selection->bbox.bottom = ymax;
+      ui.selection->bbox.left = xmin;   ui.selection->bbox.right = xmax;
+      gnome_canvas_item_set(ui.selection->canvas_item,
+			    "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
+			    "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL);
+    }
+    make_dashed(ui.selection->canvas_item);
+  }
   update_cursor();
   update_copy_paste_enabled();
   update_font_button();
@@ -602,7 +635,8 @@ gboolean start_resizesel(GdkEvent *event)
           ui.selection->resizing_top  || ui.selection->resizing_bottom)) 
       return FALSE;
 
-    // fix aspect ratio if we are near a corner
+    // fix aspect ratio if we are near a corner; corner IDs:
+    // 00 LL, 01 UL, 10 LR, 11 UR
     if ((ui.selection->resizing_left || ui.selection->resizing_right) &&
 	(ui.selection->resizing_top  || ui.selection->resizing_bottom)) {
       ui.selection->fix_aspect_ratio = TRUE;
@@ -751,7 +785,7 @@ void continue_resizesel(GdkEvent *event)
 {
   double pt[2];
   double new_ar, old_ar;
-  int new_width, old_width, new_height, old_height;
+  int new_width, old_width, new_height, old_height, tmp;
 
   get_pointer_coords(event, pt);
   old_ar = ui.selection->aspect_ratio;
@@ -780,57 +814,36 @@ void continue_resizesel(GdkEvent *event)
   }
   
   new_ar = (double) new_width / new_height;
+  tmp = new_height;
+  new_height = (int) new_width / old_ar;
+  new_width = (int) tmp * old_ar;
 
-  if (ui.selection->fix_aspect_ratio) 
-    switch (ui.selection->corner_id) {
+  //  if AR >=1 control x, match y, else control y, match x
+  if (ui.selection->fix_aspect_ratio)
+    switch (ui.selection->corner_id) { // 00 LL, 01 UL, 10 LR, 11 UR
     case 00:
-      if (old_ar >= 1) {
-	//recompute y2
-	new_height = (int) new_width / old_ar;
-	ui.selection->new_y2 = ui.selection->bbox.top + new_height;
-      } else {
-	//recompute x1
-	new_width = (int) new_height * old_ar;
-	ui.selection->new_x1 = ui.selection->bbox.right - new_width;
-      }
+      if (old_ar >= 1) //recompute y2
+  	ui.selection->new_y2 = ui.selection->bbox.top + new_height;
+      else //recompute x1
+  	ui.selection->new_x1 = ui.selection->bbox.right - new_width;
       break;
     case 01:
-      if (old_ar >= 1) {
-	//recompute y1
-	new_height = (int) new_width / old_ar;
-	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
-      } else {
-	//recompute x1
-	new_width = (int) new_height * old_ar;
-	ui.selection->new_x1 = ui.selection->bbox.right - new_width;
-      }
+      if (old_ar >= 1) //recompute y1
+  	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
+      else //recompute x1
+  	ui.selection->new_x1 = ui.selection->bbox.right - new_width;
       break;
     case 10:
-      if (old_ar >= 1) {
-	//recompute y2
-	new_height = (int) new_width / old_ar;
-	ui.selection->new_y2 = ui.selection->bbox.top + new_height;
-      } else {
-	//recompute x2
-	new_width = (int) new_height * old_ar;
-	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
-      }
+      if (old_ar >= 1) //recompute y2
+  	ui.selection->new_y2 = ui.selection->bbox.top + new_height;
+      else //recompute x2
+  	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
       break;
     case 11:
-      if (old_ar >= 1) {
-	/* printf("11 ADJ Y: OW=%d, NW=%d, D=%d, OAR=%.2f, NAR=%.2f, D=%.2f\n",old_width,new_width,(new_width-old_width),old_ar,new_ar,(old_ar-new_ar)); */
-	//recompute y1
-	new_height = (int) new_width / old_ar;
-	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
-      } else {
-	//recompute x2
-	   /* printf("11 ADJ X: OW=%d, NW=%d, D=%d, OAR=%.2f, NAR=%.2f, D=%.2f\n",old_width,new_width,(new_width-old_width),old_ar,new_ar,(old_ar-new_ar)); */
-
-	new_width = (int) new_height * old_ar;
-	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
-      }
-      break;
-    default:
+      if (old_ar >= 1) //recompute y1
+  	ui.selection->new_y1 = ui.selection->bbox.bottom - new_height;
+      else //recompute x2
+  	ui.selection->new_x2 = ui.selection->bbox.left + new_width;
       break;
     }
 
@@ -1175,7 +1188,7 @@ void clipboard_paste(void)
   update_thickness_buttons();
   update_color_buttons();
   update_font_button();  
-  update_cursor(); // FIXME: can't know if pointer is within selection!
+  update_cursor(); // FIYME: can't know if pointer is within selection!
 }
 
 // modify the color or thickness of pen strokes in a selection
