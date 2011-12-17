@@ -351,8 +351,8 @@ void delete_layer(struct Layer *l)
     }
     if (item->type == ITEM_IMAGE) {
       g_free(item->image_path);
-      if(item->image!=item->image_scaled) g_free(item->image);
-      g_free(item->image_scaled);
+      if(item->image!=item->image_scaled) g_object_unref(item->image);
+      g_object_unref(item->image_scaled);
     }
     // don't need to delete the canvas_item, as it's part of the group destroyed below
     g_free(item);
