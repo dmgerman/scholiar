@@ -36,6 +36,14 @@ void lower_canvas_item_to(GnomeCanvasGroup *g, GnomeCanvasItem *item, GnomeCanva
 void rgb_to_gdkcolor(guint rgba, GdkColor *color);
 guint32 gdkcolor_to_rgba(GdkColor gdkcolor, guint16 alpha);
 
+gboolean hittest_point(ArtSVP* lassosvp, double x, double y); 
+gboolean hittest_item(ArtSVP* lassosvp, Item* item); 
+
+double bbox_width(struct BBox b);
+double bbox_height(struct BBox b);
+void bbox_pad_symm(struct BBox *b, double xpadding, double ypadding);
+struct BBox bboxadd(struct BBox a, struct BBox b);  
+
 // interface misc functions
 
 void update_thickness_buttons(void);

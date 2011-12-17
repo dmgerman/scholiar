@@ -11,6 +11,12 @@ void finalize_erasure(void);
 
 void do_hand(GdkEvent *event);
 
+#define SHRINK_BBOX  TRUE
+#define DEFAULT_PADDING  2
+#define MIN_SEL_SCALE  0.01
+
+void start_selectregion(GdkEvent *event);
+void finalize_selectregion(void);
 void start_selectrect(GdkEvent *event);
 void finalize_selectrect(void);
 gboolean start_movesel(GdkEvent *event);

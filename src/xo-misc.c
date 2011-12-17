@@ -860,6 +860,76 @@ guint32 gdkcolor_to_rgba(GdkColor gdkcolor, guint16 alpha)
   return rgba;
 }
 
+
+// check whether a given point is inside a lasso selection. 
+gboolean hittest_point( ArtSVP* lassosvp, double x, double y ) 
+{
+  int winding; 
+
+  winding = art_svp_point_wind( lassosvp  , x, y ); 
+  return winding % 2 ; // not implement yet 
+}
+
+// check whether a given item is inside a lasso selection.
+gboolean hittest_item( ArtSVP* lassosvp, Item* item)
+{
+  gboolean result = TRUE; 
+
+  if( item->type == ITEM_STROKE ) {
+    int i ; 
+    for( i = 0 ; i < item->path->num_points ; i++ ) {
+      result = result && 
+	hittest_point( lassosvp, 
+		       item->path->coords[2*i], 
+		       item->path->coords[2*i+1] ); 
+    }
+  } 
+  else {
+    double ulx, uly, drx, dry ;
+    ulx = (item->bbox).left; 
+    uly = (item->bbox).top; 
+    drx = (item->bbox).right; 
+    dry = (item->bbox).bottom; 
+
+    result = result && hittest_point( lassosvp, ulx, uly ) &&
+      hittest_point( lassosvp, ulx, dry ) &&
+      hittest_point( lassosvp, drx, uly ) &&
+      hittest_point( lassosvp, drx, dry ) ; 
+  }
+
+  return result ; 
+}
+
+void bbox_pad_symm(struct BBox *b, double xpadding, double ypadding)
+{
+  b->left -= xpadding; b->right += xpadding;
+  b->top -= ypadding; b->bottom += ypadding;
+}
+
+double bbox_width(struct BBox b)
+{
+  return b.right - b.left;
+}
+
+double bbox_height(struct BBox b)
+{
+  return b.bottom - b.top;
+}
+
+struct BBox bboxadd( struct BBox a, struct BBox b ) 
+{
+  struct BBox result; 
+
+  result.left =	 ( a.left < b.left ) ? a.left : b.left ; 
+  result.right = ( a.right> b.right) ? a.right: b.right ; 
+  result.top	=( a.top < b.top ) ? a.top : b.top ; 
+  result.bottom =( a.bottom>b.bottom)? a.bottom : b.bottom ; 
+
+  return result; 
+}
+
+
+
 // some interface functions
 
 void update_thickness_buttons(void)
@@ -1819,6 +1889,18 @@ void reset_selection(void)
   if (ui.selection == NULL) return;
   if (ui.selection->canvas_item != NULL) 
     gtk_object_destroy(GTK_OBJECT(ui.selection->canvas_item));
+
+  if( ui.selection->closedlassopath  != NULL )
+    gnome_canvas_path_def_unref(ui.selection->closedlassopath);  
+  if( ui.selection->lassopath  != NULL )
+    gnome_canvas_path_def_unref(ui.selection->lassopath);  
+  if(ui.selection->lasso != NULL ) 
+    gtk_object_destroy(GTK_OBJECT(ui.selection->lasso)); 
+
+  // if(ui.selection->lassoclip != NULL ) 
+  //  gtk_object_destroy(GTK_OBJECT(ui.selection->lassoclip)); 
+
+ 
   g_list_free(ui.selection->items);
   g_free(ui.selection);
   ui.selection = NULL;

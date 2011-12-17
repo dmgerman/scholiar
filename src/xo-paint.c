@@ -467,6 +467,103 @@ void make_dashed(GnomeCanvasItem *item)
   gnome_canvas_item_set(item, "dash", &dash, NULL);
 }
 
+void start_selectregion(GdkEvent *event)
+{
+  double pt[2];
+  reset_selection();
+  
+  ui.cur_item_type = ITEM_SELECTREGION;
+  ui.selection = g_new(struct Selection, 1);
+  ui.selection->type = ITEM_SELECTREGION;
+  ui.selection->items = NULL;
+  ui.selection->layer = ui.cur_layer;
+  
+  ui.selection->lassopath = gnome_canvas_path_def_new(); 
+  ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath);
+  ui.selection->lasso = (GnomeCanvasBpath*)
+    gnome_canvas_item_new(ui.cur_layer->group, 
+			  gnome_canvas_bpath_get_type(),
+			  "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x80808040,
+			  "bpath",ui.selection->closedlassopath, 
+			  NULL); 
+  make_dashed((GnomeCanvasItem*)ui.selection->lasso); 
+
+  get_pointer_coords(event, pt);
+  ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
+  ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
+ 
+  ui.selection->canvas_item = 
+    gnome_canvas_item_new(ui.cur_layer->group,
+			  gnome_canvas_rect_get_type(), "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x80808040,
+			  "x1", pt[0], "x2", pt[0], "y1", pt[1], "y2", pt[1], 
+			  NULL);
+
+  gnome_canvas_path_def_moveto( ui.selection->lassopath, pt[0], pt[1] ); 
+
+  update_cursor();
+}
+
+void finalize_selectregion(void) 
+{
+  double x1, x2, y1, y2;
+  double xpadding, ypadding, minwidth, minheight, w, h;
+  GList *itemlist;
+  struct Item *item;
+  ArtBpath *bpath; 
+  ArtVpath *vpath; 
+  ArtSVP *lassosvp; 
+  
+  minwidth = MIN_SEL_SCALE*ui.screen_width;
+  minheight = MIN_SEL_SCALE*ui.screen_height;
+  
+  ui.cur_item_type = ITEM_NONE;
+  
+  bpath = gnome_canvas_path_def_bpath(ui.selection->closedlassopath); 
+  vpath = art_bez_path_to_vec(bpath, 0.25); 
+  lassosvp = art_svp_from_vpath(vpath); 
+  art_free(bpath);
+  art_free(vpath);
+
+  // hit test in lasso selection.
+  for (itemlist = ui.selection->layer->items; itemlist!=NULL; itemlist = itemlist->next) {
+    item = (struct Item *)itemlist->data;
+    if(hittest_item(lassosvp, item)) {
+      if(g_list_length(ui.selection->items) == 0)
+	ui.selection->bbox = item->bbox;
+      else 
+	ui.selection->bbox = bboxadd(ui.selection->bbox, item->bbox); 
+      
+      ui.selection->items = g_list_append(ui.selection->items, item); 
+
+      w = bbox_width(ui.selection->bbox); h = bbox_height(ui.selection->bbox);
+      xpadding = w < minwidth ? (minwidth - w) / 2 : DEFAULT_PADDING;
+      ypadding = h < minheight ? (minheight - h) / 2 : DEFAULT_PADDING;
+    }
+  }
+  bbox_pad_symm(&ui.selection->bbox, xpadding, ypadding);
+
+  if (ui.selection->items == NULL) 
+    reset_selection();
+  else {
+    // hide the temporary lasso
+    gnome_canvas_item_hide((GnomeCanvasItem*) ui.selection->lasso); 
+    gnome_canvas_item_set(ui.selection->canvas_item,
+			  "x1", ui.selection->bbox.left, "y1", ui.selection->bbox.top,
+			  "x2", ui.selection->bbox.right, "y2", ui.selection->bbox.bottom, NULL); 
+    make_dashed(ui.selection->canvas_item); 
+  }
+  update_cursor();
+  update_copy_paste_enabled();
+  update_font_button();
+
+  art_svp_free(lassosvp); 
+}
+ 
+
 
 void start_selectrect(GdkEvent *event)
 {
@@ -478,6 +575,10 @@ void start_selectrect(GdkEvent *event)
   ui.selection->type = ITEM_SELECTRECT;
   ui.selection->items = NULL;
   ui.selection->layer = ui.cur_layer;
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
+  //  ui.selection->lassoclip = NULL ; 
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
@@ -496,16 +597,12 @@ void finalize_selectrect(void)
   double x1, x2, y1, y2, xmax, xmin, ymax, ymin, minwidth, minheight;
   GList *itemlist;
   struct Item *item;
-  gboolean SHRINK_BBOX = TRUE;
-  double DEFAULT_PADDING = 2;
   double xpadding, ypadding;
-  double MIN_SEL_SCALE = 0.01;
   xmax = ymax = - HUGE_VAL;
   xmin = ymin = HUGE_VAL;
   minwidth = MIN_SEL_SCALE*ui.screen_width;
   minheight = MIN_SEL_SCALE*ui.screen_height;
-  
-  
+    
   ui.cur_item_type = ITEM_NONE;
 
   if (ui.selection->bbox.left > ui.selection->bbox.right) {
@@ -582,7 +679,7 @@ gboolean start_movesel(GdkEvent *event)
   if (ui.cur_layer != ui.selection->layer) return FALSE;
   
   get_pointer_coords(event, pt);
-  if (ui.selection->type == ITEM_SELECTRECT) {
+  if (ui.selection->type == ITEM_SELECTRECT || ui.selection->type == ITEM_SELECTREGION ) {
     if (pt[0]<ui.selection->bbox.left || pt[0]>ui.selection->bbox.right ||
         pt[1]<ui.selection->bbox.top  || pt[1]>ui.selection->bbox.bottom)
       return FALSE;
@@ -609,7 +706,7 @@ gboolean start_resizesel(GdkEvent *event)
 
   get_pointer_coords(event, pt);
 
-  if (ui.selection->type == ITEM_SELECTRECT) {
+  if (ui.selection->type == ITEM_SELECTRECT || ui.selection->type == ITEM_SELECTREGION ) {
     resize_margin = RESIZE_MARGIN/ui.zoom;
     hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
     if (hmargin>resize_margin) hmargin = resize_margin;
@@ -679,6 +776,10 @@ void start_vertspace(GdkEvent *event)
   ui.selection->type = ITEM_MOVESEL_VERT;
   ui.selection->items = NULL;
   ui.selection->layer = ui.cur_layer;
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
+
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
@@ -1106,6 +1207,10 @@ void clipboard_paste(void)
   ui.selection->layer = ui.cur_layer;
   g_memmove(&ui.selection->bbox, p, sizeof(struct BBox)); p+= sizeof(struct BBox);
   ui.selection->items = NULL;
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
+
   
   // find by how much we translate the pasted selection
   gnome_canvas_get_scroll_offsets(canvas, &sx, &sy);
