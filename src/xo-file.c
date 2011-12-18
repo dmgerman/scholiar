@@ -791,7 +791,7 @@ void xoj_parser_text(GMarkupParseContext *context,
     g_memmove(tmpItem->image_path, text, text_len);
     tmpItem->image_path[text_len]=0;
 	  #ifdef IMAGE_DEBUG
-	  printf("found image with path '%s' and length %i \n",tmpItem->image_path,text_len);
+    printf("found image with path '%s' and length %i \n",tmpItem->image_path,(int)text_len);
 	  #endif
   }
 }

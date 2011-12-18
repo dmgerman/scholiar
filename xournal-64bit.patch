@@ -1,0 +1,76 @@
+diff --git a/src/ttsubset/sft.c b/src/ttsubset/sft.c
+index e5beb94..f7e0dbf 100644
+--- a/src/ttsubset/sft.c
++++ b/src/ttsubset/sft.c
+@@ -739,7 +739,7 @@ static int GetCompoundTTOutline(TrueTypeFont *ttf, guint32 glyphID, ControlPoint
+         index = GetUInt16(ptr, 2, 1);
+         ptr += 4;
+ 
+-        if (listFind(glyphlist, (void *) (int) index)) {
++        if (listFind(glyphlist, (void *) (long) index)) {
+ #ifdef DEBUG
+             fprintf(stderr, "Endless loop found in a compound glyph.\n");
+             fprintf(stderr, "%d -> ", index);
+@@ -753,7 +753,7 @@ static int GetCompoundTTOutline(TrueTypeFont *ttf, guint32 glyphID, ControlPoint
+ #endif
+         }
+ 
+-        listAppend(glyphlist, (void *) (int) index);
++        listAppend(glyphlist, (void *) (long) index);
+ 
+ #ifdef DEBUG2
+         fprintf(stderr,"glyphlist: += %d\n", index);
+@@ -937,7 +937,7 @@ static int GetTTGlyphOutline(TrueTypeFont *ttf, guint32 glyphID, ControlPoint **
+         if (!glyphlist) {
+             glyphlistFlag = 1;
+             glyphlist = listNewEmpty();
+-            listAppend(glyphlist, (void *) glyphID);
++            listAppend(glyphlist, (void *) (long) glyphID);
+         }
+         res = GetCompoundTTOutline(ttf, glyphID, pointArray, metrics, glyphlist);
+         if (glyphlistFlag) {
+@@ -1844,7 +1844,7 @@ int GetTTGlyphComponents(TrueTypeFont *ttf, guint32 glyphID, list glyphlist)
+     if (glyphID >= ttf->nglyphs) return 0;
+     ptr = glyf + ttf->goffsets[glyphID];
+ 
+-    listAppend(glyphlist, (void *) glyphID);
++    listAppend(glyphlist, (void *) (long) glyphID);
+ 
+     if (GetInt16(ptr, 0, 1) == -1) {
+         guint16 flags, index;
+diff --git a/src/ttsubset/ttcr.c b/src/ttsubset/ttcr.c
+index 907df81..07cc38a 100644
+--- a/src/ttsubset/ttcr.c
++++ b/src/ttsubset/ttcr.c
+@@ -1302,7 +1302,7 @@ void cmapAdd(TrueTypeTable *table, guint32 id, guint32 c, guint32 g)
+ guint32 glyfAdd(TrueTypeTable *table, GlyphData *glyphdata, TrueTypeFont *fnt)
+ {
+     list l;
+-    guint32 currentID;
++    glong currentID;
+     int ret, n, ncomponents;
+     list glyphlist;
+     GlyphData *gd;
+@@ -1330,7 +1330,7 @@ guint32 glyfAdd(TrueTypeTable *table, GlyphData *glyphdata, TrueTypeFont *fnt)
+         listPositionAt(glyphlist, 1);       /* glyphData->glyphID is always the first glyph on the list */
+         do {
+             int found = 0;
+-            currentID = (guint32) listCurrent(glyphlist);
++            currentID = (glong) listCurrent(glyphlist);
+             /* XXX expensive! should be rewritten with sorted arrays! */
+             listToFirst(l);
+             do {
+diff --git a/src/xo-print.c b/src/xo-print.c
+index bb80653..3d1bda3 100644
+--- a/src/xo-print.c
++++ b/src/xo-print.c
+@@ -862,7 +862,8 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
+       }
+     font->num_glyphs_used = num-1;
+     if (OpenTTFont(font->filename, 0, &ttfnt) == SF_OK) {
+-      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &len, glyphs, encoding, num, 
++      guint32 tt_len = len;
++      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num, 
+                    0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
+         make_xref(xref, xref->last+1, pdfbuf->len);
+         nobj_fontprog = xref->last;

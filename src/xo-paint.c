@@ -7,7 +7,8 @@
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 
-#include <libart_lgpl/art_vpath_dash.h>
+#include <libart_lgpl/art_vpath_bpath.h>
+#include <libart_lgpl/art_svp_vpath.h>
 
 #include "xournal.h"
 #include "xo-callbacks.h"
@@ -152,7 +153,7 @@ void update_cursor_for_resize(double *pt)
 
 #define SUBDIVIDE_MAXDIST 5.0
 
-void subdivide_cur_path(null)
+void subdivide_cur_path()
 {
   int n, pieces, k;
   double *p;
@@ -884,7 +885,7 @@ void continue_movesel(GdkEvent *event)
 void continue_resizesel(GdkEvent *event)
 {
   double pt[2];
-  double new_ar, old_ar;
+  double old_ar;
   int new_width, old_width, new_height, old_height, tmp;
 
   get_pointer_coords(event, pt);
@@ -913,7 +914,6 @@ void continue_resizesel(GdkEvent *event)
     /* printf("RESIZE RIGHT, OW=%d, NW=%d, OH=%d, NH=%d\n",old_width,new_width,old_height,new_height); */
   }
   
-  new_ar = (double) new_width / new_height;
   tmp = new_height;
   new_height = (int) new_width / old_ar;
   new_width = (int) tmp * old_ar;

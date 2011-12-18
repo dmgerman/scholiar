@@ -6,6 +6,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
+#include <libart_lgpl/art_svp_point.h>
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
 #include <assert.h>

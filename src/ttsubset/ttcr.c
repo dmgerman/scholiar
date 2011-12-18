@@ -45,8 +45,8 @@
  */
 
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#ifdef HAVE_UNISTD_H
 #endif
 #include <fcntl.h>
 #include <stdlib.h>

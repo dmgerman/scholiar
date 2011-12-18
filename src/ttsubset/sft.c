@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include "sft.h"
 #ifdef USE_GSUB
 #include "gsub.h"

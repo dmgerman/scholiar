@@ -10,6 +10,7 @@
 #include "xournal.h"
 #include "xo-shapes.h"
 #include "xo-paint.h"
+#include "xo-misc.h"
 
 typedef struct Inertia {
   double mass, sx, sy, sxx, sxy, syy;
