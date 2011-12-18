@@ -841,8 +841,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
   guchar encoding[256];
   gushort glyphs[256];
   int i, j, num, len1, len2;
-  guint32 len;
-  gsize len_f;
+  gsize len;
   TrueTypeFont *ttfnt;
   char *seg1, *seg2;
   char *fontdata, *p;
@@ -863,8 +862,9 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
       }
     font->num_glyphs_used = num-1;
     if (OpenTTFont(font->filename, 0, &ttfnt) == SF_OK) {
-      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &len, glyphs, encoding, num, 
-                   0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
+      guint32 tt_len = len;
+      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num, 
+					0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
         make_xref(xref, xref->last+1, pdfbuf->len);
         nobj_fontprog = xref->last;
         g_string_append_printf(pdfbuf, 
@@ -880,7 +880,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
     else fallback = TRUE;
   } else {
   // embed the font file: Type1 case
-    if (g_file_get_contents(font->filename, &fontdata, &len_f, NULL) && len_f>=8) {
+    if (g_file_get_contents(font->filename, &fontdata, &len, NULL) && len>=8) {
       if (fontdata[0]==(char)0x80 && fontdata[1]==(char)0x01) {
         is_binary = TRUE;
         len1 = pfb_get_length((unsigned char *)fontdata+2);
@@ -899,7 +899,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
           if (*p=='\n' || *p=='\r') p++;
           if (*p=='\n' || *p=='\r') p++;
           len1 = p-fontdata;
-          p = g_strrstr_len(fontdata, len_f, T1_SEGMENT_3_END);
+          p = g_strrstr_len(fontdata, len, T1_SEGMENT_3_END);
           if (p==NULL) fallback = TRUE;
           else {
             // rewind 512 zeros
