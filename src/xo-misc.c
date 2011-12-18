@@ -52,7 +52,6 @@ void init_search_layer(struct Layer *searchLayer)
 {
   assert(searchLayer != NULL);
   init_layer(searchLayer);
-
   // We need to add layer to  page
 }
 
@@ -65,8 +64,8 @@ struct Page *new_page(struct Page *template)
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
 
-  /* pg->searchLayer = g_new(struct Layer, 1); */
-  /* init_search_layer(pg->searchLayer); */
+  pg->searchLayer = g_new(struct Layer, 1);
+  init_search_layer(pg->searchLayer);
 
 
   pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
@@ -100,8 +99,8 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
 
-  /* pg->searchLayer = g_new(struct Layer, 1); */
-  /* init_search_layer(pg->searchLayer); */
+  pg->searchLayer = g_new(struct Layer, 1);
+  init_search_layer(pg->searchLayer);
 
   pg->bg = bg;
   pg->bg->canvas_item = NULL;
@@ -115,9 +114,9 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
-  /* pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL); */
+  pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
 
-  /* lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);       */
+  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);
 
   update_canvas_bg(pg);
 
@@ -324,8 +323,9 @@ void delete_page(struct Page *pg)
     pg->layers = g_list_delete_link(pg->layers, pg->layers);
   }
 
-  /* pg->searchLayer->group = NULL; */
-  /* delete_layer(pg->searchLayer); */
+  if (pg->searchLayer == NULL) printf("actually sl is null\n");
+  pg->searchLayer->group = NULL;
+  delete_layer(pg->searchLayer);
 
   if (pg->group!=NULL) gtk_object_destroy(GTK_OBJECT(pg->group));
               // this also destroys the background's canvas items

@@ -346,6 +346,8 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     tmpPage->layers = NULL;
     tmpPage->nlayers = 0;
     tmpPage->group = NULL;
+    tmpPage->searchLayer = (struct Layer *)g_malloc(sizeof(struct Layer));
+    init_layer(tmpPage->searchLayer);
     tmpPage->bg = g_new(struct Background, 1);
     tmpPage->bg->type = -1;
     tmpPage->bg->canvas_item = NULL;
