@@ -22,6 +22,10 @@
 #include "xo-shapes.h"
 #include "eggfindbar.h"
 
+gboolean sp_bpath_good_dbg (ArtBpath * bpath); //DEBUG
+ArtBpath * sp_bpath_check_subpath_dbg (ArtBpath * bpath); //DEBUG
+
+
 void
 on_fileNew_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
@@ -2951,6 +2955,63 @@ on_canvas_key_press_event              (GtkWidget       *widget,
   return FALSE;
 }
 
+gboolean sp_bpath_good_dbg (ArtBpath * bpath)
+{
+	ArtBpath * bp;
+
+	g_return_val_if_fail (bpath != NULL, FALSE);
+
+	if (bpath->code == ART_END)
+                return TRUE;
+
+	bp = bpath;
+
+	while (bp->code != ART_END) {
+		bp = sp_bpath_check_subpath_dbg (bp);
+		if (bp == NULL) return FALSE;
+	}
+
+	return TRUE;
+}
+
+ArtBpath *
+sp_bpath_check_subpath_dbg (ArtBpath * bpath)
+{
+	gint i, len;
+	gboolean closed;
+
+	g_return_val_if_fail (bpath != NULL, NULL);
+
+	if (bpath->code == ART_MOVETO) {
+		closed = TRUE;
+	} else if (bpath->code == ART_MOVETO_OPEN) {
+		closed = FALSE;
+	} else {
+		return NULL;
+	}
+
+	len = 0;
+
+	for (i = 1; (bpath[i].code != ART_END) && (bpath[i].code != ART_MOVETO) && (bpath[i].code != ART_MOVETO_OPEN); i++) {
+		switch (bpath[i].code) {
+			case ART_LINETO:
+			case ART_CURVETO:
+				len++;
+				break;
+			default:
+				return NULL;
+		}
+	}
+
+	if (closed) {
+		if (len < 2) return NULL;
+		if ((bpath->x3 != bpath[i-1].x3) || (bpath->y3 != bpath[i-1].y3)) return NULL;
+	} else {
+		if (len < 1) return NULL;
+	}
+
+	return bpath + i;
+}
 
 gboolean
 on_canvas_motion_notify_event          (GtkWidget       *widget,
@@ -3033,6 +3094,10 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
     
     gnome_canvas_path_def_unref(ui.selection->closedlassopath); 
     ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath); 
+
+    ui.bad_bpath_maybe = gnome_canvas_path_def_bpath (ui.selection->closedlassopath);
+    if (! sp_bpath_good_dbg (ui.bad_bpath_maybe))
+      printf("OMG WE R GONNA CRASH!111");
     gnome_canvas_item_set((GnomeCanvasItem*) ui.selection->lasso, 
 			  "bpath",  ui.selection->closedlassopath , NULL); 
 
