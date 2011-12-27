@@ -1134,8 +1134,16 @@ void selection_to_clip(void) //TODO clipping for images
             + sizeof(int) // font_name len
             + strlen(item->font_name)+1 // font_name
             + sizeof(double); // font_size
-    }
-    else bufsz+= sizeof(int); // type
+    } else if (item->type == ITEM_IMAGE) {
+      bufsz += sizeof(int) // type
+	+ sizeof(int) //path strlen
+	+ strlen(item->image_path)+1
+	+ sizeof(gboolean)
+	+ 4*sizeof(double) // bbox 
+	+ sizeof(unsigned int)
+	+ sizeof(GdkPixbuf*)
+	+ sizeof(GdkPixbuf*);
+    } else bufsz+= sizeof(int); // type
   }
   p = buf = g_malloc(bufsz);
   g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
@@ -1166,6 +1174,21 @@ void selection_to_clip(void) //TODO clipping for images
       g_memmove(p, item->font_name, val+1); p+= val+1;
       g_memmove(p, &item->font_size, sizeof(double)); p+= sizeof(double);
     }
+    if (item->type == ITEM_IMAGE) {
+      val = strlen(item->image_path);
+      g_memmove(p, &val, sizeof(int)); p+= sizeof(int);
+      g_memmove(p, item->image_path, val+1); p+= val+1;
+      g_memmove(p, &item->image_pasted, sizeof(gboolean)); p+= sizeof(gboolean);
+      g_memmove(p, &item->bbox.left, sizeof(double)); p+= sizeof(double);
+      g_memmove(p, &item->bbox.top, sizeof(double)); p+= sizeof(double);
+      g_memmove(p, &item->bbox.right, sizeof(double)); p+= sizeof(double);
+      g_memmove(p, &item->bbox.bottom, sizeof(double)); p+= sizeof(double);
+      g_memmove(p, &item->image_id, sizeof(unsigned int)); p+= sizeof(unsigned int);
+      g_memmove(p, &item->image, sizeof(GdkPixbuf*)); p+= sizeof(GdkPixbuf*);
+      g_object_ref(item->image);
+      g_memmove(p, &item->image_scaled, sizeof(GdkPixbuf*)); p+= sizeof(GdkPixbuf*);
+      g_object_ref(item->image_scaled);
+    }
   }
   
   target.target = "_XOURNAL";
@@ -1180,7 +1203,9 @@ void selection_to_clip(void) //TODO clipping for images
 
 void clipboard_paste(void)
 {
+  GnomeCanvasItem *canvas_item;
   GtkSelectionData *sel_data;
+  GdkPixbuf *tmp_pixbuf_ptr;
   unsigned char *p;
   int nitems, npts, i, len;
   struct Item *item;
@@ -1198,10 +1223,11 @@ void clipboard_paste(void)
   if (sel_data == NULL) return; // paste failed
   
   reset_selection();
-  
+
   ui.selection = g_new(struct Selection, 1);
   p = sel_data->data + sizeof(int);
   g_memmove(&nitems, p, sizeof(int)); p+= sizeof(int);
+
   ui.selection->type = ITEM_SELECTRECT;
   ui.selection->layer = ui.cur_layer;
   g_memmove(&ui.selection->bbox, p, sizeof(struct BBox)); p+= sizeof(struct BBox);
@@ -1277,6 +1303,32 @@ void clipboard_paste(void)
       item->font_name = g_malloc(len+1);
       g_memmove(item->font_name, p, len+1); p+= len+1;
       g_memmove(&item->font_size, p, sizeof(double)); p+= sizeof(double);
+      make_canvas_item_one(ui.cur_layer->group, item);
+    }
+    if (item->type == ITEM_IMAGE) {
+      g_memmove(&len, p, sizeof(int)); p+= sizeof(int);
+      item->image_path = g_malloc(len+1);
+      g_memmove(item->image_path, p, len+1); p+= len+1;
+      g_memmove(&item->image_pasted, p, sizeof(gboolean)); p+= sizeof(gboolean);
+
+      g_memmove(&item->bbox.left, p, sizeof(double)); p+= sizeof(double);
+      g_memmove(&item->bbox.top, p, sizeof(double)); p+= sizeof(double);
+      g_memmove(&item->bbox.right, p, sizeof(double)); p+= sizeof(double);
+      g_memmove(&item->bbox.bottom, p, sizeof(double)); p+= sizeof(double);
+      item->bbox.left += hoffset;
+      item->bbox.right += hoffset;
+      item->bbox.top += voffset;
+      item->bbox.bottom += voffset;
+
+      g_memmove(&item->image_id, p, sizeof(unsigned int)); p+= sizeof(unsigned int);
+      g_memmove(&item->image, p, sizeof(GdkPixbuf*)); p+= sizeof(GdkPixbuf*);
+      g_memmove(&item->image_scaled, p, sizeof(GdkPixbuf*)); p+= sizeof(GdkPixbuf*);
+      
+      // copied image has the same underlying "image" (referenced twice), but
+      // image_scaled is copied into its own storage
+      tmp_pixbuf_ptr = gdk_pixbuf_copy(item->image_scaled);
+      g_object_unref(item->image_scaled);
+      item->image_scaled = tmp_pixbuf_ptr;
       make_canvas_item_one(ui.cur_layer->group, item);
     }
   }
