@@ -506,6 +506,34 @@ double get_pressure_multiplier(GdkEvent *event)
   return ((1-rawpressure)*ui.width_minimum_multiplier + rawpressure*ui.width_maximum_multiplier);
 }
 
+void get_possible_resize_direction(double *pt, gboolean *l, gboolean *r, gboolean *t, gboolean *b)
+{
+  double h_corner_margin, v_corner_margin, hmargin, vmargin, resize_margin;
+  if (ui.selection==NULL) return;
+  if (ui.cur_layer != ui.selection->layer) return;
+
+    resize_margin = RESIZE_MARGIN/ui.zoom;
+    hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
+    if (hmargin>resize_margin) hmargin = resize_margin;
+    vmargin = (ui.selection->bbox.bottom-ui.selection->bbox.top)*0.3;
+    if (vmargin>resize_margin) vmargin = resize_margin;
+
+  h_corner_margin = 0.25 * fabs(ui.selection->bbox.right - ui.selection->bbox.left);
+  v_corner_margin = 0.25 * fabs(ui.selection->bbox.top - ui.selection->bbox.bottom);
+
+  *l = (pt[0]<ui.selection->bbox.left+hmargin);
+  *r = (pt[0]>ui.selection->bbox.right-hmargin);
+  if (*l || *r) 
+    vmargin = v_corner_margin;
+  *t = (pt[1]<ui.selection->bbox.top+vmargin);
+  *b = (pt[1]>ui.selection->bbox.bottom-vmargin);
+  if (*t || *b) { // redo left/right tests with new margin
+    hmargin = h_corner_margin;
+    *l = (pt[0]<ui.selection->bbox.left+hmargin);
+    *r = (pt[0]>ui.selection->bbox.right-hmargin);
+  }
+}
+
 void update_item_bbox(struct Item *item)
 {
   int i;

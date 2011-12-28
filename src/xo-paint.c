@@ -124,11 +124,8 @@ void update_cursor_for_resize(double *pt)
   }
 
   ui.is_sel_cursor = TRUE;
-  can_resize_left = (pt[0] < ui.selection->bbox.left+resize_margin);
-  can_resize_right = (pt[0] > ui.selection->bbox.right-resize_margin);
-  can_resize_top = (pt[1] < ui.selection->bbox.top+resize_margin);
-  can_resize_bottom = (pt[1] > ui.selection->bbox.bottom-resize_margin);
 
+  get_possible_resize_direction(pt, &can_resize_left, &can_resize_right, &can_resize_top, &can_resize_bottom);
   if (can_resize_left) {
     if (can_resize_top) newcursor = GDK_TOP_LEFT_CORNER;
     else if (can_resize_bottom) newcursor = GDK_BOTTOM_LEFT_CORNER;
@@ -705,7 +702,8 @@ gboolean start_movesel(GdkEvent *event)
 
 gboolean start_resizesel(GdkEvent *event)
 {
-  double pt[2], resize_margin, hmargin, vmargin;
+  double pt[2];
+  gboolean can_resize_left, can_resize_right, can_resize_bottom, can_resize_top;
 
   if (ui.selection==NULL) return FALSE;
   if (ui.cur_layer != ui.selection->layer) return FALSE;
@@ -713,31 +711,16 @@ gboolean start_resizesel(GdkEvent *event)
   get_pointer_coords(event, pt);
 
   if (ui.selection->type == ITEM_SELECTRECT || ui.selection->type == ITEM_SELECTREGION ) {
-    resize_margin = RESIZE_MARGIN/ui.zoom;
-    hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
-    if (hmargin>resize_margin) hmargin = resize_margin;
-    vmargin = (ui.selection->bbox.bottom-ui.selection->bbox.top)*0.3;
-    if (vmargin>resize_margin) vmargin = resize_margin;
-
-    // make sure the click is within a box slightly bigger than the selection rectangle
-    if (pt[0]<ui.selection->bbox.left-resize_margin || 
-        pt[0]>ui.selection->bbox.right+resize_margin ||
-        pt[1]<ui.selection->bbox.top-resize_margin || 
-        pt[1]>ui.selection->bbox.bottom+resize_margin)
-      return FALSE;
+     get_possible_resize_direction(pt, &can_resize_left, &can_resize_right, &can_resize_top, &can_resize_bottom);
+     if (!(can_resize_left || can_resize_right || can_resize_bottom || can_resize_top))
+       return FALSE;
 
     // now, if the click is near the edge, it's a resize operation
     // keep track of which edges we're close to, since those are the ones which should move
-    ui.selection->resizing_left = (pt[0]<ui.selection->bbox.left+hmargin);
-    ui.selection->resizing_right = (pt[0]>ui.selection->bbox.right-hmargin);
-    ui.selection->resizing_top = (pt[1]<ui.selection->bbox.top+vmargin);
-    ui.selection->resizing_bottom = (pt[1]>ui.selection->bbox.bottom-vmargin);
-
-
-    // we're not near any edge, give up
-    if (!(ui.selection->resizing_left || ui.selection->resizing_right ||
-          ui.selection->resizing_top  || ui.selection->resizing_bottom)) 
-      return FALSE;
+     ui.selection->resizing_left = can_resize_left;
+     ui.selection->resizing_right = can_resize_right;
+     ui.selection->resizing_bottom = can_resize_bottom;
+     ui.selection->resizing_top = can_resize_top;
 
     // fix aspect ratio if we are near a corner; corner IDs:
     // 00 LL, 01 UL, 10 LR, 11 UR

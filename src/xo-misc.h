@@ -84,6 +84,7 @@ void reset_focus(void);
 
 // selection / clipboard stuff
 
+void get_possible_resize_direction(double *pt, gboolean *l, gboolean *r, gboolean *t, gboolean *b);
 void reset_selection(void);
 void move_journal_items_by(GList *itemlist, double dx, double dy,
                            struct Layer *l1, struct Layer *l2, GList *depths);
