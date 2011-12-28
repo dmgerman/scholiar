@@ -684,7 +684,7 @@ gboolean start_movesel(GdkEvent *event)
       return FALSE;
     if (get_mapping((GdkEventButton *)event) == COPY_SEL_MAPPING) {
       selection_to_clip();
-      clipboard_paste_with_offset(1,1);
+      clipboard_paste_with_offset(TRUE, 1,1);
     }
     ui.cur_item_type = ITEM_MOVESEL;
     ui.selection->anchor_x = ui.selection->last_x = pt[0];
@@ -1194,9 +1194,7 @@ void selection_to_clip(void) //TODO clipping for images
 
 void clipboard_paste(void)
 {
-  double hoffset, voffset;
-  clipboard_paste_get_offset(&hoffset, &voffset);
-  clipboard_paste_with_offset(hoffset, voffset);
+  clipboard_paste_with_offset(FALSE, 0, 0);
 } 
 
 void clipboard_paste_get_offset(double *hoffset, double *voffset)
@@ -1221,7 +1219,10 @@ void clipboard_paste_get_offset(double *hoffset, double *voffset)
   *voffset = cy - (ui.selection->bbox.top+ui.selection->bbox.bottom)/2;
 }
 
-void clipboard_paste_with_offset(double hoffset, double voffset) 
+// if use_provided_offset == FALSE, hoffset and voffset parameters are
+// ignored and are recomputed inside the function (effectively it's the same
+// as the old clipboard_paste)
+void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, double voffset) 
 {
   GnomeCanvasItem *canvas_item;
   GtkSelectionData *sel_data;
@@ -1254,7 +1255,9 @@ void clipboard_paste_with_offset(double hoffset, double voffset)
   ui.selection->lassopath = NULL; 
   ui.selection->closedlassopath = NULL; 
 
-  
+  if (! use_provided_offset)
+    clipboard_paste_get_offset(&hoffset, &voffset);
+
   ui.selection->bbox.left += hoffset;
   ui.selection->bbox.right += hoffset;
   ui.selection->bbox.top += voffset;

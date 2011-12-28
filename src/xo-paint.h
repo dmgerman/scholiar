@@ -34,7 +34,7 @@ void finalize_resizesel(void);
 void selection_delete(void);
 void selection_to_clip(void);
 void clipboard_paste_get_offset(double *hoffset, double *voffset);
-void clipboard_paste_with_offset(double hoffset, double voffset);
+void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, double voffset);
 void clipboard_paste(void);
 
 void recolor_selection(int color_no, guint color_rgba);
