@@ -2707,7 +2707,8 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 
   // process the event
   
-  if (ui.toolno[mapping] == TOOL_HAND || (ui.touch_as_handtool && strstr(event->device->name, "touch")) != NULL) {
+  if (ui.toolno[mapping] == TOOL_HAND || 
+      (ui.touch_as_handtool && strstr(event->device->name, "touch") != NULL)) {
     ui.cur_item_type = ITEM_HAND;
     get_pointer_coords((GdkEvent *)event, ui.hand_refpt);
     ui.hand_refpt[0] += ui.cur_page->hoffset;
