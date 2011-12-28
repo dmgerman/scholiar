@@ -15,6 +15,7 @@ void do_hand(GdkEvent *event);
 #define SHRINK_BBOX  TRUE
 #define DEFAULT_PADDING  2
 #define MIN_SEL_SCALE  0.01
+#define COPY_SEL_MAPPING 2
 
 void start_selectregion(GdkEvent *event);
 void finalize_selectregion(void);
@@ -23,13 +24,17 @@ void finalize_selectrect(void);
 gboolean start_movesel(GdkEvent *event);
 void start_vertspace(GdkEvent *event);
 void continue_movesel(GdkEvent *event);
+void continue_copysel(GdkEvent *event);
 void finalize_movesel(void);
+void finalize_copysel(void);
 gboolean start_resizesel(GdkEvent *event);
 void continue_resizesel(GdkEvent *event);
 void finalize_resizesel(void);
 
 void selection_delete(void);
 void selection_to_clip(void);
+void clipboard_paste_get_offset(double *hoffset, double *voffset);
+void clipboard_paste_with_offset(double hoffset, double voffset);
 void clipboard_paste(void);
 
 void recolor_selection(int color_no, guint color_rgba);

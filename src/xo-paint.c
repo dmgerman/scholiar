@@ -674,7 +674,9 @@ void finalize_selectrect(void)
 gboolean start_movesel(GdkEvent *event)
 {
   double pt[2];
-  
+  int mapping;
+  mapping = get_mapping((GdkEventButton *)event);
+
   if (ui.selection==NULL) return FALSE;
   if (ui.cur_layer != ui.selection->layer) return FALSE;
   
@@ -683,6 +685,10 @@ gboolean start_movesel(GdkEvent *event)
     if (pt[0]<ui.selection->bbox.left || pt[0]>ui.selection->bbox.right ||
         pt[1]<ui.selection->bbox.top  || pt[1]>ui.selection->bbox.bottom)
       return FALSE;
+    if (get_mapping((GdkEventButton *)event) == COPY_SEL_MAPPING) {
+      selection_to_clip();
+      clipboard_paste_with_offset(1,1);
+    }
     ui.cur_item_type = ITEM_MOVESEL;
     ui.selection->anchor_x = ui.selection->last_x = pt[0];
     ui.selection->anchor_y = ui.selection->last_y = pt[1];
@@ -727,6 +733,7 @@ gboolean start_resizesel(GdkEvent *event)
     ui.selection->resizing_top = (pt[1]<ui.selection->bbox.top+vmargin);
     ui.selection->resizing_bottom = (pt[1]>ui.selection->bbox.bottom-vmargin);
 
+
     // we're not near any edge, give up
     if (!(ui.selection->resizing_left || ui.selection->resizing_right ||
           ui.selection->resizing_top  || ui.selection->resizing_bottom)) 
@@ -761,7 +768,8 @@ gboolean start_resizesel(GdkEvent *event)
     return TRUE;
   }
   return FALSE;
-}
+} 
+
 
 
 void start_vertspace(GdkEvent *event)
@@ -807,13 +815,14 @@ void start_vertspace(GdkEvent *event)
 }
 
 void continue_movesel(GdkEvent *event)
-{
+{//TODO: explore buildingcopysel on top of this
   double pt[2], dx, dy, upmargin;
   GList *list;
   struct Item *item;
   int tmppageno;
   struct Page *tmppage;
   
+
   get_pointer_coords(event, pt);
   if (ui.cur_item_type == ITEM_MOVESEL_VERT) pt[0] = 0;
   pt[1] += ui.selection->move_pagedelta;
@@ -1200,8 +1209,36 @@ void selection_to_clip(void) //TODO clipping for images
        callback_clipboard_get, callback_clipboard_clear, buf);
 }
 
-
 void clipboard_paste(void)
+{
+  double hoffset, voffset;
+  clipboard_paste_get_offset(&hoffset, &voffset);
+  clipboard_paste_with_offset(hoffset, voffset);
+} 
+
+void clipboard_paste_get_offset(double *hoffset, double *voffset)
+{
+  double cx, cy;
+  int sx, sy, wx, wy;
+ // find by how much we translate the pasted selection
+  gnome_canvas_get_scroll_offsets(canvas, &sx, &sy);
+  gdk_window_get_geometry(GTK_WIDGET(canvas)->window, NULL, NULL, &wx, &wy, NULL);
+  gnome_canvas_window_to_world(canvas, sx + wx/2, sy + wy/2, &cx, &cy);
+  cx -= ui.cur_page->hoffset;
+  cy -= ui.cur_page->voffset;
+  if (cx + (ui.selection->bbox.right-ui.selection->bbox.left)/2 > ui.cur_page->width)
+    cx = ui.cur_page->width - (ui.selection->bbox.right-ui.selection->bbox.left)/2;
+  if (cx - (ui.selection->bbox.right-ui.selection->bbox.left)/2 < 0)
+    cx = (ui.selection->bbox.right-ui.selection->bbox.left)/2;
+  if (cy + (ui.selection->bbox.bottom-ui.selection->bbox.top)/2 > ui.cur_page->height)
+    cy = ui.cur_page->height - (ui.selection->bbox.bottom-ui.selection->bbox.top)/2;
+  if (cy - (ui.selection->bbox.bottom-ui.selection->bbox.top)/2 < 0)
+    cy = (ui.selection->bbox.bottom-ui.selection->bbox.top)/2;
+  *hoffset = cx - (ui.selection->bbox.right+ui.selection->bbox.left)/2;
+  *voffset = cy - (ui.selection->bbox.top+ui.selection->bbox.bottom)/2;
+}
+
+void clipboard_paste_with_offset(double hoffset, double voffset) 
 {
   GnomeCanvasItem *canvas_item;
   GtkSelectionData *sel_data;
@@ -1209,9 +1246,7 @@ void clipboard_paste(void)
   unsigned char *p;
   int nitems, npts, i, len;
   struct Item *item;
-  double hoffset, voffset, cx, cy;
   double *pf;
-  int sx, sy, wx, wy;
   
   if (ui.cur_layer == NULL) return;
   
@@ -1237,22 +1272,6 @@ void clipboard_paste(void)
   ui.selection->closedlassopath = NULL; 
 
   
-  // find by how much we translate the pasted selection
-  gnome_canvas_get_scroll_offsets(canvas, &sx, &sy);
-  gdk_window_get_geometry(GTK_WIDGET(canvas)->window, NULL, NULL, &wx, &wy, NULL);
-  gnome_canvas_window_to_world(canvas, sx + wx/2, sy + wy/2, &cx, &cy);
-  cx -= ui.cur_page->hoffset;
-  cy -= ui.cur_page->voffset;
-  if (cx + (ui.selection->bbox.right-ui.selection->bbox.left)/2 > ui.cur_page->width)
-    cx = ui.cur_page->width - (ui.selection->bbox.right-ui.selection->bbox.left)/2;
-  if (cx - (ui.selection->bbox.right-ui.selection->bbox.left)/2 < 0)
-    cx = (ui.selection->bbox.right-ui.selection->bbox.left)/2;
-  if (cy + (ui.selection->bbox.bottom-ui.selection->bbox.top)/2 > ui.cur_page->height)
-    cy = ui.cur_page->height - (ui.selection->bbox.bottom-ui.selection->bbox.top)/2;
-  if (cy - (ui.selection->bbox.bottom-ui.selection->bbox.top)/2 < 0)
-    cy = (ui.selection->bbox.bottom-ui.selection->bbox.top)/2;
-  hoffset = cx - (ui.selection->bbox.right+ui.selection->bbox.left)/2;
-  voffset = cy - (ui.selection->bbox.top+ui.selection->bbox.bottom)/2;
   ui.selection->bbox.left += hoffset;
   ui.selection->bbox.right += hoffset;
   ui.selection->bbox.top += voffset;

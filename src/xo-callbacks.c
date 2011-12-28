@@ -2690,15 +2690,8 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   ui.is_corestroke = is_core;
   ui.stroke_device = event->device;
 
-  if (ui.use_erasertip && event->device->source == GDK_SOURCE_ERASER)
-    mapping = NUM_BUTTONS;
-  else if (ui.button_switch_mapping) {
-    mapping = ui.cur_mapping;
-    if (!mapping && (event->state & GDK_BUTTON2_MASK)) mapping = 1;
-    if (!mapping && (event->state & GDK_BUTTON3_MASK)) mapping = 2;
-  }
-  else mapping = event->button-1;
-
+  mapping = get_mapping(event);
+  
   // check whether we're in a page
   page_change = FALSE;
   tmppage = ui.cur_page;
@@ -3116,6 +3109,9 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   else if (ui.cur_item_type == ITEM_MOVESEL || ui.cur_item_type == ITEM_MOVESEL_VERT) {
     continue_movesel((GdkEvent *)event);
   }
+  /* else if (ui.cur_item_type == ITEM_COPYSEL) { */
+  /*   continue_copysel((GdkEvent *)event); */
+  /* } */
   else if (ui.cur_item_type == ITEM_RESIZESEL) {
     continue_resizesel((GdkEvent *)event);
   }

@@ -201,6 +201,7 @@ typedef struct Item {
 #define ITEM_RECOGNIZER 23
 #define ITEM_IMAGE 24
 #define ITEM_SELECTREGION 25
+#define ITEM_COPYSEL 26
 
 #define ITEM_MOVE_PAGE 90
 

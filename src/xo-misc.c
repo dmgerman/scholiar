@@ -397,6 +397,20 @@ void refstring_unref(struct Refstring *rs)
 
 // some helper functions
 
+int get_mapping(GdkEventButton *event)
+{
+  int mapping;
+  if (ui.use_erasertip && event->device->source == GDK_SOURCE_ERASER)
+    mapping = NUM_BUTTONS;
+  else if (ui.button_switch_mapping) {
+    mapping = ui.cur_mapping;
+    if (!mapping && (event->state & GDK_BUTTON2_MASK)) mapping = 1;
+    if (!mapping && (event->state & GDK_BUTTON3_MASK)) mapping = 2;
+  }
+  else mapping = event->button-1;
+  return mapping;
+} 
+
 void get_pointer_coords(GdkEvent *event, gdouble *ret)
 {
   double x, y;

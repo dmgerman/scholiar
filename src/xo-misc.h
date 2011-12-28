@@ -30,6 +30,8 @@ void update_canvas_bg(struct Page *pg);
 gboolean is_visible(struct Page *pg);
 void rescale_bg_pixmaps(void);
 
+int get_mapping(GdkEventButton *event);
+
 gboolean have_intersect(struct BBox *a, struct BBox *b);
 void lower_canvas_item_to(GnomeCanvasGroup *g, GnomeCanvasItem *item, GnomeCanvasItem *after);
 
