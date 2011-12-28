@@ -2613,13 +2613,14 @@ on_canvas_button_press_event           (GtkWidget       *widget,
                                         gpointer         user_data)
 {
   double pt[2];
-  gboolean page_change;
+  gboolean page_change, just_reset_sel = FALSE;
   struct Page *tmppage;
   GtkWidget *dialog;
   int mapping;
   gboolean is_core;
   struct Item *item;
   GdkEvent scroll_event;
+  gboolean deselect_without_stroke = TRUE; // tap pen on canvas to deselect
 
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonPress (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
@@ -2750,11 +2751,14 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   if (start_resizesel((GdkEvent *)event)) return FALSE;
   if (start_movesel((GdkEvent *)event)) return FALSE;
   
-  if (ui.toolno[mapping] != TOOL_SELECTREGION && ui.toolno[mapping] != TOOL_SELECTRECT)
+  if (ui.toolno[mapping] != TOOL_SELECTREGION && ui.toolno[mapping] != TOOL_SELECTRECT) {
+    if (ui.selection != NULL) {
+      just_reset_sel = TRUE;
+    }
     reset_selection();
+  }
 
   // process the event
-  
   if (ui.toolno[mapping] == TOOL_HAND || (ui.touch_as_handtool && strstr(event->device->name, "touch") != NULL)) {
     ui.cur_item_type = ITEM_HAND;
     get_pointer_coords((GdkEvent *)event, ui.hand_refpt);
@@ -2763,9 +2767,9 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   } 
   else if (ui.toolno[mapping] == TOOL_PEN || ui.toolno[mapping] == TOOL_HIGHLIGHTER ||
         (ui.toolno[mapping] == TOOL_ERASER && ui.cur_brush->tool_options == TOOLOPT_ERASER_WHITEOUT)) {
-    create_new_stroke((GdkEvent *)event);
-  } 
-  else if (ui.toolno[mapping] == TOOL_ERASER) {
+    if (!just_reset_sel && deselect_without_stroke)
+      create_new_stroke((GdkEvent *)event);
+  } else if (ui.toolno[mapping] == TOOL_ERASER) {
     ui.cur_item_type = ITEM_ERASURE;
     do_eraser((GdkEvent *)event, ui.cur_brush->thickness/2,
                ui.cur_brush->tool_options == TOOLOPT_ERASER_STROKES);

@@ -30,7 +30,7 @@
 #include "xo-print.h"
 #include "xo-shapes.h"
 
-const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "", "selectrect", "vertspace", "hand"};
+const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "selectregion", "selectrect", "vertspace", "hand"};
 const char *color_names[COLOR_MAX] = {"black", "blue", "red", "green",
    "gray", "lightblue", "lightgreen", "magenta", "orange", "yellow", "white"};
 const char *bgtype_names[3] = {"solid", "pixmap", "pdf"};
