@@ -2750,7 +2750,6 @@ on_canvas_button_press_event           (GtkWidget       *widget,
     }
     reset_selection();
   }
-
   // process the event
   if (ui.toolno[mapping] == TOOL_HAND || (ui.touch_as_handtool && strstr(event->device->name, "touch") != NULL)) {
     ui.cur_item_type = ITEM_HAND;

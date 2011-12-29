@@ -512,11 +512,23 @@ void get_possible_resize_direction(double *pt, gboolean *l, gboolean *r, gboolea
   if (ui.selection==NULL) return;
   if (ui.cur_layer != ui.selection->layer) return;
 
-    resize_margin = RESIZE_MARGIN/ui.zoom;
-    hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
-    if (hmargin>resize_margin) hmargin = resize_margin;
-    vmargin = (ui.selection->bbox.bottom-ui.selection->bbox.top)*0.3;
-    if (vmargin>resize_margin) vmargin = resize_margin;
+  resize_margin = RESIZE_MARGIN/ui.zoom;
+  hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
+  if (hmargin>resize_margin) hmargin = resize_margin;
+  vmargin = (ui.selection->bbox.bottom-ui.selection->bbox.top)*0.3;
+  if (vmargin>resize_margin) vmargin = resize_margin;
+
+  // make sure the click is within a box slightly bigger than the selection rectangle
+  if (pt[0]<ui.selection->bbox.left-resize_margin || 
+      pt[0]>ui.selection->bbox.right+resize_margin ||
+      pt[1]<ui.selection->bbox.top-resize_margin || 
+      pt[1]>ui.selection->bbox.bottom+resize_margin) {
+    *l = *r = *t = *b = FALSE;
+    return;
+  }
+
+  // If we got here, and if the click is near the edge, it's a resize operation.
+  // keep track of which edges we're close to, since those are the ones which should move
 
   h_corner_margin = 0.25 * fabs(ui.selection->bbox.right - ui.selection->bbox.left);
   v_corner_margin = 0.25 * fabs(ui.selection->bbox.top - ui.selection->bbox.bottom);
