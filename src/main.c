@@ -351,6 +351,7 @@ void init_stuff (int argc, char *argv[])
   if (fileArguments == NULL || fileArguments[0] == NULL) return;
   //  fprintf(stderr, "Fiel name %s\n", fileArguments[0]);
   /*
+
   set_cursor_busy(TRUE);
   if (g_path_is_absolute(fileArguments[0]))
     tmpfn = g_strdup(fileArguments[0]);

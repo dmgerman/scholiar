@@ -1101,6 +1101,7 @@ on_viewFirstPage_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
+
   prepare_new_undo();
   undo->type = ITEM_MOVE_PAGE;
   undo->val = ui.pageno;
@@ -2573,6 +2574,7 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   struct Item *item;
   GdkEvent scroll_event;
 
+
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonPress (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
     event->device->name, event->x, event->y, event->button, event->state);
@@ -2913,6 +2915,7 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
      or if there's a selection (then we might want to change the mouse
      cursor to indicate the possibility of resizing) */  
   if (ui.cur_item_type == ITEM_NONE && ui.selection==NULL) return FALSE;
+
   if (ui.cur_item_type == ITEM_TEXT || ui.cur_item_type == ITEM_IMAGE) return FALSE;
 
   is_core = (event->device == gdk_device_get_core_pointer());
@@ -3831,8 +3834,6 @@ on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
   ui.button_switch_mapping = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
-
-
 void
 on_editFind_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
@@ -4044,3 +4045,5 @@ on_find_bar_prev                       (GtkWidget       *widget,
 
 
 
+=======
+>>>>>>> 0_4_5

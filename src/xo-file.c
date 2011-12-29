@@ -1462,6 +1462,7 @@ void init_config_default(void)
   ui.autoload_pdf_xoj = FALSE;
   ui.autoexport_pdf = FALSE;
   ui.pdf_viewer_cmd = DEFAULT_PDF_VIEWER;
+
   // the default UI vertical order
   ui.vertical_order[0][0] = 1; 
   ui.vertical_order[0][1] = 2; 
@@ -1596,9 +1597,11 @@ void save_config_to_file(void)
   update_keyval("general", "autoload_pdf_xoj",
     _(" automatically load filename.pdf.xoj instead of filename.pdf (true/false)"),
     g_strdup(ui.autoload_pdf_xoj?"true":"false"));
+
   update_keyval("general", "autoexport_pdf",
     _(" automatically export filename.pdf.xoj.pdf when saving the .xoj file (true/false)"),
     g_strdup(ui.autoexport_pdf?"true":"false"));
+
   update_keyval("general", "default_path",
     _(" default path for open/save (leave blank for current directory)"),
     g_strdup((ui.default_path!=NULL)?ui.default_path:""));
@@ -1989,7 +1992,9 @@ void load_config_from_file(void)
   parse_keyval_boolean("general", "use_erasertip", &ui.use_erasertip);
   parse_keyval_boolean("general", "buttons_switch_mappings", &ui.button_switch_mapping);
   parse_keyval_boolean("general", "autoload_pdf_xoj", &ui.autoload_pdf_xoj);
+
   parse_keyval_boolean("general", "autoexport_pdf", &ui.autoexport_pdf);
+
   parse_keyval_string("general", "default_path", &ui.default_path);
   parse_keyval_boolean("general", "pressure_sensitivity", &ui.pressure_sensitivity);
   parse_keyval_float("general", "width_minimum_multiplier", &ui.width_minimum_multiplier, 0., 10.);

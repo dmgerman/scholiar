@@ -2263,6 +2263,7 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     /* the event won't be processed since the hbox1 doesn't know what to do with it,
        so we might as well kill it and avoid confusing ourselves when it gets
        propagated further ... */
+
   printf("Here I am 1\n");
     return TRUE;
   }
@@ -2270,12 +2271,14 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     /* we let the spin button take care of itself, and don't steal its focus,
        unless the user presses Esc or Tab (in those cases we intervene) */
   printf("Here I am 2\n");
+
     if (ev->type != GDK_KEY_PRESS) return FALSE;
     if (ev->key.keyval == GDK_Escape) 
        gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), ui.pageno+1); // abort
     else if (ev->key.keyval != GDK_Tab && ev->key.keyval != GDK_ISO_Left_Tab)
        return FALSE; // let the spin button process it
   }
+
   if (gtk_widget_is_ancestor(w, GET_COMPONENT("findBar"))) {
     // are we inside the findbar... then do not still focus
     printf("Inside the findbar\n");
@@ -2451,4 +2454,5 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri, int len)
   }
   encoded_uri[k] = 0;
 }
+
 
