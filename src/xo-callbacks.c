@@ -22,6 +22,7 @@
 #include "xo-shapes.h"
 #include "eggfindbar.h"
 
+
 void
 on_fileNew_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
@@ -4172,7 +4173,55 @@ on_find_bar_prev                       (GtkWidget       *widget,
   return TRUE;
 }
 
-
-
-
+gboolean on_text_keypress_event(GtkWidget   *widget,
+                                GdkEventKey *event,
+                                gpointer     user_data) 
+{
+  gboolean stop_processing = FALSE;
+  PangoFontDescription *font;
+  gint font_size;
+  PangoStyle font_style;
+  PangoWeight font_weight;
+  char *font_string;
+  
+  if ((event->state & GDK_CONTROL_MASK) != 0
+      && (event->keyval == GDK_b ||
+          event->keyval == GDK_i ||
+          event->keyval == GDK_less ||
+          event->keyval == GDK_greater)) {
+    // get the current font, which we'll tweak
+    font = pango_font_description_from_string(ui.font_name);
+    font_size = (int)(ui.font_size + 0.5);
+    font_style = pango_font_description_get_style(font);
+    font_weight = pango_font_description_get_weight(font);
+    
+    if (event->keyval == GDK_less) {
+      font_size -= (font_size > 40 ? 8 : font_size > 28 ? 4 : font_size > 18 ? 2 : font_size > 1 ? 1 : 0);
+    }
+    if (event->keyval == GDK_greater) {
+      font_size += (font_size >= 72 ? 0 : font_size >= 40 ? 8 : font_size >= 32 ? 4 : font_size >= 18 ? 2 : 1);
+    }
+    if (event->keyval == GDK_b) {
+      font_weight = font_weight > PANGO_WEIGHT_NORMAL ? PANGO_WEIGHT_NORMAL : PANGO_WEIGHT_BOLD;
+    }
+    if (event->keyval == GDK_i) {
+      if (font_style == PANGO_STYLE_NORMAL) {
+        font_style = PANGO_STYLE_ITALIC;
+      } else {
+        font_style = PANGO_STYLE_NORMAL;
+      }
+    }
+    // make the updates
+    pango_font_description_set_size(font, font_size * PANGO_SCALE);
+    pango_font_description_set_style(font, font_style);
+    pango_font_description_set_weight(font, font_weight);
+    
+    font_string = pango_font_description_to_string(font); /* eventually free'd inside process_font_sel */
+    process_font_sel(font_string);
+    pango_font_description_free(font);
+    
+    stop_processing = TRUE;
+  }
+  return stop_processing;
+}
 

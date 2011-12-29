@@ -691,3 +691,7 @@ gboolean
 on_find_bar_prev                       (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);
+
+gboolean on_text_keypress_event(GtkWidget   *widget,
+                                GdkEventKey *event,
+                                gpointer     user_data) ;

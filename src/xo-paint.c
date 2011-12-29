@@ -1329,6 +1329,10 @@ void start_text(GdkEvent *event, struct Item *item)
   }
   item->canvas_item = canvas_item;
 
+  g_signal_connect((gpointer) item->widget, "key-press-event",
+                    G_CALLBACK(on_text_keypress_event), NULL);
+
+
   gtk_widget_show(item->widget);
   ui.resize_signal_handler = 
     g_signal_connect((gpointer) winMain, "check_resize",
