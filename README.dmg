@@ -6,13 +6,15 @@
 
 * Patches applied:
 
-|--------------------+-----------------------------------------------------------------------------------------------|
-| Name               | URL                                                                                           |
-|--------------------+-----------------------------------------------------------------------------------------------|
-| Last page seen     | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
-| Add next-prev file | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
-| Text font sizing   | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
-|--------------------+-----------------------------------------------------------------------------------------------|
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+| Name                        | URL                                                                                           |
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+| Last page seen              | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
+| Add next-prev file          | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
+| Cmd Line: Open a given page | https://sourceforge.net/tracker/index.php?func=detail&aid=2924825&group_id=163434&atid=827735 |
+| Text font sizing            | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
+| Poor man's bookmarks        | https://sourceforge.net/tracker/index.php?func=detail&aid=2838282&group_id=163434&atid=827735 |
+|-----------------------------+-----------------------------------------------------------------------------------------------|
 
 ** Load page seen
 
@@ -28,4 +30,14 @@ Opens the next/pref .xoj file  in the current directory
 Use Ctrl-B to bold, Ctrl > and Ctr < to increase size or reduce size
 of annotation
 
+* Patches I'd like to apply
 
+|-------------------------------------+-----------------------------------------------------------------------------------------------|
+| Name                                | URL                                                                                           |
+|-------------------------------------+-----------------------------------------------------------------------------------------------|
+| ortho and snap                      | https://sourceforge.net/tracker/index.php?func=detail&aid=2758895&group_id=163434&atid=827735 |
+| Preserve aspect ratio when resizing | https://sourceforge.net/tracker/index.php?func=detail&aid=3082301&group_id=163434&atid=827735 |
+| Insert images                       | https://sourceforge.net/tracker/index.php?func=detail&aid=2890925&group_id=163434&atid=827735 |
+| Check this out                      | https://sourceforge.net/tracker/index.php?func=detail&aid=3073179&group_id=163434&atid=827735 |
+| Multi-page view and Lasso           | https://sourceforge.net/tracker/index.php?func=detail&aid=2679096&group_id=163434&atid=827735 |
+|-------------------------------------+-----------------------------------------------------------------------------------------------|
