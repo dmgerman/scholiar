@@ -1,0 +1,31 @@
+* Branches
+
+- master: the main branch with my code and many extra features
+- upstream: denis code, reflecting this CVS repository
+- debian:   ubuntu xournal packages
+
+* Patches applied:
+
+|--------------------+-----------------------------------------------------------------------------------------------|
+| Name               | URL                                                                                           |
+|--------------------+-----------------------------------------------------------------------------------------------|
+| Last page seen     | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
+| Add next-prev file | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
+| Text font sizing   | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
+|--------------------+-----------------------------------------------------------------------------------------------|
+
+** Load page seen
+
+ Saves the current page number in the xoj file. When you open it
+ again, jumps there
+
+** Add next-prev file
+
+Opens the next/pref .xoj file  in the current directory
+
+** Text font sizing
+
+Use Ctrl-B to bold, Ctrl > and Ctr < to increase size or reduce size
+of annotation
+
+
