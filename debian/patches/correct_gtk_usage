@@ -1,0 +1,22 @@
+--- a/src/xo-file.c
++++ b/src/xo-file.c
+@@ -987,7 +987,18 @@
+   for (npad = 6; npad>0; npad--) {
+      ppm_name = g_strdup_printf("%s/p-%0*d.ppm", bgpdf.tmpdir, npad, req->pageno);
+      if (bgpdf.status != STATUS_ABORTED && bgpdf.status != STATUS_SHUTDOWN)
+-       pixbuf = gdk_pixbuf_new_from_file(ppm_name, NULL);
++     { // workaround for PPM loading issue in recent GTK
++       gchar *buf;
++       gsize count;
++       GdkPixbufLoader *loader = gdk_pixbuf_loader_new_with_type("pnm", NULL);
++       if (loader!=NULL && g_file_get_contents(ppm_name, &buf, &count, NULL))
++       {
++         gdk_pixbuf_loader_write(loader, buf, count, NULL);
++         pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
++         gdk_pixbuf_loader_close(loader, NULL);
++         g_free(buf);
++       }
++     }
+      ret = unlink(ppm_name);
+      g_free(ppm_name);
+      if (pixbuf != NULL || ret == 0) break;

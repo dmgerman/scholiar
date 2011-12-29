@@ -864,7 +864,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
       }
     font->num_glyphs_used = num-1;
     if (OpenTTFont(font->filename, 0, &ttfnt) == SF_OK) {
-      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num, 
+      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num,
                    0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
         make_xref(xref, xref->last+1, pdfbuf->len);
         nobj_fontprog = xref->last;
