@@ -1,10 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-if WIN32
-  SUBDIRS = ttsubset win32
-else
-  SUBDIRS = ttsubset
-endif
+SUBDIRS = ttsubset
 
 INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -25,10 +21,5 @@ xournal_SOURCES = \
 	eggfindbar.c 	eggfindbar.h \
 	xo-shapes.c xo-shapes.h
 
-if WIN32
-  xournal_LDFLAGS = -mwindows
-  xournal_LDADD = win32/xournal.res ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lz
-else
-  xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS)
-endif
+xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS)
 

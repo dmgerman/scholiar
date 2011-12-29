@@ -4070,5 +4070,3 @@ on_find_bar_prev                       (GtkWidget       *widget,
 
 
 
-=======
->>>>>>> 0_4_5
