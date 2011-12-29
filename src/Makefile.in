@@ -55,6 +55,8 @@ am_xournal_OBJECTS = main.$(OBJEXT) xo-misc.$(OBJEXT) \
 xournal_OBJECTS = $(am_xournal_OBJECTS)
 am__DEPENDENCIES_1 =
 xournal_DEPENDENCIES = ttsubset/libttsubset.a $(am__DEPENDENCIES_1)
+xournal_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(xournal_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -242,7 +244,8 @@ xournal_SOURCES = \
 	eggfindbar.c 	eggfindbar.h \
 	xo-shapes.c xo-shapes.h
 
-xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS)
+xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lX11 -lz
+xournal_LDFLAGS = -Wl,--as-needed
 all: all-recursive
 
 .SUFFIXES:
@@ -316,7 +319,7 @@ clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 xournal$(EXEEXT): $(xournal_OBJECTS) $(xournal_DEPENDENCIES) 
 	@rm -f xournal$(EXEEXT)
-	$(LINK) $(xournal_OBJECTS) $(xournal_LDADD) $(LIBS)
+	$(xournal_LINK) $(xournal_OBJECTS) $(xournal_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
