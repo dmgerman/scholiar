@@ -3836,6 +3836,99 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
   update_mappings_menu();
 }
 
+void
+open_relative_journal(int nextprev)
+{
+  const gchar *curname;
+  gchar *curdir, *ourname, *tmpname = NULL, *filename = NULL;
+  GDir *dirh;
+
+  if (ui.filename == NULL) {
+    // FIX ME... disable buttons
+    printf("FIXME: No file loaded,buttons should be disabled\n");
+    return;
+  }
+
+  // set the directory where to look
+  if (ui.filename == NULL) {
+    // no filename, so check if there is a PDF background
+    if (bgpdf.status != STATUS_NOT_INIT && bgpdf.filename != NULL) {
+      curdir = g_path_get_dirname(bgpdf.filename->s);
+    } else {
+
+      assert(ui.default_path!=NULL);
+      // we need to duplicate, since g_path_get_dirname allocates
+      curdir = g_strdup (ui.default_path);
+    }
+  } else {
+      curdir = g_path_get_dirname(ui.filename);
+  }
+
+  set_cursor_busy(TRUE);
+  dirh = g_dir_open(curdir, 0, NULL);
+  if (!dirh) {
+    g_free(curdir);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  ourname = g_path_get_basename(ui.filename);
+
+  // Scan the directory
+  while ((curname = g_dir_read_name(dirh))) {
+    int len = strlen(curname);
+    if (g_strcmp0(curname+len-4, ".xoj") != 0) {
+      continue;
+    }
+    if (g_strcmp0(curname, ourname) == nextprev) {
+      if (NULL == tmpname || g_strcmp0(curname, tmpname) == -nextprev) {
+        tmpname = g_strdup(curname);
+      }
+    }
+  }
+  g_dir_close(dirh);
+  g_free(ourname);
+
+  //  printf("FILENAME [%s][%s][%s]\n", curname,ourname,tmpname);
+
+  if (NULL == tmpname) {
+    g_free(curdir);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  filename = g_build_filename(curdir, tmpname, NULL);
+  g_free(curdir);
+  g_free(tmpname);
+
+  end_text();
+  reset_focus();
+  if (!ok_to_close()) {
+    g_free(filename);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  //  printf("To open journal [%s]", filename);
+
+  open_journal(filename);
+  set_cursor_busy(FALSE);
+
+  g_free(filename);
+}
+
+void
+on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data)
+{
+  open_relative_journal(-1);
+}
+
+void
+on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data)
+{
+  open_relative_journal(1);
+}
+
+
 
 void
 on_buttonColorChooser_set              (GtkColorButton  *colorbutton,

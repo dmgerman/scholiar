@@ -1529,6 +1529,8 @@ void init_config_default(void)
   PDFTOPPM_PRINTING_DPI = 150;
   
   ui.hiliter_opacity = 0.5;
+
+  bgpdf.filename = NULL;
   
 #if GTK_CHECK_VERSION(2,10,0)
   ui.print_settings = NULL;

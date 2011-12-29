@@ -1,5 +1,10 @@
 List of features to be implemented (not in any particular order)
 ----------------------------------------------------------------
+   
+DMG:
+
+- disable next file/prev file buttons where file not loaded
+
 
 - collaborative editing (see discussion with Erik Demaine)
 - porting to MacOS; merge Nokia port
@@ -273,3 +278,4 @@ PATCHES TO INCORPORATE:
   to bind Ctrl-B to draw a \beta" for class notes). (shape, binding) sets are
   local to one session (different for different classes; but save them into
   the xoj file maybe ?) [Felix Giannelia 09/29/2009]
+
