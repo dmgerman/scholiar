@@ -3842,6 +3842,7 @@ open_relative_journal(int nextprev)
   const gchar *curname;
   gchar *curdir, *ourname, *tmpname = NULL, *filename = NULL;
   GDir *dirh;
+  GtkWidget *dialog;
 
   if (ui.filename == NULL) {
     // FIX ME... disable buttons
@@ -3867,6 +3868,12 @@ open_relative_journal(int nextprev)
   set_cursor_busy(TRUE);
   dirh = g_dir_open(curdir, 0, NULL);
   if (!dirh) {
+
+    dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Unable to scan directory '%s'"), curdir);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
     g_free(curdir);
     set_cursor_busy(FALSE);
     return;
@@ -3891,6 +3898,12 @@ open_relative_journal(int nextprev)
   //  printf("FILENAME [%s][%s][%s]\n", curname,ourname,tmpname);
 
   if (NULL == tmpname) {
+
+    dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("No %s Xournal file in directory '%s'"), nextprev==1?"Next":"Previous", curdir);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
     g_free(curdir);
     set_cursor_busy(FALSE);
     return;
