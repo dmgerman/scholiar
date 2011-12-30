@@ -91,6 +91,9 @@ void move_journal_items_by(GList *itemlist, double dx, double dy,
 void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y,
                              double offset_x, double offset_y);
 
+// functions to work around GTK path bugs
+gboolean sp_bpath_good_check (ArtBpath * bpath); 
+ArtBpath * sp_bpath_check_subpath_check (ArtBpath * bpath); 
 
 // switch between mappings
 

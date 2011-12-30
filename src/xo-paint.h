@@ -32,10 +32,18 @@ void continue_resizesel(GdkEvent *event);
 void finalize_resizesel(void);
 
 void selection_delete(void);
+
+/* clipboard-related functions */
+
 void selection_to_clip(void);
 void clipboard_paste_get_offset(double *hoffset, double *voffset);
 void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, double voffset);
 void clipboard_paste(void);
+int buffer_size_for_item(struct Item *item);
+int buffer_size_for_header(int nimages);
+void put_item_in_buffer(struct Item *item, char *p);
+void get_item_from_buffer(struct Item *item, unsigned char *p, double hoffset, double voffset);
+void import_img_as_clipped_item();
 
 void recolor_selection(int color_no, guint color_rgba);
 void rethicken_selection(int val);

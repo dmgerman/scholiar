@@ -2722,3 +2722,77 @@ void ui_search_print(void)
   
 }
 
+// Work around GTK path bugs
+// These functions are defined in gnome-canvas-path-def.c, but are not
+// exposed in the public interface.  The bug is the following: sometimes, for
+// unclear reasons, gnome_canvas_path_def_close_all(ui.selection->lassopath)
+// does not return a closed path (bug #1).  Upon attempting to set this bad
+// lasso path to ui.selection->lasso, an internal check for path validity
+// leads to a segfault: g_object_set_valist calls gnome_canvas_shape_set_path_def 
+// (in gnome-canvas-shape.c),  which calls gnome_canvas_path_def_duplicate.  
+// There, the following lines execute: 
+// new = gnome_canvas_path_def_new_from_foreign_bpath (path->bpath);
+//       ^^^^^^^^^^^^^^^^^ returns NULL as a result of failed call to sp_bpath_good
+//	new->x = path->x;
+//      ^^^^^^ dereferences NULL and segfaults
+// This is bug #2.  As a workaround, we copy the validity-checking code 
+// from sp_bpath_good here, and will repeat closing the path until a valid path is
+// returned. The original names of functions are sp_bpath_good and sp_bpath_check_subpath;
+// here we name them sp_bpath_good_check and sp_bpath_check_subpath_check
+gboolean sp_bpath_good_check (ArtBpath * bpath)
+{
+	ArtBpath * bp;
+
+	g_return_val_if_fail (bpath != NULL, FALSE);
+
+	if (bpath->code == ART_END)
+                return TRUE;
+
+	bp = bpath;
+
+	while (bp->code != ART_END) {
+		bp = sp_bpath_check_subpath_check (bp);
+		if (bp == NULL) return FALSE;
+	}
+
+	return TRUE;
+}
+
+ArtBpath *
+sp_bpath_check_subpath_check (ArtBpath * bpath)
+{
+	gint i, len;
+	gboolean closed;
+
+	g_return_val_if_fail (bpath != NULL, NULL);
+
+	if (bpath->code == ART_MOVETO) {
+		closed = TRUE;
+	} else if (bpath->code == ART_MOVETO_OPEN) {
+		closed = FALSE;
+	} else {
+		return NULL;
+	}
+
+	len = 0;
+
+	for (i = 1; (bpath[i].code != ART_END) && (bpath[i].code != ART_MOVETO) && (bpath[i].code != ART_MOVETO_OPEN); i++) {
+		switch (bpath[i].code) {
+			case ART_LINETO:
+			case ART_CURVETO:
+				len++;
+				break;
+			default:
+				return NULL;
+		}
+	}
+
+	if (closed) {
+		if (len < 2) return NULL;
+		if ((bpath->x3 != bpath[i-1].x3) || (bpath->y3 != bpath[i-1].y3)) return NULL;
+	} else {
+		if (len < 1) return NULL;
+	}
+
+	return bpath + i;
+}
