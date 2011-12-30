@@ -566,8 +566,7 @@ void start_selectrect(GdkEvent *event)
 {
   double pt[2];
   reset_selection();
-  printf("reset sel\n\n");
-  if (ui.selection == NULL) printf("ui selection is now NULL as it should be\n");
+  
   ui.cur_item_type = ITEM_SELECTRECT;
   ui.selection = g_new(struct Selection, 1);
   ui.selection->type = ITEM_SELECTRECT;
@@ -1145,6 +1144,21 @@ int buffer_size_for_item(struct Item *item)
   return bufsz;
 }
 
+// buffer layout:
+// bufsz, nitems, nimages, [img,img_sc]*, bbox, [item]*
+// everything before the item entries is considered a header
+// the [img,img_sc] pointer pairs are for proper reference counting
+int buffer_size_for_header(int nimages)
+{
+  int bufsz = 0;
+  int img_ptr_store_size = 2*nimages*sizeof(GdkPixbuf *);
+  bufsz = 2*sizeof(int) // bufsz, nitems
+    + sizeof(struct BBox) // bbox
+    + sizeof(int) // nimages
+    + img_ptr_store_size; // store image pointers up front for easy unreferencing
+  return bufsz;
+}
+
 void put_item_in_buffer(struct Item *item, char *p)
 {
   int val;
@@ -1201,20 +1215,17 @@ void selection_to_clip(void)
   GtkTargetEntry target;
   
   if (ui.selection == NULL) return;
-  bufsz = 2*sizeof(int) // bufsz, nitems
-    + 2*sizeof(int) // im_refs, im_sc_refs
-    + sizeof(struct BBox); // bbox
-  nitems = 0; nimages = 0;
+  bufsz = 0; nitems = 0; nimages = 0;
   for (list = ui.selection->items; list != NULL; list = list->next) {
     item = (struct Item *)list->data;
     nitems++;
     if (item->type == ITEM_IMAGE) nimages++;
     bufsz += buffer_size_for_item(item);
   }
-  bufsz += sizeof(int); // nimages
   img_ptr_store_size = 2*nimages*sizeof(GdkPixbuf *);
-  bufsz += img_ptr_store_size; // store image pointers up front for easy unreferencing
-
+  bufsz += buffer_size_for_header(nimages); // size of header, incl. image
+					    // pointers which we store up
+					    // front for easy unreferencing
   p = buf = g_malloc(bufsz);
   g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
   g_memmove(p, &nitems, sizeof(int)); p+= sizeof(int);
@@ -1283,7 +1294,9 @@ void import_img_as_clipped_item()
   double scale=1;
   char *paste_fname_base = "paste_";
   int IMG_INDEX_MAX_SIZE = 11;
+  /* printf("wait for image...."); */
   pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+  /* printf("got image..."); */
   if(pixbuf==NULL){
     /* open failed */
     ui.cur_item = NULL;
@@ -1299,7 +1312,6 @@ void import_img_as_clipped_item()
   sprintf(&(item->image_path[strlen(paste_fname_base)]),"%d",item->image_id);
   item->canvas_item = NULL;
 
-  ////////////need to determine bbox!!!
   item->bbox.left = 0;
   item->bbox.top = 0;
   item->image = pixbuf;
@@ -1315,7 +1327,7 @@ void import_img_as_clipped_item()
     item->image_scaled=gdk_pixbuf_scale_simple(item->image,
 					       scale*gdk_pixbuf_get_width(item->image),
 					       scale*gdk_pixbuf_get_height(item->image),
-					       GDK_INTERP_HYPER);
+					       GDK_INTERP_NEAREST);
   /* gdk_pixbuf_save(item->image_scaled,"/tmp/testpixbuf3","png", &error, NULL); */
 
   item->bbox.right = item->bbox.left + gdk_pixbuf_get_width(item->image_scaled);
@@ -1326,26 +1338,24 @@ void import_img_as_clipped_item()
 
   // now we put this item in a buffer in the same way that a selection item
   // would be processed on copy
-   bufsz = 3*sizeof(int) // bufsz, nitems, nimages
-     + 2*sizeof(GdkPixbuf *) // image pointer store for a single image
-     + sizeof(struct BBox); // bbox
-   bufsz += buffer_size_for_item(item);
-   p = buf = g_malloc(bufsz);
-   g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
-   g_memmove(p, &nitems, sizeof(int)); p+= sizeof(int);
-   g_memmove(p, &nimages, sizeof(int)); p+= sizeof(int);
-   g_memmove(p, &item->image, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
-   g_memmove(p, &item->image_scaled, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
-   g_memmove(p, &item->bbox, sizeof(struct BBox)); p+= sizeof(struct BBox); // will this work?
-   put_item_in_buffer(item, p);
-   g_free(item);
+  bufsz = buffer_size_for_header(nimages); // size of header, incl. image
+  bufsz += buffer_size_for_item(item);
+  p = buf = g_malloc(bufsz);
+  g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
+  g_memmove(p, &nitems, sizeof(int)); p+= sizeof(int);
+  g_memmove(p, &nimages, sizeof(int)); p+= sizeof(int);
+  g_memmove(p, &item->image, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
+  g_memmove(p, &item->image_scaled, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
+  g_memmove(p, &item->bbox, sizeof(struct BBox)); p+= sizeof(struct BBox); // will this work?
+  put_item_in_buffer(item, p);
+  g_free(item);
    
    // finish setting this up as a regular selection
-   target.target = "_XOURNAL";
-   target.flags = 0;
-   target.info = 0;
-   
-   gtk_clipboard_set_with_data(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), 
+  target.target = "_XOURNAL";
+  target.flags = 0;
+  target.info = 0;
+  
+  gtk_clipboard_set_with_data(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), 
 			      &target, 1,
 			      callback_clipboard_get, callback_clipboard_clear, buf);
 
@@ -1438,7 +1448,6 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   clipboard_has_image = gtk_clipboard_wait_is_image_available(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
   if (clipboard_has_image) 
     import_img_as_clipped_item();
-  
 
   ui.cur_item_type = ITEM_PASTE;
   sel_data = gtk_clipboard_wait_for_contents(
