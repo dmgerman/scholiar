@@ -861,6 +861,15 @@
                       </widget>
                     </child>
                     <child>
+                      <widget class="GtkRadioMenuItem" id="toolsSelectObject">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">Select Ob_ject</property>
+                        <property name="use_underline">True</property>
+                        <property name="active">True</property>
+                        <property name="group">toolsPen</property>
+                      </widget>
+                    </child>
+                    <child>
                       <widget class="GtkRadioMenuItem" id="toolsVerticalSpace">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">_Vertical Space</property>

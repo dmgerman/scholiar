@@ -411,6 +411,15 @@ int get_mapping(GdkEventButton *event)
   return mapping;
 } 
 
+
+void make_bbox_copy(struct BBox *bbfrom, struct BBox *bbto, int padding)
+{
+  (*bbfrom).left = (*bbto).left - padding;
+  (*bbfrom).right = (*bbto).right + padding;
+  (*bbfrom).top = (*bbto).top - padding;
+  (*bbfrom).bottom = (*bbto).bottom + padding;
+}
+
 void get_pointer_coords(GdkEvent *event, gdouble *ret)
 {
   double x, y;

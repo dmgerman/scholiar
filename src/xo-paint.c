@@ -465,16 +465,26 @@ void make_dashed(GnomeCanvasItem *item)
   gnome_canvas_item_set(item, "dash", &dash, NULL);
 }
 
+void get_new_selection(int selection_type, struct Layer *layer)
+{
+  ui.selection = g_new(struct Selection, 1);
+  ui.selection->type = selection_type;
+  ui.selection->layer = layer;
+  ui.selection->items = NULL;
+  ui.selection->canvas_item = NULL;
+  ui.selection->move_layer = NULL;
+  ui.selection->lasso = NULL; 
+  ui.selection->lassopath = NULL; 
+  ui.selection->closedlassopath = NULL; 
+}
+
 void start_selectregion(GdkEvent *event)
 {
   double pt[2];
   reset_selection();
   
   ui.cur_item_type = ITEM_SELECTREGION;
-  ui.selection = g_new(struct Selection, 1);
-  ui.selection->type = ITEM_SELECTREGION;
-  ui.selection->items = NULL;
-  ui.selection->layer = ui.cur_layer;
+  get_new_selection(ITEM_SELECTREGION, ui.cur_layer);
   
   ui.selection->lassopath = gnome_canvas_path_def_new(); 
   ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath);
@@ -560,22 +570,13 @@ void finalize_selectregion(void)
   art_svp_free(lassosvp); 
 }
  
-
-
 void start_selectrect(GdkEvent *event)
 {
   double pt[2];
   reset_selection();
   
   ui.cur_item_type = ITEM_SELECTRECT;
-  ui.selection = g_new(struct Selection, 1);
-  ui.selection->type = ITEM_SELECTRECT;
-  ui.selection->items = NULL;
-  ui.selection->layer = ui.cur_layer;
-  ui.selection->lasso = NULL; 
-  ui.selection->lassopath = NULL; 
-  ui.selection->closedlassopath = NULL; 
-  //  ui.selection->lassoclip = NULL ; 
+  get_new_selection(ITEM_SELECTRECT, ui.cur_layer);
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
@@ -666,6 +667,49 @@ void finalize_selectrect(void)
   update_cursor();
   update_copy_paste_enabled();
   update_font_button();
+}
+
+gboolean item_under_point(struct Item *item, double *pt)
+{
+  return(pt[0] > item->bbox.left && pt[0] < item->bbox.right &&
+	 pt[1] > item->bbox.top && pt[1] < item->bbox.bottom);
+}
+
+void start_selectobject(GdkEvent *event)
+{
+  double pt[2];
+  GList *itemlist;
+  struct Item *item, *object_item = NULL;
+  
+  get_pointer_coords(event, pt);
+  for (itemlist = ui.cur_layer->items; itemlist!=NULL; itemlist = itemlist->next) {
+    item = (struct Item *)itemlist->data;
+    if (item_under_point(item, pt) && (item->type == ITEM_TEXT || item->type == ITEM_IMAGE)) 
+      object_item = item;
+  }
+  if (object_item != NULL) {
+    reset_selection();
+    ui.cur_item_type = ITEM_NONE;
+    get_new_selection(ITEM_SELECTRECT, ui.cur_layer);
+
+    make_bbox_copy(&ui.selection->bbox, &object_item->bbox, DEFAULT_PADDING);
+    
+    ui.selection->items = g_list_append(ui.selection->items, object_item); 
+
+    ui.selection->canvas_item = gnome_canvas_item_new(ui.cur_layer->group,
+      gnome_canvas_rect_get_type(), "width-pixels", 1, 
+      "outline-color-rgba", 0x000000ff,
+      "fill-color-rgba", 0x80808040,
+      "x1", pt[0], "x2", pt[0], "y1", pt[1], "y2", pt[1], NULL);
+
+    gnome_canvas_item_set(ui.selection->canvas_item,
+			  "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
+			  "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL);
+    make_dashed(ui.selection->canvas_item);
+    update_cursor();
+    update_copy_paste_enabled();
+    update_font_button();
+  }
 }
 
 gboolean start_movesel(GdkEvent *event)
@@ -762,14 +806,7 @@ void start_vertspace(GdkEvent *event)
 
   reset_selection();
   ui.cur_item_type = ITEM_MOVESEL_VERT;
-  ui.selection = g_new(struct Selection, 1);
-  ui.selection->type = ITEM_MOVESEL_VERT;
-  ui.selection->items = NULL;
-  ui.selection->layer = ui.cur_layer;
-  ui.selection->lasso = NULL; 
-  ui.selection->lassopath = NULL; 
-  ui.selection->closedlassopath = NULL; 
-
+  get_new_selection(ITEM_MOVESEL_VERT, ui.cur_layer);
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
@@ -1291,6 +1328,7 @@ void import_img_as_clipped_item()
   GtkTargetEntry target;
   GdkPixbuf *pixbuf;
   struct Item *item;
+  struct BBox selection_bbox;
   double scale=1;
   char *paste_fname_base = "paste_";
   int IMG_INDEX_MAX_SIZE = 11;
@@ -1336,6 +1374,7 @@ void import_img_as_clipped_item()
   /* ui.cur_layer->items = g_list_append(ui.cur_layer->items, item); */
   /* ui.cur_layer->nitems++; */
 
+  make_bbox_copy(&selection_bbox, &item->bbox, DEFAULT_PADDING);
   // now we put this item in a buffer in the same way that a selection item
   // would be processed on copy
   bufsz = buffer_size_for_header(nimages); // size of header, incl. image
@@ -1346,7 +1385,7 @@ void import_img_as_clipped_item()
   g_memmove(p, &nimages, sizeof(int)); p+= sizeof(int);
   g_memmove(p, &item->image, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
   g_memmove(p, &item->image_scaled, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
-  g_memmove(p, &item->bbox, sizeof(struct BBox)); p+= sizeof(struct BBox); // will this work?
+  g_memmove(p, &selection_bbox, sizeof(struct BBox)); p+= sizeof(struct BBox); 
   put_item_in_buffer(item, p);
   g_free(item);
    
@@ -1456,22 +1495,16 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   ui.cur_item_type = ITEM_NONE;
   if (sel_data == NULL) return; // paste failed
   
-  reset_selection();
-
-  ui.selection = g_new(struct Selection, 1);
   p = sel_data->data + sizeof(int);
   g_memmove(&nitems, p, sizeof(int)); p+= sizeof(int);
   g_memmove(&nimages, p, sizeof(int)); p+= sizeof(int);
   p += 2*nimages*sizeof(GdkPixbuf *); // ignore the image pointers here
 				      // (adjust refcount when retrieving
 				      // images from buffer)
-  ui.selection->type = ITEM_SELECTRECT;
-  ui.selection->layer = ui.cur_layer;
+  
+  reset_selection();
+  get_new_selection(ITEM_SELECTRECT, ui.cur_layer);
   g_memmove(&ui.selection->bbox, p, sizeof(struct BBox)); p+= sizeof(struct BBox);
-  ui.selection->items = NULL;
-  ui.selection->lasso = NULL; 
-  ui.selection->lassopath = NULL; 
-  ui.selection->closedlassopath = NULL; 
 
   if (! use_provided_offset)
     clipboard_paste_get_offset(&hoffset, &voffset);

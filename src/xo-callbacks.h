@@ -234,7 +234,9 @@ on_toolsImage_activate                  (GtkMenuItem     *menuitem,
 void
 on_toolsSelectRegion_activate          (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
-
+void
+on_toolsSelectObject_activate          (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
 void
 on_toolsSelectRectangle_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data);

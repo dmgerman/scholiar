@@ -17,7 +17,9 @@ void do_hand(GdkEvent *event);
 #define MIN_SEL_SCALE  0.01
 #define COPY_SEL_MAPPING 2
 
+void get_new_selection(int selection_type, struct Layer *layer);
 void start_selectregion(GdkEvent *event);
+void start_selectobject(GdkEvent *event);
 void finalize_selectregion(void);
 void start_selectrect(GdkEvent *event);
 void finalize_selectrect(void);

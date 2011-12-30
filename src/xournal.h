@@ -135,8 +135,10 @@ extern guint predef_bgcolors_rgba[COLOR_MAX];
 #define TOOL_VERTSPACE    6
 #define TOOL_HAND         7
 #define TOOL_IMAGE	8
+#define TOOL_SELECTOBJECT  9
+
 #define NUM_STROKE_TOOLS  3
-#define NUM_TOOLS         8
+#define NUM_TOOLS         10
 #define NUM_BUTTONS       3
 
 #define TOOLOPT_ERASER_STANDARD     0
@@ -249,8 +251,6 @@ typedef struct Selection {
   GnomeCanvasPathDef  *lassopath ; //  path for lasso selection 
   GnomeCanvasPathDef  *closedlassopath ; // for drawing lasso shape
   GnomeCanvasBpath *lasso; // for drawing lasso shape
-  //  ArtSVP *lassosvp  ;  // for selecting object
-  //  GnomeCanvasClipgroup *lassoclip; // for selecting object 
 } Selection;
 
 typedef struct UIData {
