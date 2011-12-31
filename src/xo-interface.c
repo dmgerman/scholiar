@@ -70,7 +70,6 @@ create_winMain (void)
   GtkWidget *editCopy;
   GtkWidget *editPaste;
   GtkWidget *editDelete;
-  GtkWidget *editInsertImage;
   GtkWidget *editRemember;
   GtkWidget *editStoreLink;
   GtkWidget *editInPDFViewer;
@@ -546,10 +545,6 @@ create_winMain (void)
                               GDK_Delete, (GdkModifierType) 0,
                               GTK_ACCEL_VISIBLE);
 
-
-  editInsertImage = gtk_image_menu_item_new_with_mnemonic(_("_Insert Image"));
-  gtk_widget_show (editInsertImage);
-  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editInsertImage);
 
   editRemember = gtk_image_menu_item_new_with_mnemonic(_("_Remember"));
   gtk_widget_show (editRemember);
@@ -2121,9 +2116,6 @@ create_winMain (void)
   g_signal_connect ((gpointer) editDelete, "activate",
                     G_CALLBACK (on_editDelete_activate),
                     NULL);
-  g_signal_connect ((gpointer) editInsertImage, "activate",
-                      G_CALLBACK (on_editInsertImage_activate),
-                      "insert-image");
   g_signal_connect ((gpointer) editRemember, "activate",
                     G_CALLBACK (on_editRemember_activate),
                     "remember");

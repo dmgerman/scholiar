@@ -909,34 +909,6 @@ on_editDelete_activate                 (GtkMenuItem     *menuitem,
   selection_delete();
 }
 
-//In the future, this should probably call on_toolsImage_activate (or vice versa)
-void
-on_editInsertImage_activate             (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  if (GTK_OBJECT_TYPE(menuitem) == GTK_TYPE_RADIO_MENU_ITEM) {
-    if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem)))
-      return;
-  } else {
-    if (!gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem)))
-      return;
-  }
-
-  if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
-  ui.image_from_file = TRUE;
-  if (ui.toolno[ui.cur_mapping] == TOOL_IMAGE) return;
-
-  ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
-  reset_selection();
-  ui.toolno[ui.cur_mapping] = TOOL_IMAGE;
-  ui.cur_brush = &(ui.brushes[ui.cur_mapping][TOOL_PEN]);
-  update_mapping_linkings(-1);
-  update_tool_buttons();
-  update_tool_menu();
-  update_color_menu();
-  update_cursor();
-}
-
 
 void
 on_editRemember_activate                 (GtkMenuItem     *menuitem,
@@ -2001,7 +1973,7 @@ on_toolsImage_activate                  (GtkMenuItem     *menuitem,
   }
   
   if (ui.cur_mapping != 0 && !ui.button_switch_mapping) return; // not user-generated
-  ui.image_from_file = FALSE;
+
   if (ui.toolno[ui.cur_mapping] == TOOL_IMAGE) return;
   
   ui.cur_mapping = 0; // don't use switch_mapping() (refreshes buttons too soon)
@@ -2774,10 +2746,7 @@ on_canvas_button_press_event           (GtkWidget       *widget,
     start_text((GdkEvent *)event, NULL);
   }
   else if (ui.toolno[mapping] == TOOL_IMAGE) {
-    if (ui.image_from_file)
-      insert_image((GdkEvent *)event, NULL);
-    else
-      paste_image((GdkEvent *)event, NULL);
+    insert_image((GdkEvent *)event, NULL);
   }
   return FALSE;
 }

@@ -334,7 +334,6 @@ typedef struct UIData {
   GtkPrintSettings *print_settings;
 #endif
   searchDataType searchData;
-  gboolean image_from_file; // inserting image from clipboard (default) or file?
 } UIData;
 
 #define BRUSH_LINKED 0

@@ -75,5 +75,4 @@ void process_font_sel(gchar *str);
 
 /* image functions */
 
-void paste_image(GdkEvent *event, struct Item *item);
 void insert_image(GdkEvent *event, struct Item *item);
