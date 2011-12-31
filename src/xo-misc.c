@@ -411,6 +411,39 @@ int get_mapping(GdkEventButton *event)
   return mapping;
 } 
 
+// Creates new canvas item based on what's in ui.selection depending on the
+// type (one of ITEM_SELECTREGION or ITEM_SELECTRECT).  Note that
+// ui.selection->closedlassopath or ui.selection->bbox must be set correctly
+// before calling this.
+GnomeCanvasItem* canvas_item_new_for_selection(int type)
+{
+  switch (type) {
+  case ITEM_SELECTREGION:
+    return(gnome_canvas_item_new(ui.cur_layer->group, 
+				 gnome_canvas_bpath_get_type(),
+				 "width-pixels", 1, 
+				 "outline-color-rgba", 0x000000ff,
+				 "fill-color-rgba", 0x80808040,
+				 "bpath",ui.selection->closedlassopath, 
+				 NULL)); 
+  case ITEM_SELECTRECT:
+    return(gnome_canvas_item_new(ui.cur_layer->group,
+				 gnome_canvas_rect_get_type(), "width-pixels", 1, 
+				 "outline-color-rgba", 0x000000ff,
+				 "fill-color-rgba", 0x80808040,
+				 "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
+				 "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL));
+  default:
+    return(NULL);
+  }
+}
+
+struct BBox make_bbox_from_lrtb(double l, double r, double t, double b)
+{
+  struct BBox bb;
+  bb.left = l; bb.right = r; bb.top = t; bb.bottom = b;
+  return(bb);
+}
 
 void make_bbox_copy(struct BBox *bbfrom, struct BBox *bbto, int padding)
 {

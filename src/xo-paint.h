@@ -19,7 +19,6 @@ void do_hand(GdkEvent *event);
 
 void get_new_selection(int selection_type, struct Layer *layer);
 void start_selectregion(GdkEvent *event);
-void start_selectobject(GdkEvent *event);
 void finalize_selectregion(void);
 void start_selectrect(GdkEvent *event);
 void finalize_selectrect(void);
@@ -59,6 +58,8 @@ void start_text(GdkEvent *event, struct Item *item);
 void end_text(void);
 void update_text_item_displayfont(struct Item *item);
 void rescale_text_items(void);
+gboolean item_under_point(struct Item *item, double x, double y);
+struct Item *click_is_in_object(struct Layer *layer, double x, double y);
 struct Item *click_is_in_text(struct Layer *layer, double x, double y);
 void refont_text_item(struct Item *item, gchar *font_name, double font_size);
 void process_font_sel(gchar *str);

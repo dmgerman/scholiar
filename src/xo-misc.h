@@ -18,12 +18,14 @@ struct Refstring *refstring_ref(struct Refstring *rs);
 void refstring_unref(struct Refstring *rs);
 
 // helper functions
+struct BBox make_bbox_from_lrtb(double l, double r, double t, double b);
 void make_bbox_copy(struct BBox *bbfrom, struct BBox *bbto, int padding);
 void get_pointer_coords(GdkEvent *event, double *ret);
 double get_pressure_multiplier(GdkEvent *event);
 void fix_xinput_coords(GdkEvent *event);
 void update_item_bbox(struct Item *item);
 void make_page_clipbox(struct Page *pg);
+GnomeCanvasItem* canvas_item_new_for_selection(int type);
 void make_canvas_items(void);
 void make_canvas_item_one(GnomeCanvasGroup *group, struct Item *item);
 void update_canvas_bg(struct Page *pg);

@@ -159,7 +159,6 @@ create_winMain (void)
   GtkWidget *toolsRuler;
   GtkWidget *separator9;
   GtkWidget *toolsSelectRegion;
-  GtkWidget *toolsSelectObject;
   GtkWidget *toolsSelectRectangle;
   GtkWidget *toolsVerticalSpace;
   GtkWidget *toolsHand;
@@ -983,15 +982,6 @@ create_winMain (void)
                               GTK_ACCEL_VISIBLE);
   gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (toolsSelectRegion), TRUE);
   
-  toolsSelectObject = gtk_radio_menu_item_new_with_mnemonic (toolsPen_group, _("Select Ob_ject"));
-  toolsPen_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (toolsSelectObject));
-  gtk_widget_show (toolsSelectObject);
-  gtk_container_add (GTK_CONTAINER (menuTools_menu), toolsSelectObject);
-  gtk_widget_add_accelerator (toolsSelectObject, "activate", accel_group,
-                              GDK_J, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
-                              GTK_ACCEL_VISIBLE);
-  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (toolsSelectObject), TRUE);
-
   toolsSelectRectangle = gtk_radio_menu_item_new_with_mnemonic (toolsPen_group, _("Select _Rectangle"));
   toolsPen_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (toolsSelectRectangle));
   gtk_widget_show (toolsSelectRectangle);
@@ -2284,9 +2274,6 @@ create_winMain (void)
   g_signal_connect ((gpointer) toolsSelectRegion, "toggled",
                     G_CALLBACK (on_toolsSelectRegion_activate),
                     NULL);
-  g_signal_connect ((gpointer) toolsSelectObject, "toggled",
-                    G_CALLBACK (on_toolsSelectObject_activate),
-                    NULL);
   g_signal_connect ((gpointer) toolsSelectRectangle, "toggled",
                     G_CALLBACK (on_toolsSelectRectangle_activate),
                     NULL);
@@ -2782,7 +2769,6 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, toolsRuler, "toolsRuler");
   GLADE_HOOKUP_OBJECT (winMain, separator9, "separator9");
   GLADE_HOOKUP_OBJECT (winMain, toolsSelectRegion, "toolsSelectRegion");
-  GLADE_HOOKUP_OBJECT (winMain, toolsSelectObject, "toolsSelectObject");
   GLADE_HOOKUP_OBJECT (winMain, toolsSelectRectangle, "toolsSelectRectangle");
   GLADE_HOOKUP_OBJECT (winMain, toolsVerticalSpace, "toolsVerticalSpace");
   GLADE_HOOKUP_OBJECT (winMain, toolsHand, "toolsHand");

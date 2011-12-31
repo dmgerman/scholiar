@@ -2042,32 +2042,6 @@ on_toolsSelectRegion_activate          (GtkMenuItem     *menuitem,
   update_cursor();
 }
 
-void
-on_toolsSelectObject_activate          (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  if (GTK_OBJECT_TYPE(menuitem) == GTK_TYPE_RADIO_MENU_ITEM) {
-    if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem)))
-      return;
-  } else {
-    if (!gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON (menuitem)))
-      return;
-  }
-
-  if (ui.cur_mapping != 0) return; // not user-generated
-  if (ui.toolno[0] == TOOL_SELECTOBJECT) return;
-  
-  ui.cur_mapping = 0;
-  end_text();
-  reset_focus(); 
-  ui.toolno[ui.cur_mapping] = TOOL_SELECTOBJECT;
-  update_mapping_linkings(-1);
-  update_tool_buttons();
-  update_tool_menu();
-  update_color_menu();
-  update_cursor();
-}
-
 
 void
 on_toolsSelectRectangle_activate       (GtkMenuItem     *menuitem,
@@ -2793,9 +2767,6 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   else if (ui.toolno[mapping] == TOOL_SELECTRECT) {
     start_selectrect((GdkEvent *)event);
   }
-  else if (ui.toolno[mapping] == TOOL_SELECTOBJECT) {
-    start_selectobject((GdkEvent *)event);
-  } 
   else if (ui.toolno[mapping] == TOOL_VERTSPACE) {
     start_vertspace((GdkEvent *)event);
   }

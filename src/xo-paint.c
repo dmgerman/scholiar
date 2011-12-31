@@ -488,27 +488,13 @@ void start_selectregion(GdkEvent *event)
   
   ui.selection->lassopath = gnome_canvas_path_def_new(); 
   ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath);
-  ui.selection->lasso = (GnomeCanvasBpath*)
-    gnome_canvas_item_new(ui.cur_layer->group, 
-			  gnome_canvas_bpath_get_type(),
-			  "width-pixels", 1, 
-			  "outline-color-rgba", 0x000000ff,
-			  "fill-color-rgba", 0x80808040,
-			  "bpath",ui.selection->closedlassopath, 
-			  NULL); 
+  ui.selection->lasso = (GnomeCanvasBpath*)canvas_item_new_for_selection(ITEM_SELECTREGION);
   make_dashed((GnomeCanvasItem*)ui.selection->lasso); 
 
   get_pointer_coords(event, pt);
   ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
   ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
- 
-  ui.selection->canvas_item = 
-    gnome_canvas_item_new(ui.cur_layer->group,
-			  gnome_canvas_rect_get_type(), "width-pixels", 1, 
-			  "outline-color-rgba", 0x000000ff,
-			  "fill-color-rgba", 0x80808040,
-			  "x1", pt[0], "x2", pt[0], "y1", pt[1], "y2", pt[1], 
-			  NULL);
+  ui.selection->canvas_item = canvas_item_new_for_selection(ITEM_SELECTRECT);
 
   gnome_canvas_path_def_moveto( ui.selection->lassopath, pt[0], pt[1] ); 
 
@@ -582,11 +568,7 @@ void start_selectrect(GdkEvent *event)
   ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
   ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
  
-  ui.selection->canvas_item = gnome_canvas_item_new(ui.cur_layer->group,
-      gnome_canvas_rect_get_type(), "width-pixels", 1, 
-      "outline-color-rgba", 0x000000ff,
-      "fill-color-rgba", 0x80808040,
-      "x1", pt[0], "x2", pt[0], "y1", pt[1], "y2", pt[1], NULL);
+  ui.selection->canvas_item = canvas_item_new_for_selection(ITEM_SELECTRECT);
   update_cursor();
 }
 
@@ -640,15 +622,13 @@ void finalize_selectrect(void)
   xmax += xpadding; xmin -= xpadding;
   ymax += ypadding; ymin -= ypadding;
   
-  if (ui.selection->items == NULL) {
-    // if we clicked inside a text zone ?  
-    item = click_is_in_text(ui.selection->layer, x1, y1);
-    if (item!=NULL && item==click_is_in_text(ui.selection->layer, x2, y2)) {
+  if (ui.selection->items == NULL) { // perhaps we are selecting an object
+    item = click_is_in_object(ui.selection->layer, x1, y1);
+    if (item != NULL && item == click_is_in_object(ui.selection->layer, x2, y2)) {
       ui.selection->items = g_list_append(ui.selection->items, item);
-      g_memmove(&(ui.selection->bbox), &(item->bbox), sizeof(struct BBox));
-      gnome_canvas_item_set(ui.selection->canvas_item,
-        "x1", item->bbox.left, "x2", item->bbox.right, 
-        "y1", item->bbox.top, "y2", item->bbox.bottom, NULL);
+      make_bbox_copy(&(ui.selection->bbox), &(item->bbox), DEFAULT_PADDING);
+      ymin = ui.selection->bbox.top;  ymax = ui.selection->bbox.bottom;
+      xmin = ui.selection->bbox.left; xmax = ui.selection->bbox.right;
     }
   }
   
@@ -669,48 +649,12 @@ void finalize_selectrect(void)
   update_font_button();
 }
 
-gboolean item_under_point(struct Item *item, double *pt)
+gboolean item_under_point(struct Item *item, double x, double y)
 {
-  return(pt[0] > item->bbox.left && pt[0] < item->bbox.right &&
-	 pt[1] > item->bbox.top && pt[1] < item->bbox.bottom);
+  return(x > item->bbox.left && x < item->bbox.right &&
+	 y > item->bbox.top && y < item->bbox.bottom);
 }
 
-void start_selectobject(GdkEvent *event)
-{
-  double pt[2];
-  GList *itemlist;
-  struct Item *item, *object_item = NULL;
-  
-  get_pointer_coords(event, pt);
-  for (itemlist = ui.cur_layer->items; itemlist!=NULL; itemlist = itemlist->next) {
-    item = (struct Item *)itemlist->data;
-    if (item_under_point(item, pt) && (item->type == ITEM_TEXT || item->type == ITEM_IMAGE)) 
-      object_item = item;
-  }
-  if (object_item != NULL) {
-    reset_selection();
-    ui.cur_item_type = ITEM_NONE;
-    get_new_selection(ITEM_SELECTRECT, ui.cur_layer);
-
-    make_bbox_copy(&ui.selection->bbox, &object_item->bbox, DEFAULT_PADDING);
-    
-    ui.selection->items = g_list_append(ui.selection->items, object_item); 
-
-    ui.selection->canvas_item = gnome_canvas_item_new(ui.cur_layer->group,
-      gnome_canvas_rect_get_type(), "width-pixels", 1, 
-      "outline-color-rgba", 0x000000ff,
-      "fill-color-rgba", 0x80808040,
-      "x1", pt[0], "x2", pt[0], "y1", pt[1], "y2", pt[1], NULL);
-
-    gnome_canvas_item_set(ui.selection->canvas_item,
-			  "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
-			  "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL);
-    make_dashed(ui.selection->canvas_item);
-    update_cursor();
-    update_copy_paste_enabled();
-    update_font_button();
-  }
-}
 
 gboolean start_movesel(GdkEvent *event)
 {
@@ -1514,12 +1458,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   ui.selection->bbox.top += voffset;
   ui.selection->bbox.bottom += voffset;
 
-  ui.selection->canvas_item = gnome_canvas_item_new(ui.cur_layer->group,
-      gnome_canvas_rect_get_type(), "width-pixels", 1,
-      "outline-color-rgba", 0x000000ff,
-      "fill-color-rgba", 0x80808040,
-      "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
-      "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL);
+  ui.selection->canvas_item = canvas_item_new_for_selection(ITEM_SELECTRECT);
   make_dashed(ui.selection->canvas_item);
 
   while (nitems-- > 0) {
@@ -1825,20 +1764,24 @@ void rescale_text_items(void)
         update_text_item_displayfont((struct Item *)itemlist->data);
 }
 
-struct Item *click_is_in_text(struct Layer *layer, double x, double y)
+struct Item *click_is_in_object(struct Layer *layer, double x, double y)
 {
   GList *itemlist;
-  struct Item *item, *val;
+  struct Item *item, *object_item;
+  object_item = NULL;
   
-  val = NULL;
-  for (itemlist = layer->items; itemlist!=NULL; itemlist = itemlist->next) {
+  for (itemlist = ui.cur_layer->items; itemlist!=NULL; itemlist = itemlist->next) {
     item = (struct Item *)itemlist->data;
-    if (item->type != ITEM_TEXT) continue;
-    if (x<item->bbox.left || x>item->bbox.right) continue;
-    if (y<item->bbox.top || y>item->bbox.bottom) continue;
-    val = item;
+    if (item_under_point(item, x, y) && (item->type == ITEM_TEXT || item->type == ITEM_IMAGE)) 
+      object_item = item;
   }
-  return val;
+  return object_item;
+}
+
+struct Item *click_is_in_text(struct Layer *layer, double x, double y)
+{
+  struct Item *item = click_is_in_object(layer, x, y);
+  return (item && item->type == ITEM_TEXT ? item : NULL);
 }
 
 void refont_text_item(struct Item *item, gchar *font_name, double font_size)
