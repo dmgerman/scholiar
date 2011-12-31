@@ -230,6 +230,12 @@ typedef struct Journal {
   unsigned int image_id_counter;
 } Journal;
 
+typedef struct SelectionContext {
+  int type;
+  ArtSVP *lassosvp;
+  double x1, x2, y1, y2;
+} SelectionContext;
+
 typedef struct Selection {
   int type;  // ITEM_SELECTRECT, ITEM_MOVESEL_VERT
   BBox bbox; // the rectangle bbox of the selection

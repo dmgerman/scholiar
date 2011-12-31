@@ -9,6 +9,7 @@
 
 #include <libart_lgpl/art_vpath_bpath.h>
 #include <libart_lgpl/art_svp_vpath.h>
+#include <libart_lgpl/art_rect_svp.h>
 
 #include "xournal.h"
 #include "xo-callbacks.h"
@@ -465,6 +466,76 @@ void make_dashed(GnomeCanvasItem *item)
   gnome_canvas_item_set(item, "dash", &dash, NULL);
 }
 
+
+gboolean item_within_selection(struct Item *item, struct SelectionContext *sc) 
+{
+  if (!sc) return FALSE;
+  switch (sc->type) {
+  case ITEM_SELECTREGION:
+    return (hittest_item(sc->lassosvp, item));
+  case ITEM_SELECTRECT:
+    return (item->bbox.left >= sc->x1 && item->bbox.right <= sc->x2 &&
+	    item->bbox.top >= sc->y1 && item->bbox.bottom <= sc->y2);
+  default:
+    return (FALSE);
+  }
+}
+
+
+void free_selection_context(struct SelectionContext *sc) 
+{
+  if (sc->lassosvp) art_svp_free(sc->lassosvp); 
+}
+
+void get_selection_context_rect(struct SelectionContext *sc) 
+{
+  if (ui.selection->bbox.left > ui.selection->bbox.right) {
+    sc->x1 = ui.selection->bbox.right;  sc->x2 = ui.selection->bbox.left;
+    ui.selection->bbox.left = sc->x1;   ui.selection->bbox.right = sc->x2;
+  } else {
+    sc->x1 = ui.selection->bbox.left;  sc->x2 = ui.selection->bbox.right;
+  }
+  if (ui.selection->bbox.top > ui.selection->bbox.bottom) {
+    sc->y1 = ui.selection->bbox.bottom;  sc->y2 = ui.selection->bbox.top;
+    ui.selection->bbox.top = sc->y1;   ui.selection->bbox.bottom = sc->y2;
+  } else {
+    sc->y1 = ui.selection->bbox.top;  sc->y2 = ui.selection->bbox.bottom;
+  }
+}
+
+void get_selection_context_lasso(struct SelectionContext *sc) 
+{
+  ArtBpath *bpath; 
+  ArtVpath *vpath; 
+  ArtDRect lassosvp_bbox;
+  bpath = gnome_canvas_path_def_bpath(ui.selection->closedlassopath); 
+  vpath = art_bez_path_to_vec(bpath, 0.25); 
+  sc->lassosvp = art_svp_from_vpath(vpath); 
+  art_free(vpath);
+  art_drect_svp(&lassosvp_bbox, sc->lassosvp);
+  sc->x1 = lassosvp_bbox.x0; sc->x2 = lassosvp_bbox.x1; 
+  sc->y1 = lassosvp_bbox.y0; sc->y2 = lassosvp_bbox.y1; 
+}
+
+void get_selection_context(int selection_type, struct SelectionContext *sc) 
+{
+  sc->lassosvp = NULL;
+  switch (selection_type) {
+  case ITEM_SELECTREGION:
+    sc->type = ITEM_SELECTREGION;
+    get_selection_context_lasso(sc);
+    break;
+  case ITEM_SELECTRECT:
+    sc->type = ITEM_SELECTRECT;
+    get_selection_context_rect(sc);
+    break;
+  default:
+    sc = NULL;
+    break;
+  }
+}
+
+/* Allocates new selection */
 void get_new_selection(int selection_type, struct Layer *layer)
 {
   ui.selection = g_new(struct Selection, 1);
@@ -501,60 +572,73 @@ void start_selectregion(GdkEvent *event)
   update_cursor();
 }
 
-void finalize_selectregion(void) 
-{
-  double x1, x2, y1, y2;
-  double xpadding, ypadding, minwidth, minheight, w, h;
-  GList *itemlist;
-  struct Item *item;
-  ArtBpath *bpath; 
-  ArtVpath *vpath; 
-  ArtSVP *lassosvp; 
+/* void finalize_selectregion(void)  */
+/* { */
+/*   double x1, x2, y1, y2; */
+/*   double xpadding, ypadding, minwidth, minheight, w, h; */
+/*   GList *itemlist; */
+/*   struct Item *item; */
+/*   ArtBpath *bpath;  */
+/*   ArtVpath *vpath;  */
+/*   ArtSVP *lassosvp; */
+/*   ArtDRect lassosvp_bbox; */
   
-  minwidth = MIN_SEL_SCALE*ui.screen_width;
-  minheight = MIN_SEL_SCALE*ui.screen_height;
+/*   minwidth = MIN_SEL_SCALE*ui.screen_width; */
+/*   minheight = MIN_SEL_SCALE*ui.screen_height; */
   
-  ui.cur_item_type = ITEM_NONE;
+/*   ui.cur_item_type = ITEM_NONE; */
   
-  bpath = gnome_canvas_path_def_bpath(ui.selection->closedlassopath); 
-  vpath = art_bez_path_to_vec(bpath, 0.25); 
-  lassosvp = art_svp_from_vpath(vpath); 
-  art_free(vpath);
+/*   bpath = gnome_canvas_path_def_bpath(ui.selection->closedlassopath);  */
+/*   vpath = art_bez_path_to_vec(bpath, 0.25);  */
+/*   lassosvp = art_svp_from_vpath(vpath);  */
+/*   art_free(vpath); */
+/*   art_drect_svp(&lassosvp_bbox, lassosvp); */
+/*   x1 = lassosvp_bbox.x0; x2 = lassosvp_bbox.x1;  */
+/*   y1 = lassosvp_bbox.y0; y2 = lassosvp_bbox.y1;  */
 
-  // hit test in lasso selection.
-  for (itemlist = ui.selection->layer->items; itemlist!=NULL; itemlist = itemlist->next) {
-    item = (struct Item *)itemlist->data;
-    if(hittest_item(lassosvp, item)) {
-      if(g_list_length(ui.selection->items) == 0)
-	ui.selection->bbox = item->bbox;
-      else 
-	ui.selection->bbox = bboxadd(ui.selection->bbox, item->bbox); 
+/*   // hit test in lasso selection. */
+/*   for (itemlist = ui.selection->layer->items; itemlist!=NULL; itemlist = itemlist->next) { */
+/*     item = (struct Item *)itemlist->data; */
+/*     if(hittest_item(lassosvp, item)) { */
+/*       if(g_list_length(ui.selection->items) == 0) */
+/* 	ui.selection->bbox = item->bbox; */
+/*       else  */
+/* 	ui.selection->bbox = bboxadd(ui.selection->bbox, item->bbox);  */
       
-      ui.selection->items = g_list_append(ui.selection->items, item); 
+/*       ui.selection->items = g_list_append(ui.selection->items, item);  */
 
-      w = bbox_width(ui.selection->bbox); h = bbox_height(ui.selection->bbox);
-      xpadding = w < minwidth ? (minwidth - w) / 2 : DEFAULT_PADDING;
-      ypadding = h < minheight ? (minheight - h) / 2 : DEFAULT_PADDING;
-    }
-  }
-  bbox_pad_symm(&ui.selection->bbox, xpadding, ypadding);
+/*       w = bbox_width(ui.selection->bbox); h = bbox_height(ui.selection->bbox); */
+/*       xpadding = w < minwidth ? (minwidth - w) / 2 : DEFAULT_PADDING; */
+/*       ypadding = h < minheight ? (minheight - h) / 2 : DEFAULT_PADDING; */
+/*     } */
+/*   } */
+/*   bbox_pad_symm(&ui.selection->bbox, xpadding, ypadding); */
 
-  if (ui.selection->items == NULL) 
-    reset_selection();
-  else {
-    // hide the temporary lasso
-    gnome_canvas_item_hide((GnomeCanvasItem*) ui.selection->lasso); 
-    gnome_canvas_item_set(ui.selection->canvas_item,
-			  "x1", ui.selection->bbox.left, "y1", ui.selection->bbox.top,
-			  "x2", ui.selection->bbox.right, "y2", ui.selection->bbox.bottom, NULL); 
-    make_dashed(ui.selection->canvas_item); 
-  }
-  update_cursor();
-  update_copy_paste_enabled();
-  update_font_button();
+/*   if (ui.selection->items == NULL) { // perhaps we are selecting an object */
+/*     item = click_is_in_object(ui.selection->layer, x1, y1); */
+/*     if (item != NULL && item == click_is_in_object(ui.selection->layer, x2, y2)) { */
+/*       ui.selection->items = g_list_append(ui.selection->items, item); */
+/*       make_bbox_copy(&(ui.selection->bbox), &(item->bbox), DEFAULT_PADDING); */
+/*     } */
+/*   } */
 
-  art_svp_free(lassosvp); 
-}
+
+/*   if (ui.selection->items == NULL)  */
+/*     reset_selection(); */
+/*   else { */
+/*     // hide the temporary lasso */
+/*     gnome_canvas_item_hide((GnomeCanvasItem*) ui.selection->lasso);  */
+/*     gnome_canvas_item_set(ui.selection->canvas_item, */
+/* 			  "x1", ui.selection->bbox.left, "y1", ui.selection->bbox.top, */
+/* 			  "x2", ui.selection->bbox.right, "y2", ui.selection->bbox.bottom, NULL);  */
+/*     make_dashed(ui.selection->canvas_item);  */
+/*   } */
+/*   update_cursor(); */
+/*   update_copy_paste_enabled(); */
+/*   update_font_button(); */
+
+/*   art_svp_free(lassosvp);  */
+/* } */
  
 void start_selectrect(GdkEvent *event)
 {
@@ -572,78 +656,73 @@ void start_selectrect(GdkEvent *event)
   update_cursor();
 }
 
-void finalize_selectrect(void)
+void finalize_selectregion() { finalize_selection(ITEM_SELECTREGION); }
+void finalize_selectrect() { finalize_selection(ITEM_SELECTRECT); }
+
+void populate_selection(struct SelectionContext *sc) 
 {
-  double x1, x2, y1, y2, xmax, xmin, ymax, ymin, minwidth, minheight;
   GList *itemlist;
   struct Item *item;
-  double xpadding, ypadding;
-  xmax = ymax = - HUGE_VAL;
-  xmin = ymin = HUGE_VAL;
+  double xpadding, ypadding, minwidth, minheight, w, h;
   minwidth = MIN_SEL_SCALE*ui.screen_width;
   minheight = MIN_SEL_SCALE*ui.screen_height;
-    
-  ui.cur_item_type = ITEM_NONE;
 
-  if (ui.selection->bbox.left > ui.selection->bbox.right) {
-    x1 = ui.selection->bbox.right;  x2 = ui.selection->bbox.left;
-    ui.selection->bbox.left = x1;   ui.selection->bbox.right = x2;
-  } else {
-    x1 = ui.selection->bbox.left;  x2 = ui.selection->bbox.right;
-  }
-
-  if (ui.selection->bbox.top > ui.selection->bbox.bottom) {
-    y1 = ui.selection->bbox.bottom;  y2 = ui.selection->bbox.top;
-    ui.selection->bbox.top = y1;   ui.selection->bbox.bottom = y2;
-  } else {
-    y1 = ui.selection->bbox.top;  y2 = ui.selection->bbox.bottom;
-  }
-  
   for (itemlist = ui.selection->layer->items; itemlist!=NULL; itemlist = itemlist->next) {
     item = (struct Item *)itemlist->data;
-    if (item->bbox.left >= x1 && item->bbox.right <= x2 &&
-          item->bbox.top >= y1 && item->bbox.bottom <= y2) {
+    if (item_within_selection(item, sc)) {
+      if(g_list_length(ui.selection->items) == 0)
+	ui.selection->bbox = item->bbox;
+      else 
+	ui.selection->bbox = bboxadd(ui.selection->bbox, item->bbox); 
+
       ui.selection->items = g_list_append(ui.selection->items, item); 
 
-      if (item->bbox.left < xmin) xmin = item->bbox.left;
-      if (item->bbox.right > xmax) xmax = item->bbox.right;
-      if (item->bbox.top < ymin) ymin = item->bbox.top;
-      if (item->bbox.bottom > ymax) ymax = item->bbox.bottom;
-      if (xmax - xmin < minwidth) 
-	xpadding = (minwidth - (xmax - xmin)) / 2;
-      else
-	xpadding = DEFAULT_PADDING;
-      if (ymax - ymin < minheight) 
-	ypadding = (minheight - (ymax - ymin)) / 2;
-      else
-	ypadding = DEFAULT_PADDING;
+      w = bbox_width(ui.selection->bbox); h = bbox_height(ui.selection->bbox);
+      xpadding = w < minwidth ? (minwidth - w) / 2 : DEFAULT_PADDING;
+      ypadding = h < minheight ? (minheight - h) / 2 : DEFAULT_PADDING;
     }
   }
-  xmax += xpadding; xmin -= xpadding;
-  ymax += ypadding; ymin -= ypadding;
-  
+  bbox_pad_symm(&ui.selection->bbox, xpadding, ypadding);
+}
+
+void select_object_maybe(struct SelectionContext *sc)
+{
+  struct Item *item;
   if (ui.selection->items == NULL) { // perhaps we are selecting an object
-    item = click_is_in_object(ui.selection->layer, x1, y1);
-    if (item != NULL && item == click_is_in_object(ui.selection->layer, x2, y2)) {
+    item = click_is_in_object(ui.selection->layer, sc->x1, sc->y1);
+    if (item != NULL && item == click_is_in_object(ui.selection->layer, sc->x2, sc->y2)) {
       ui.selection->items = g_list_append(ui.selection->items, item);
       make_bbox_copy(&(ui.selection->bbox), &(item->bbox), DEFAULT_PADDING);
-      ymin = ui.selection->bbox.top;  ymax = ui.selection->bbox.bottom;
-      xmin = ui.selection->bbox.left; xmax = ui.selection->bbox.right;
     }
   }
-  
+}
+
+void render_selection_marquee(struct SelectionContext *sc) 
+{
   if (ui.selection->items == NULL) 
     reset_selection();
   else {
-    if (SHRINK_BBOX) {
-      ui.selection->bbox.top = ymin;   ui.selection->bbox.bottom = ymax;
-      ui.selection->bbox.left = xmin;   ui.selection->bbox.right = xmax;
-      gnome_canvas_item_set(ui.selection->canvas_item,
-			    "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
-			    "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL);
-    }
+    // hide the temporary lasso
+    if (sc->type == ITEM_SELECTREGION)
+      gnome_canvas_item_hide((GnomeCanvasItem*) ui.selection->lasso);
+    gnome_canvas_item_set(ui.selection->canvas_item,
+			  "x1", ui.selection->bbox.left, "x2", ui.selection->bbox.right, 
+			  "y1", ui.selection->bbox.top, "y2", ui.selection->bbox.bottom, NULL);
     make_dashed(ui.selection->canvas_item);
   }
+}
+
+void finalize_selection(int selection_type)
+{
+  SelectionContext sc;
+  get_selection_context(selection_type, &sc);
+
+  ui.cur_item_type = ITEM_NONE;
+  populate_selection(&sc);
+  select_object_maybe(&sc);
+  render_selection_marquee(&sc);
+  
+  free_selection_context(&sc);
   update_cursor();
   update_copy_paste_enabled();
   update_font_button();

@@ -969,7 +969,7 @@ gboolean hittest_point( ArtSVP* lassosvp, double x, double y )
 }
 
 // check whether a given item is inside a lasso selection.
-gboolean hittest_item( ArtSVP* lassosvp, Item* item)
+gboolean hittest_item(ArtSVP* lassosvp, Item* item)
 {
   gboolean result = TRUE; 
 
