@@ -1072,24 +1072,39 @@ on_viewPageWidth_activate              (GtkMenuItem     *menuitem,
 {
   double byHeight = 0.0;
   double byWidth = 0.0;
+  double x1, y1, x2, y2 ; 
 
-  /* Implement toogling to zooming fullpage by width and height */
-  byHeight = (GTK_WIDGET(canvas))->allocation.height/ui.cur_page->height;
-  byWidth = (GTK_WIDGET(canvas))->allocation.width/ui.cur_page->width;
-  // If the current zoom is by width then do by height
-  // One small caveat, if the document fully fills the screen (no scrollbar)
-  // the next 'zoom' will include a scrollbar, which will oclude a small section of
-  // the document. This means that the toggle is really a 3 steps one:
-  // Full width (no scrollbar) -> full height (no scrollbar) -> full with (with scrollbar)->...
-
-  printf("Current zoom [%f] byhight [%f] bywidth [%f]\n", 
-         ui.zoom, byHeight, byWidth);
-
-  if (ui.zoom != byWidth) {
-    ui.zoom = byWidth;
-  } else {
-    ui.zoom = byHeight;
+  if( !ui.view_continuous || !ui.multipage_view  ) {
+    // if not (continuos and multipage)
+    // do the normal thing
+    
+    /* Implement toogling to zooming fullpage by width and height */
+    byHeight = (GTK_WIDGET(canvas))->allocation.height/ui.cur_page->height;
+    byWidth = (GTK_WIDGET(canvas))->allocation.width/ui.cur_page->width;
+    // If the current zoom is by width then do by height
+    // One small caveat, if the document fully fills the screen (no scrollbar)
+    // the next 'zoom' will include a scrollbar, which will oclude a small section of
+    // the document. This means that the toggle is really a 3 steps one:
+    // Full width (no scrollbar) -> full height (no scrollbar) -> full with (with scrollbar)->...
+    
+    printf("Current zoom [%f] byhight [%f] bywidth [%f]\n", 
+           ui.zoom, byHeight, byWidth);
+    
+    if (ui.zoom != byWidth) {
+      ui.zoom = byWidth;
+    } else {
+      ui.zoom = byHeight;
+    }
   }
+  else {
+    // else use the code for multipage
+    gnome_canvas_get_scroll_region( canvas, &x1, &y1, &x2, &y2 ); 
+    ui.zoom = (GTK_WIDGET(canvas))->allocation.width/(x2-x1);  
+  }
+
+
+
+
   
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
   rescale_text_items();
@@ -2659,20 +2674,69 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   page_change = FALSE;
   tmppage = ui.cur_page;
   get_pointer_coords((GdkEvent *)event, pt);
-  while (ui.view_continuous && (pt[1] < - VIEW_CONTINUOUS_SKIP)) {
-    if (ui.pageno == 0) break;
-    page_change = TRUE;
-    ui.pageno--;
-    tmppage = g_list_nth_data(journal.pages, ui.pageno);
-    pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
+
+  //////////////////////////
+  // multipage
+
+  if( ui.view_continuous ) {
+    if( !ui.multipage_view ) {
+      // Old code
+      while (pt[1] < - VIEW_CONTINUOUS_SKIP) {
+	if (ui.pageno == 0) break;
+	page_change = TRUE;
+	ui.pageno--;
+	tmppage = g_list_nth_data(journal.pages, ui.pageno);
+	pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
+      }
+      while (pt[1] > tmppage->height + VIEW_CONTINUOUS_SKIP) {
+	if (ui.pageno == journal.npages-1) break;
+	pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+	page_change = TRUE;
+	ui.pageno++;
+	tmppage = g_list_nth_data(journal.pages, ui.pageno);
+      }
+      // end of old code
+    }
+    else {
+      int tmppagenum = 0 ; 
+      GList *pglist ;
+      struct Page* pg;  
+    
+      for( pglist = journal.pages ; pglist != NULL ; pglist = pglist->next ) {
+	pg = (struct Page *)pglist->data; 
+
+	if( (pt[0]+ui.cur_page->hoffset >= pg->hoffset) && 
+	    (pt[0]+ui.cur_page->hoffset <= pg->hoffset + pg->width) &&
+	    (pt[1]+ui.cur_page->voffset >= pg->voffset) && 
+	    (pt[1]+ui.cur_page->voffset <= pg->voffset + pg->height)) 
+	  break; 
+	tmppagenum ++; 	
+      }
+      if( tmppagenum != ui.pageno && (tmppagenum < journal.npages) 
+	  && (tmppagenum >=0 ) ) {
+	page_change = TRUE ; 
+	ui.pageno = tmppagenum ; 
+      }
+    }
   }
-  while (ui.view_continuous && (pt[1] > tmppage->height + VIEW_CONTINUOUS_SKIP)) {
-    if (ui.pageno == journal.npages-1) break;
-    pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
-    page_change = TRUE;
-    ui.pageno++;
-    tmppage = g_list_nth_data(journal.pages, ui.pageno);
-  }
+
+
+//  while (ui.view_continuous && (pt[1] < - VIEW_CONTINUOUS_SKIP)) {
+//    if (ui.pageno == 0) break;
+//    page_change = TRUE;
+//    ui.pageno--;
+//    tmppage = g_list_nth_data(journal.pages, ui.pageno);
+//    pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
+//  }
+//  while (ui.view_continuous && (pt[1] > tmppage->height + VIEW_CONTINUOUS_SKIP)) {
+//    if (ui.pageno == journal.npages-1) break;
+//    pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+//    page_change = TRUE;
+//    ui.pageno++;
+//    tmppage = g_list_nth_data(journal.pages, ui.pageno);
+//  }
+/////
+
   if (page_change) do_switch_page(ui.pageno, FALSE, FALSE);
   
   // can't paint on the background...
@@ -4223,5 +4287,71 @@ gboolean on_text_keypress_event(GtkWidget   *widget,
     stop_processing = TRUE;
   }
   return stop_processing;
+}
+
+void
+on_optionsMultipageView_activate       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  GtkAdjustment *v_adj;
+  double yscroll;
+  struct Page *pg;
+
+  end_text();
+  reset_focus();
+  ui.multipage_view = 
+    gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+
+ if( ui.multipage_view ) {
+    gtk_widget_set_sensitive(GET_COMPONENT("Multiple_pages"), TRUE);
+  }
+  else { 
+    gtk_widget_set_sensitive(GET_COMPONENT("Multiple_pages"), FALSE);
+  }
+
+  v_adj = gtk_layout_get_vadjustment(GTK_LAYOUT(canvas));
+  pg = ui.cur_page;
+  yscroll = gtk_adjustment_get_value(v_adj) - pg->voffset*ui.zoom;
+  update_page_stuff();
+  gtk_adjustment_set_value(v_adj, yscroll + pg->voffset*ui.zoom);
+
+  rescale_to_fitWidth();
+}
+
+void rescale_to_fitWidth( void ) 
+{
+  double x1, y1, x2, y2 ; 
+  gnome_canvas_get_scroll_region( canvas, &x1, &y1, &x2, &y2 ); 
+  ui.zoom = (GTK_WIDGET(canvas))->allocation.width/(x2-x1);  
+  // force a refresh
+  gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
+  rescale_text_items();
+  rescale_bg_pixmaps();
+}
+
+void
+on_MultiplePages2_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  end_text();
+  reset_focus();
+  ui.multipage_view_num = 2 ; 
+  if( ui.multipage_view ) {    
+    update_page_stuff();
+    rescale_to_fitWidth();
+  }
+}
+
+
+
+void
+on_pagehiglight_activate               (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  end_text();
+  reset_focus();
+  ui.pagehighlight = 
+    gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+  update_page_stuff();
 }
 

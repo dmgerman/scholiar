@@ -178,7 +178,7 @@ void update_cursor(void)
 
 void update_cursor_for_resize(double *pt)
 {
-  gboolean in_range_x, in_range_y;
+  //  gboolean in_range_x, in_range_y;
   gboolean can_resize_left, can_resize_right, can_resize_bottom, can_resize_top;
   gdouble resize_margin;
   GdkCursorType newcursor;
@@ -730,9 +730,15 @@ void continue_movesel(GdkEvent *event)
   struct Item *item;
   int tmppageno;
   struct Page *tmppage;
+  double origx, origy ;
   
   get_pointer_coords(event, pt);
+
+  origx = pt[0]; origy = pt[1]; 
+
   if (ui.cur_item_type == ITEM_MOVESEL_VERT) pt[0] = 0;
+
+  pt[0] += ui.selection->move_pagehdelta; 
   pt[1] += ui.selection->move_pagedelta;
 
   // check for page jumps
@@ -741,20 +747,74 @@ void continue_movesel(GdkEvent *event)
   else upmargin = VIEW_CONTINUOUS_SKIP;
   tmppageno = ui.selection->move_pageno;
   tmppage = g_list_nth_data(journal.pages, tmppageno);
-  while (ui.view_continuous && (pt[1] < - upmargin)) {
-    if (tmppageno == 0) break;
-    tmppageno--;
-    tmppage = g_list_nth_data(journal.pages, tmppageno);
-    pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
-    ui.selection->move_pagedelta += tmppage->height + VIEW_CONTINUOUS_SKIP;
+
+  if( ui.view_continuous ) { 
+    if( !ui.multipage_view ) {
+      ui.selection->move_pagehdelta = 0 ;
+      while (pt[1] < - upmargin) {
+	if (tmppageno == 0) break;
+	tmppageno--;
+	tmppage = g_list_nth_data(journal.pages, tmppageno);
+	pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
+	ui.selection->move_pagedelta += tmppage->height + VIEW_CONTINUOUS_SKIP;
+      }
+      while (pt[1] > tmppage->height+VIEW_CONTINUOUS_SKIP) {
+	if (tmppageno == journal.npages-1) break;
+	pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+	ui.selection->move_pagedelta -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+	tmppageno++;
+	tmppage = g_list_nth_data(journal.pages, tmppageno);
+      }
+    }
+    else { 
+      GList *pglist ;
+      struct Page* pg;  
+      struct Page* origpg ; 
+
+      origpg = g_list_nth_data(journal.pages, ui.selection->orig_pageno ); 
+    
+      tmppageno = 0 ; 
+      
+      for( pglist = journal.pages ; pglist != NULL ; pglist = pglist->next ) {
+	pg = (struct Page *)pglist->data; 
+
+	if( (origx+ui.cur_page->hoffset >= pg->hoffset) && 
+	    (origx+ui.cur_page->hoffset <= pg->hoffset + pg->width) &&
+	    (origy+ui.cur_page->voffset >= pg->voffset) && 
+	    (origy+ui.cur_page->voffset <= pg->voffset + pg->height)) 
+	  break; 
+	tmppageno ++; 	
+      }
+      if( (tmppageno < journal.npages) && (tmppageno >=0 ) ) {
+	tmppage = g_list_nth_data(journal.pages, tmppageno); 
+	ui.selection->move_pagedelta = origpg->voffset - tmppage->voffset;
+	ui.selection->move_pagehdelta = origpg->hoffset - tmppage->hoffset;
+
+      }
+      else {
+	tmppageno = ui.selection->move_pageno; 
+	tmppage = g_list_nth_data(journal.pages, tmppageno); 
+      }
+	
+    }
   }
-  while (ui.view_continuous && (pt[1] > tmppage->height+VIEW_CONTINUOUS_SKIP)) {
-    if (tmppageno == journal.npages-1) break;
-    pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
-    ui.selection->move_pagedelta -= tmppage->height + VIEW_CONTINUOUS_SKIP;
-    tmppageno++;
-    tmppage = g_list_nth_data(journal.pages, tmppageno);
-  }
+
+// original code
+//  while (ui.view_continuous && (pt[1] < - upmargin)) {
+//    if (tmppageno == 0) break;
+//    tmppageno--;
+//    tmppage = g_list_nth_data(journal.pages, tmppageno);
+//    pt[1] += tmppage->height + VIEW_CONTINUOUS_SKIP;
+//    ui.selection->move_pagedelta += tmppage->height + VIEW_CONTINUOUS_SKIP;
+//  }
+//  while (ui.view_continuous && (pt[1] > tmppage->height+VIEW_CONTINUOUS_SKIP)) {
+//    if (tmppageno == journal.npages-1) break;
+//    pt[1] -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+//    ui.selection->move_pagedelta -= tmppage->height + VIEW_CONTINUOUS_SKIP;
+//    tmppageno++;
+//    tmppage = g_list_nth_data(journal.pages, tmppageno);
+//  }
+//  // end original code
   
   if (tmppageno != ui.selection->move_pageno) {
     // move to a new page !
@@ -867,7 +927,7 @@ void finalize_movesel(void)
 
 void finalize_resizesel(void)
 {
-  struct Item *item;
+  //  struct Item *item;
 
   // build the affine transformation
   double offset_x, offset_y, scaling_x, scaling_y;
@@ -1512,9 +1572,9 @@ void process_font_sel(gchar *str)
 void insert_image(GdkEvent *event, struct Item *item)
 {
   double pt[2];
-  GtkTextBuffer *buffer;
+  //  GtkTextBuffer *buffer;
   GnomeCanvasItem *canvas_item;
-  GdkColor color;
+  //  GdkColor color;
   GtkWidget *dialog;
   GtkFileFilter *filt_all;
   GtkFileFilter *filt_gdkimage;

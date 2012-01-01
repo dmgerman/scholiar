@@ -218,6 +218,12 @@ create_winMain (void)
   GtkWidget *optionsUseXInput;
   GtkWidget *optionsButtonMappings;
   GtkWidget *optionsPressureSensitive;
+  GtkWidget *page_highlight;
+  GtkWidget *optionsMultipageView;
+  GtkWidget *Multiple_pages;
+  GtkWidget *Multiple_pages_menu;
+  GSList *MultiplePages2_group = NULL;
+  GtkWidget *MultiplePages2;
   GtkWidget *button2_mapping;
   GtkWidget *button2_mapping_menu;
   GSList *button2Pen_group = NULL;
@@ -1268,6 +1274,28 @@ create_winMain (void)
   optionsPressureSensitive = gtk_check_menu_item_new_with_mnemonic (_("_Pressure sensitivity"));
   gtk_widget_show (optionsPressureSensitive);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsPressureSensitive);
+
+  page_highlight = gtk_check_menu_item_new_with_mnemonic ("Page _Highlight");
+  gtk_widget_show (page_highlight);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), page_highlight);
+  gtk_tooltips_set_tip (tooltips, page_highlight, "Page Highlight", NULL);
+
+  optionsMultipageView = gtk_check_menu_item_new_with_mnemonic ("_Multiple page view");
+  gtk_widget_show (optionsMultipageView);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsMultipageView);
+
+  Multiple_pages = gtk_menu_item_new_with_mnemonic ("Multiple pages");
+  gtk_widget_show (Multiple_pages);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), Multiple_pages);
+
+  Multiple_pages_menu = gtk_menu_new ();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (Multiple_pages), Multiple_pages_menu);
+
+  MultiplePages2 = gtk_radio_menu_item_new_with_mnemonic (MultiplePages2_group, "2 pages");
+  MultiplePages2_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (MultiplePages2));
+  gtk_widget_show (MultiplePages2);
+  gtk_container_add (GTK_CONTAINER (Multiple_pages_menu), MultiplePages2);
+  gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (MultiplePages2), TRUE);
 
   button2_mapping = gtk_menu_item_new_with_mnemonic (_("Button _2 Mapping"));
   gtk_widget_show (button2_mapping);
@@ -2406,6 +2434,17 @@ create_winMain (void)
   g_signal_connect ((gpointer) optionsPressureSensitive, "activate",
                     G_CALLBACK (on_optionsPressureSensitive_activate),
                     NULL);
+
+  g_signal_connect ((gpointer) page_highlight, "activate",
+                    G_CALLBACK (on_pagehiglight_activate),
+                    NULL);
+  g_signal_connect ((gpointer) optionsMultipageView, "activate",
+                    G_CALLBACK (on_optionsMultipageView_activate),
+                    NULL);
+  g_signal_connect ((gpointer) MultiplePages2, "activate",
+                    G_CALLBACK (on_MultiplePages2_activate),
+                    NULL);
+
   g_signal_connect ((gpointer) button2Pen, "activate",
                     G_CALLBACK (on_button2Pen_activate),
                     NULL);
@@ -2842,6 +2881,11 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, optionsUseXInput, "optionsUseXInput");
   GLADE_HOOKUP_OBJECT (winMain, optionsButtonMappings, "optionsButtonMappings");
   GLADE_HOOKUP_OBJECT (winMain, optionsPressureSensitive, "optionsPressureSensitive");
+  GLADE_HOOKUP_OBJECT (winMain, page_highlight, "page_highlight");
+  GLADE_HOOKUP_OBJECT (winMain, optionsMultipageView, "optionsMultipageView");
+  GLADE_HOOKUP_OBJECT (winMain, Multiple_pages, "Multiple_pages");
+  GLADE_HOOKUP_OBJECT (winMain, Multiple_pages_menu, "Multiple_pages_menu");
+  GLADE_HOOKUP_OBJECT (winMain, MultiplePages2, "MultiplePages2");
   GLADE_HOOKUP_OBJECT (winMain, button2_mapping, "button2_mapping");
   GLADE_HOOKUP_OBJECT (winMain, button2_mapping_menu, "button2_mapping_menu");
   GLADE_HOOKUP_OBJECT (winMain, button2Pen, "button2Pen");

@@ -1,3 +1,5 @@
+#ifndef XO_CALLBACKS_H
+
 #include <gtk/gtk.h>
 
 void
@@ -695,3 +697,19 @@ on_find_bar_prev                       (GtkWidget       *widget,
 gboolean on_text_keypress_event(GtkWidget   *widget,
                                 GdkEventKey *event,
                                 gpointer     user_data) ;
+
+void
+on_optionsMultipageView_activate       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_MultiplePages2_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_pagehiglight_activate               (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+#define XO_CALLBACKS_H
+#endif
+

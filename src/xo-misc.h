@@ -1,3 +1,5 @@
+#ifndef XO_MISC_H 
+
 // data manipulation misc functions
 
 struct Page *new_page(struct Page *template);
@@ -128,10 +130,13 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
 #define RULING_GRAPHSPACING 14.17
 
 
-static void       draw_rubberband                            (GtkWidget          *widget,
-							      GdkWindow          *window,
-							      const GdkRectangle *rect,
-							      guchar              alpha);
-
+//static void       draw_rubberband                            (GtkWidget          *widget,
+//							      GdkWindow          *window,
+//							      const GdkRectangle *rect,
+//							      guchar              alpha);
+//
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
+
+#define XO_MISC_H
+#endif
 

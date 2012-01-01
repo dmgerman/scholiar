@@ -228,7 +228,8 @@ typedef struct Selection {
   GList *items; // the selected items (a list of struct Item)
   int move_pageno, orig_pageno; // if selection moves to a different page
   struct Layer *move_layer;
-  float move_pagedelta;
+  double move_pagedelta;
+  double move_pagehdelta ; 
 } Selection;
 
 typedef struct UIData {
@@ -260,6 +261,10 @@ typedef struct UIData {
   gboolean discard_corepointer; // discard core pointer events in XInput mode
   gboolean pressure_sensitivity; // use pen pressure to control stroke width?
   double width_minimum_multiplier, width_maximum_multiplier; // calibration for pressure sensitivity
+  gboolean pagehighlight; // current page highlight?
+  GnomeCanvasItem* pagehighlighter ; 
+  gboolean multipage_view; // horizontal multipage view?
+  int multipage_view_num ;
   gboolean is_corestroke; // this stroke is painted with core pointer
   gboolean saved_is_corestroke;
   GdkDevice *stroke_device; // who's painting this stroke

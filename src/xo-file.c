@@ -1498,6 +1498,8 @@ void init_config_default(void)
   ui.scrollbar_step_increment = 30;
   ui.zoom_step_increment = 1;
   ui.zoom_step_factor = 1.5;
+  ui.multipage_view = FALSE; 
+  ui.multipage_view_num = 2; 
   ui.progressive_bg = TRUE;
   ui.print_ruling = TRUE;
   ui.default_unit = UNIT_CM;

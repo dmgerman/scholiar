@@ -3,6 +3,7 @@
 #endif
 
 #include <math.h>
+#include <ctype.h>
 #include <string.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
@@ -366,21 +367,29 @@ void get_pointer_coords(GdkEvent *event, gdouble *ret)
 
 void fix_xinput_coords(GdkEvent *event)
 {
-  double *axes, *px, *py, axis_width;
+  //  double *axes, *px, *py, axis_width;
+  double *px, *py;
+#ifdef ENABLE_XINPUT_BUGFIX
+  double *axes;
   GdkDevice *device;
+#endif
   int wx, wy, sx, sy, ix, iy;
 
   if (event->type == GDK_BUTTON_PRESS || event->type == GDK_BUTTON_RELEASE) {
-    axes = event->button.axes;
     px = &(event->button.x);
     py = &(event->button.y);
+#ifdef ENABLE_XINPUT_BUGFIX
+    axes = event->button.axes;
     device = event->button.device;
+#endif
   }
   else if (event->type == GDK_MOTION_NOTIFY) {
-    axes = event->motion.axes;
     px = &(event->motion.x);
     py = &(event->motion.y);
+#ifdef ENABLE_XINPUT_BUGFIX
+    axes = event->motion.axes;
     device = event->motion.device;
+#endif
   }
   else return; // nothing we know how to do
 
@@ -632,10 +641,10 @@ void update_canvas_bg(struct Page *pg)
 {
   GnomeCanvasGroup *group;
   GnomeCanvasPoints *seg;
-  GdkPixbuf *scaled_pix;
+  //  GdkPixbuf *scaled_pix;
   double *pt;
   double x, y;
-  int w, h;
+  //  int w, h;
   gboolean is_well_scaled;
   
   if (pg->bg->canvas_item != NULL)
@@ -1320,9 +1329,10 @@ void update_page_stuff(void)
   GtkSpinButton *spin;
   struct Page *pg;
   double vertpos, maxwidth;
+  double horipos, maxheight_single; 
 
   // move the page groups to their rightful locations or hide them
-  if (ui.view_continuous) {
+  if (ui.view_continuous && ! ui.multipage_view) {
     vertpos = 0.; 
     maxwidth = 0.;
     for (i=0, pglist = journal.pages; pglist!=NULL; i++, pglist = pglist->next) {
@@ -1338,6 +1348,43 @@ void update_page_stuff(void)
     }
     vertpos -= VIEW_CONTINUOUS_SKIP;
     gnome_canvas_set_scroll_region(canvas, 0, 0, maxwidth, vertpos);
+  } else if( ui.view_continuous && ui.multipage_view ) {
+    // continuos and multipage
+    horipos = 0.;
+    vertpos = 0.;
+    maxwidth = 0.;
+    maxheight_single = 0. ; 
+
+    for (i=0, pglist = journal.pages; pglist!=NULL; i++, pglist = pglist->next) {
+      pg = (struct Page *)pglist->data;
+      if (pg->group!=NULL) {
+	pg->hoffset = horipos; 
+	pg->voffset = vertpos;
+        gnome_canvas_item_set(GNOME_CANVAS_ITEM(pg->group), 
+			      "x", pg->hoffset, "y", pg->voffset, NULL);
+        gnome_canvas_item_show(GNOME_CANVAS_ITEM(pg->group));
+      }
+      horipos += pg->width ; 
+
+      if( pg->height > maxheight_single ) 
+	maxheight_single = pg->height; 
+      
+      if( (i+1) % ui.multipage_view_num == 0 || (i+1) >= journal.npages ) {
+	if( horipos > maxwidth ) 
+	  maxwidth = horipos; 
+	horipos = 0.;
+	vertpos += maxheight_single + VIEW_CONTINUOUS_SKIP;
+	maxheight_single = 0; 
+      }
+      else {
+	horipos += VIEW_CONTINUOUS_SKIP;
+      }
+    }
+    if( i % ui.multipage_view_num == 0 || i <= ui.multipage_view_num ) 
+      vertpos -= VIEW_CONTINUOUS_SKIP;
+    else 
+      vertpos += maxheight_single; 
+    gnome_canvas_set_scroll_region(canvas, 0, 0, maxwidth, vertpos);
   } else {
     for (pglist = journal.pages; pglist!=NULL; pglist = pglist->next) {
       pg = (struct Page *)pglist->data;
@@ -1351,6 +1398,23 @@ void update_page_stuff(void)
       }
     }
     gnome_canvas_set_scroll_region(canvas, 0, 0, ui.cur_page->width, ui.cur_page->height);
+  }
+
+  // draw current page highlighted 
+  if( ui.pagehighlight ) {
+    gnome_canvas_item_set(GNOME_CANVAS_ITEM(ui.pagehighlighter),
+			  "width-pixels", 1, 
+			  "outline-color-rgba", 0x000000ff,
+			  "fill-color-rgba", 0x00000000,
+			  "x1", ui.cur_page->hoffset-VIEW_CONTINUOUS_SKIP/4.0, 
+			  "x2", ui.cur_page->hoffset+ui.cur_page->width+VIEW_CONTINUOUS_SKIP/2.0, 
+			  "y1", ui.cur_page->voffset-VIEW_CONTINUOUS_SKIP/4.0, 
+			  "y2", ui.cur_page->voffset+ui.cur_page->height+VIEW_CONTINUOUS_SKIP/2.0, 
+			  NULL);
+    gnome_canvas_item_show(GNOME_CANVAS_ITEM(ui.pagehighlighter));
+  }
+  else {
+    gnome_canvas_item_hide(GNOME_CANVAS_ITEM(ui.pagehighlighter));
   }
 
   // update the page / layer info at bottom of screen
