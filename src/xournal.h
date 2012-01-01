@@ -2,7 +2,7 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <poppler/glib/poppler.h>
 
-#define INPUT_DEBUG
+//#define INPUT_DEBUG
 /* uncomment this line if you experience event-processing problems
    and want to list the input events received by xournal. Caution, lots
    of output (redirect to a file). */
@@ -17,7 +17,7 @@
    "tiny file dialog" syndrome, without hurting those with well-behaved
    versions of GTK+. Comment out if you'd prefer not to include this fix. */
 
-#define IMAGE_DEBUG  //this is for debugging of the "insert image" patch
+//#define IMAGE_DEBUG  //this is for debugging of the "insert image" patch
 
 // PREF FILES INFO
 
