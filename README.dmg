@@ -6,15 +6,16 @@
 
 * Patches applied:
 
-|-----------------------------+-----------------------------------------------------------------------------------------------|
-| Name                        | URL                                                                                           |
-|-----------------------------+-----------------------------------------------------------------------------------------------|
-| Last page seen              | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
-| Add next-prev file          | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
-| Cmd Line: Open a given page | https://sourceforge.net/tracker/index.php?func=detail&aid=2924825&group_id=163434&atid=827735 |
-| Text font sizing            | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
-| Poor man's bookmarks        | https://sourceforge.net/tracker/index.php?func=detail&aid=2838282&group_id=163434&atid=827735 |
-|-----------------------------+-----------------------------------------------------------------------------------------------|
+|---------------------------------+-----------------------------------------------------------------------------------------------|
+| Name                            | URL                                                                                           |
+|---------------------------------+-----------------------------------------------------------------------------------------------|
+| Last page seen                  | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
+| Add next-prev file              | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
+| Cmd Line: Open a given page     | https://sourceforge.net/tracker/index.php?func=detail&aid=2924825&group_id=163434&atid=827735 |
+| Text font sizing                | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
+| Poor man's bookmarks            | https://sourceforge.net/tracker/index.php?func=detail&aid=2838282&group_id=163434&atid=827735 |
+| Multi-page view (but not lasso) | https://sourceforge.net/tracker/index.php?func=detail&aid=2679096&group_id=163434&atid=827735 |
+|---------------------------------+-----------------------------------------------------------------------------------------------|
 
 ** Load page seen
 
