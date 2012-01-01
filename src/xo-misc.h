@@ -18,6 +18,7 @@ struct Refstring *refstring_ref(struct Refstring *rs);
 void refstring_unref(struct Refstring *rs);
 
 // helper functions
+void init_layer(struct Layer *l);
 struct BBox make_bbox_from_lrtb(double l, double r, double t, double b);
 void make_bbox_copy(struct BBox *bbfrom, struct BBox *bbto, int padding);
 void get_pointer_coords(GdkEvent *event, double *ret);

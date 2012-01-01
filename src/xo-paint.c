@@ -552,23 +552,20 @@ void get_new_selection(int selection_type, struct Layer *layer)
 void start_selectregion(GdkEvent *event)
 {
   double pt[2];
-  reset_selection();
-  
+  get_pointer_coords(event, pt); 
   ui.cur_item_type = ITEM_SELECTREGION;
+  reset_selection();
   get_new_selection(ITEM_SELECTREGION, ui.cur_layer);
   
   ui.selection->lassopath = gnome_canvas_path_def_new(); 
+  gnome_canvas_path_def_moveto(ui.selection->lassopath, pt[0], pt[1]); 
   ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath);
   ui.selection->lasso = (GnomeCanvasBpath*)canvas_item_new_for_selection(ITEM_SELECTREGION);
   make_dashed((GnomeCanvasItem*)ui.selection->lasso); 
 
-  get_pointer_coords(event, pt);
   ui.selection->bbox.left = ui.selection->bbox.right = pt[0];
   ui.selection->bbox.top = ui.selection->bbox.bottom = pt[1];
   ui.selection->canvas_item = canvas_item_new_for_selection(ITEM_SELECTRECT);
-
-  gnome_canvas_path_def_moveto( ui.selection->lassopath, pt[0], pt[1] ); 
-
   update_cursor();
 }
  

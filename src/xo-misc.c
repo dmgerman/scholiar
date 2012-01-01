@@ -2765,6 +2765,9 @@ void ui_search_print(void)
 }
 
 // Work around GTK path bugs
+// see https://bugzilla.gnome.org/show_bug.cgi?id=667077 and
+// https://bugzilla.gnome.org/show_bug.cgi?id=667078
+//
 // These functions are defined in gnome-canvas-path-def.c, but are not
 // exposed in the public interface.  The bug is the following: sometimes, for
 // unclear reasons, gnome_canvas_path_def_close_all(ui.selection->lassopath)
