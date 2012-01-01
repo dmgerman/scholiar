@@ -681,7 +681,7 @@ gboolean start_movesel(GdkEvent *event)
     if (get_mapping((GdkEventButton *)event) == COPY_SEL_MAPPING) {
       selection_to_clip();
       clipboard_paste_with_offset(TRUE, 1,1);
-    }
+    } 
     ui.cur_item_type = ITEM_MOVESEL;
     ui.selection->anchor_x = ui.selection->last_x = pt[0];
     ui.selection->anchor_y = ui.selection->last_y = pt[1];
@@ -1095,6 +1095,16 @@ void callback_clipboard_clear(GtkClipboard *clipboard, gpointer user_data)
   g_free(user_data);
 }
 
+void copy_to_buffer_advance_ptr(unsigned char **to, gpointer from, gsize size)
+{
+  g_memmove(*to, from, size); *to+=size;
+}
+
+void copy_from_buffer_advance_ptr(gpointer to, unsigned char **from, gsize size)
+{
+  g_memmove(to, *from, size); *from+=size;
+}
+
 // returns the number of bytes needed to store a particular item, including the type_id field
 // Note that this has to correlate exactly with _what_ is being put in the buffer!
 int buffer_size_for_item(struct Item *item)
@@ -1148,46 +1158,43 @@ int buffer_size_for_header(int nimages)
   return bufsz;
 }
 
-void put_item_in_buffer(struct Item *item, char **pp)
+void put_item_in_buffer(struct Item *item, unsigned char **pp)
 {
   int val;
-  g_memmove(*pp, &item->type, sizeof(int)); *pp+= sizeof(int);
+  copy_to_buffer_advance_ptr(pp, &item->type, sizeof(int));
   switch (item->type) {
   case ITEM_STROKE:
-    g_memmove(*pp, &item->brush, sizeof(struct Brush)); *pp+= sizeof(struct Brush);
-    g_memmove(*pp, &item->path->num_points, sizeof(int)); *pp+= sizeof(int);
-    g_memmove(*pp, item->path->coords, 2*item->path->num_points*sizeof(double));
-    *pp+= 2*item->path->num_points*sizeof(double);
-    if (item->brush.variable_width) {
-      g_memmove(*pp, item->widths, (item->path->num_points-1)*sizeof(double));
-      *pp+= (item->path->num_points-1)*sizeof(double);
-    }
+    copy_to_buffer_advance_ptr(pp, &item->brush, sizeof(struct Brush));
+    copy_to_buffer_advance_ptr(pp, &item->path->num_points, sizeof(int));
+    copy_to_buffer_advance_ptr(pp, item->path->coords, 2*item->path->num_points*sizeof(double));
+    if (item->brush.variable_width)
+      copy_to_buffer_advance_ptr(pp, item->widths, (item->path->num_points-1)*sizeof(double));
     break;
   case ITEM_TEXT:
-    g_memmove(*pp, &item->brush, sizeof(struct Brush)); *pp+= sizeof(struct Brush);
-    g_memmove(*pp, &item->bbox.left, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(*pp, &item->bbox.top, sizeof(double)); *pp+= sizeof(double);
+    copy_to_buffer_advance_ptr(pp, &item->brush, sizeof(struct Brush));
+    copy_to_buffer_advance_ptr(pp, &item->bbox.left, sizeof(double));
+    copy_to_buffer_advance_ptr(pp, &item->bbox.top, sizeof(double));
     val = strlen(item->text);
-    g_memmove(*pp, &val, sizeof(int)); *pp+= sizeof(int);
-    g_memmove(*pp, item->text, val+1); *pp+= val+1;
+    copy_to_buffer_advance_ptr(pp, &val, sizeof(int));
+    copy_to_buffer_advance_ptr(pp, item->text, val+1);
     val = strlen(item->font_name);
-    g_memmove(*pp, &val, sizeof(int)); *pp+= sizeof(int);
-    g_memmove(*pp, item->font_name, val+1); *pp+= val+1;
-    g_memmove(*pp, &item->font_size, sizeof(double)); *pp+= sizeof(double);
+    copy_to_buffer_advance_ptr(pp, &val, sizeof(int));
+    copy_to_buffer_advance_ptr(pp, item->font_name, val+1);
+    copy_to_buffer_advance_ptr(pp, &item->font_size, sizeof(double));
     break;
   case ITEM_IMAGE:
     val = strlen(item->image_path);
-    g_memmove(*pp, &val, sizeof(int)); *pp+= sizeof(int);
-    g_memmove(*pp, item->image_path, val+1); *pp+= val+1;
-    g_memmove(*pp, &item->image_pasted, sizeof(gboolean)); *pp+= sizeof(gboolean);
-    g_memmove(*pp, &item->bbox.left, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(*pp, &item->bbox.top, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(*pp, &item->bbox.right, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(*pp, &item->bbox.bottom, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(*pp, &item->image_id, sizeof(unsigned int)); *pp+= sizeof(unsigned int);
-    g_memmove(*pp, &item->image, sizeof(GdkPixbuf*)); *pp+= sizeof(GdkPixbuf*);
+    copy_to_buffer_advance_ptr(pp, &val, sizeof(int));
+    copy_to_buffer_advance_ptr(pp, item->image_path, val+1);
+    copy_to_buffer_advance_ptr(pp, &item->image_pasted, sizeof(gboolean));
+    copy_to_buffer_advance_ptr(pp, &item->bbox.left, sizeof(double));
+    copy_to_buffer_advance_ptr(pp, &item->bbox.top, sizeof(double));
+    copy_to_buffer_advance_ptr(pp, &item->bbox.right, sizeof(double));
+    copy_to_buffer_advance_ptr(pp, &item->bbox.bottom, sizeof(double));
+    copy_to_buffer_advance_ptr(pp, &item->image_id, sizeof(unsigned int));
+    copy_to_buffer_advance_ptr(pp, &item->image, sizeof(GdkPixbuf*));
     g_object_ref(item->image); 
-    g_memmove(*pp, &item->image_scaled, sizeof(GdkPixbuf*)); *pp+= sizeof(GdkPixbuf*);
+    copy_to_buffer_advance_ptr(pp, &item->image_scaled, sizeof(GdkPixbuf*));
     g_object_ref(item->image_scaled);
     break;
   default:
@@ -1198,7 +1205,7 @@ void put_item_in_buffer(struct Item *item, char **pp)
 void selection_to_clip(void) 
 {
   int bufsz, nitems, nimages, val, img_ptr_store_size;
-  char *buf, *p, *p_imrefs;
+  unsigned char *buf, *p, *p_imrefs;
   GList *list;
   struct Item *item;
   GtkTargetEntry target;
@@ -1276,7 +1283,7 @@ void clipboard_paste_get_offset(double *hoffset, double *voffset)
 void import_img_as_clipped_item()
 {
   int bufsz, nitems = 1, nimages = 1;
-  char *buf, *p;
+  unsigned char *buf, *p;
   GtkTargetEntry target;
   GdkPixbuf *pixbuf;
   struct Item *item;
@@ -1332,12 +1339,12 @@ void import_img_as_clipped_item()
   bufsz = buffer_size_for_header(nimages); // size of header, incl. image
   bufsz += buffer_size_for_item(item);
   p = buf = g_malloc(bufsz);
-  g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
-  g_memmove(p, &nitems, sizeof(int)); p+= sizeof(int);
-  g_memmove(p, &nimages, sizeof(int)); p+= sizeof(int);
-  g_memmove(p, &item->image, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
-  g_memmove(p, &item->image_scaled, sizeof(GdkPixbuf *)); p+= sizeof(GdkPixbuf *);
-  g_memmove(p, &selection_bbox, sizeof(struct BBox)); p+= sizeof(struct BBox); 
+  copy_to_buffer_advance_ptr(&p, &bufsz, sizeof(int));
+  copy_to_buffer_advance_ptr(&p, &nitems, sizeof(int));
+  copy_to_buffer_advance_ptr(&p, &nimages, sizeof(int));
+  copy_to_buffer_advance_ptr(&p, &item->image, sizeof(GdkPixbuf *));
+  copy_to_buffer_advance_ptr(&p, &item->image_scaled, sizeof(GdkPixbuf *));
+  copy_to_buffer_advance_ptr(&p, &selection_bbox, sizeof(struct BBox)); 
   put_item_in_buffer(item, &p);
   g_free(item);
    
@@ -1360,8 +1367,8 @@ void get_item_from_buffer(struct Item *item, unsigned char **pp, double hoffset,
   GdkPixbuf *tmp_pixbuf_ptr;
   switch (item->type) {
   case ITEM_STROKE:
-    g_memmove(&item->brush, *pp, sizeof(struct Brush)); *pp+= sizeof(struct Brush);
-    g_memmove(&npts, *pp, sizeof(int)); *pp+= sizeof(int);
+    copy_from_buffer_advance_ptr(&item->brush, pp, sizeof(struct Brush));
+    copy_from_buffer_advance_ptr(&npts, pp, sizeof(int));
     item->path = gnome_canvas_points_new(npts);
     pf = (double *)*pp;
     for (i=0; i<npts; i++) {
@@ -1377,37 +1384,37 @@ void get_item_from_buffer(struct Item *item, unsigned char **pp, double hoffset,
     update_item_bbox(item);
     break;
  case ITEM_TEXT:
-   g_memmove(&item->brush, *pp, sizeof(struct Brush)); *pp+= sizeof(struct Brush);
-   g_memmove(&item->bbox.left, *pp, sizeof(double)); *pp+= sizeof(double);
-   g_memmove(&item->bbox.top, *pp, sizeof(double)); *pp+= sizeof(double);
+   copy_from_buffer_advance_ptr(&item->brush, pp, sizeof(struct Brush));
+   copy_from_buffer_advance_ptr(&item->bbox.left, pp, sizeof(double));
+   copy_from_buffer_advance_ptr(&item->bbox.top, pp, sizeof(double));
    item->bbox.left += hoffset;
    item->bbox.top += voffset;
-   g_memmove(&len, *pp, sizeof(int)); *pp+= sizeof(int);
+   copy_from_buffer_advance_ptr(&len, pp, sizeof(int));
    item->text = g_malloc(len+1);
-   g_memmove(item->text, *pp, len+1); *pp+= len+1;
-   g_memmove(&len, *pp, sizeof(int)); *pp+= sizeof(int);
+   copy_from_buffer_advance_ptr(item->text, pp, len+1);
+   copy_from_buffer_advance_ptr(&len, pp, sizeof(int));
    item->font_name = g_malloc(len+1);
-   g_memmove(item->font_name, *pp, len+1); *pp+= len+1;
-   g_memmove(&item->font_size, *pp, sizeof(double)); *pp+= sizeof(double);
+   copy_from_buffer_advance_ptr(item->font_name, pp, len+1);
+   copy_from_buffer_advance_ptr(&item->font_size, pp, sizeof(double));
    break;
   case ITEM_IMAGE:
-    g_memmove(&len, *pp, sizeof(int)); *pp+= sizeof(int);
+    copy_from_buffer_advance_ptr(&len, pp, sizeof(int));
     item->image_path = g_malloc(len+1);
-    g_memmove(item->image_path, *pp, len+1); *pp+= len+1;
-    g_memmove(&item->image_pasted, *pp, sizeof(gboolean)); *pp+= sizeof(gboolean);
+    copy_from_buffer_advance_ptr(item->image_path, pp, len+1);
+    copy_from_buffer_advance_ptr(&item->image_pasted, pp, sizeof(gboolean));
 
-    g_memmove(&item->bbox.left, *pp, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(&item->bbox.top, *pp, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(&item->bbox.right, *pp, sizeof(double)); *pp+= sizeof(double);
-    g_memmove(&item->bbox.bottom, *pp, sizeof(double)); *pp+= sizeof(double);
+    copy_from_buffer_advance_ptr(&item->bbox.left, pp, sizeof(double));
+    copy_from_buffer_advance_ptr(&item->bbox.top, pp, sizeof(double));
+    copy_from_buffer_advance_ptr(&item->bbox.right, pp, sizeof(double));
+    copy_from_buffer_advance_ptr(&item->bbox.bottom, pp, sizeof(double));
     item->bbox.left += hoffset;
     item->bbox.right += hoffset;
     item->bbox.top += voffset;
     item->bbox.bottom += voffset;
 
-    g_memmove(&item->image_id, *pp, sizeof(unsigned int)); *pp+= sizeof(unsigned int);
-    g_memmove(&item->image, *pp, sizeof(GdkPixbuf*)); *pp+= sizeof(GdkPixbuf*);
-    g_memmove(&item->image_scaled, *pp, sizeof(GdkPixbuf*)); *pp+= sizeof(GdkPixbuf*);
+    copy_from_buffer_advance_ptr(&item->image_id, pp, sizeof(unsigned int));
+    copy_from_buffer_advance_ptr(&item->image, pp, sizeof(GdkPixbuf*));
+    copy_from_buffer_advance_ptr(&item->image_scaled, pp, sizeof(GdkPixbuf*));
       
     // copied image has the same underlying "image" (referenced twice), but
     // image_scaled is copied into its own storage
@@ -1448,15 +1455,15 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   if (sel_data == NULL) return; // paste failed
   
   p = sel_data->data + sizeof(int);
-  g_memmove(&nitems, p, sizeof(int)); p+= sizeof(int);
-  g_memmove(&nimages, p, sizeof(int)); p+= sizeof(int);
+  copy_from_buffer_advance_ptr(&nitems, &p, sizeof(int));
+  copy_from_buffer_advance_ptr(&nimages, &p, sizeof(int));
   p += 2*nimages*sizeof(GdkPixbuf *); // ignore the image pointers here
 				      // (adjust refcount when retrieving
 				      // images from buffer)
   
   reset_selection();
   get_new_selection(ITEM_SELECTRECT, ui.cur_layer);
-  g_memmove(&ui.selection->bbox, p, sizeof(struct BBox)); p+= sizeof(struct BBox);
+  copy_from_buffer_advance_ptr(&ui.selection->bbox, &p, sizeof(struct BBox));
 
   if (! use_provided_offset)
     clipboard_paste_get_offset(&hoffset, &voffset);
@@ -1474,7 +1481,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
     ui.selection->items = g_list_append(ui.selection->items, item);
     ui.cur_layer->items = g_list_append(ui.cur_layer->items, item);
     ui.cur_layer->nitems++;
-    g_memmove(&item->type, p, sizeof(int)); p+= sizeof(int);
+    copy_from_buffer_advance_ptr(&item->type, &p, sizeof(int));
     get_item_from_buffer(item, &p, hoffset, voffset); // offsets needed for setting item bbox
     make_canvas_item_one(ui.cur_layer->group, item);
   }

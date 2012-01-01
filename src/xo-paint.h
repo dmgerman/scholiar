@@ -43,6 +43,8 @@ void finalize_resizesel(void);
 void selection_delete(void);
 
 /* clipboard-related functions */
+void copy_to_buffer_advance_ptr(unsigned char **to, gpointer from, gsize size);
+void copy_from_buffer_advance_ptr(gpointer to, unsigned char **from, gsize size);
 
 void selection_to_clip(void);
 void clipboard_paste_get_offset(double *hoffset, double *voffset);
@@ -50,7 +52,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
 void clipboard_paste(void);
 int buffer_size_for_item(struct Item *item);
 int buffer_size_for_header(int nimages);
-void put_item_in_buffer(struct Item *item, char **pp);
+void put_item_in_buffer(struct Item *item, unsigned char **pp);
 void get_item_from_buffer(struct Item *item, unsigned char **pp, double hoffset, double voffset);
 void import_img_as_clipped_item();
 
