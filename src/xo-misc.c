@@ -632,110 +632,150 @@ void make_page_clipbox(struct Page *pg)
   gnome_canvas_path_def_unref(pg_clip);
 }
 
-void make_canvas_item_one(GnomeCanvasGroup *group, struct Item *item)
+void make_canvas_item_one_stroke(GnomeCanvasGroup *group, struct Item *item)
 {
-  PangoFontDescription *font_desc;
   GnomeCanvasPoints points;
+  int j;
+  if (!item->brush.variable_width)
+    item->canvas_item = gnome_canvas_item_new(group,
+					      gnome_canvas_line_get_type(), "points", item->path,   
+					      "cap-style", GDK_CAP_ROUND, "join-style", GDK_JOIN_ROUND,
+					      "fill-color-rgba", item->brush.color_rgba,  
+					      "width-units", item->brush.thickness, NULL);
+  else {
+    item->canvas_item = gnome_canvas_item_new(group,
+					      gnome_canvas_group_get_type(), NULL);
+    points.num_points = 2;
+    points.ref_count = 1;
+    for (j = 0; j < item->path->num_points-1; j++) {
+      points.coords = item->path->coords+2*j;
+      gnome_canvas_item_new((GnomeCanvasGroup *) item->canvas_item,
+			    gnome_canvas_line_get_type(), "points", &points, 
+			    "cap-style", GDK_CAP_ROUND, "join-style", GDK_JOIN_ROUND, 
+			    "fill-color-rgba", item->brush.color_rgba,
+			    "width-units", item->widths[j], NULL);
+    }
+  }  
+}
+
+void make_canvas_item_one_text(GnomeCanvasGroup *group, struct Item *item)
+{  
+  PangoFontDescription *font_desc;
+  font_desc = pango_font_description_from_string(item->font_name);
+  pango_font_description_set_absolute_size(font_desc, 
+					   item->font_size*ui.zoom*PANGO_SCALE);
+  item->canvas_item = gnome_canvas_item_new(group,
+					    gnome_canvas_text_get_type(),
+					    "x", item->bbox.left, "y", item->bbox.top, "anchor", GTK_ANCHOR_NW,
+					    "font-desc", font_desc, "fill-color-rgba", item->brush.color_rgba,
+					    "text", item->text, NULL);
+  update_item_bbox(item);
+}
+
+void prompt_user_for_image(struct Item *item)
+{
   GtkFileFilter *filt_all;
   GtkFileFilter *filt_gdkimage;
   GtkWidget *dialog;
   char *tmp_filename;
-  int j;
 
-  if (item->type == ITEM_STROKE) {
-    if (!item->brush.variable_width)
-      item->canvas_item = gnome_canvas_item_new(group,
-            gnome_canvas_line_get_type(), "points", item->path,   
-            "cap-style", GDK_CAP_ROUND, "join-style", GDK_JOIN_ROUND,
-            "fill-color-rgba", item->brush.color_rgba,  
-            "width-units", item->brush.thickness, NULL);
-    else {
-      item->canvas_item = gnome_canvas_item_new(group,
-            gnome_canvas_group_get_type(), NULL);
-      points.num_points = 2;
-      points.ref_count = 1;
-      for (j = 0; j < item->path->num_points-1; j++) {
-        points.coords = item->path->coords+2*j;
-        gnome_canvas_item_new((GnomeCanvasGroup *) item->canvas_item,
-              gnome_canvas_line_get_type(), "points", &points, 
-              "cap-style", GDK_CAP_ROUND, "join-style", GDK_JOIN_ROUND, 
-              "fill-color-rgba", item->brush.color_rgba,
-              "width-units", item->widths[j], NULL);
-      }
-    }
-  }
-  if (item->type == ITEM_TEXT) {
-    font_desc = pango_font_description_from_string(item->font_name);
-    pango_font_description_set_absolute_size(font_desc, 
-            item->font_size*ui.zoom*PANGO_SCALE);
-    item->canvas_item = gnome_canvas_item_new(group,
-          gnome_canvas_text_get_type(),
-          "x", item->bbox.left, "y", item->bbox.top, "anchor", GTK_ANCHOR_NW,
-          "font-desc", font_desc, "fill-color-rgba", item->brush.color_rgba,
-          "text", item->text, NULL);
-    update_item_bbox(item);
-  }
-  if (item->type == ITEM_IMAGE) {
-	  #ifdef IMAGE_DEBUG
-	  printf("make_canvas_item_one of image '%s'\n",item->image_path);
-	  #endif
-	  if(item->image==NULL)
-		item->image = gdk_pixbuf_new_from_file(item->image_path, NULL);
-	  tmp_filename=item->image_path;
-	  while(item->image==NULL){
-		  /* open failed */
-		  dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-		    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening image '%s'"), item->image_path);
-		  gtk_dialog_run(GTK_DIALOG(dialog));
-		  gtk_widget_destroy(dialog);
-		  dialog = gtk_file_chooser_dialog_new(_("Specify new image location"), GTK_WINDOW (winMain),
-		     GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		     GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
-		#ifdef FILE_DIALOG_SIZE_BUGFIX
-		  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
-		#endif
+  dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+				  GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening image '%s'"), item->image_path);
+  gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
+  dialog = gtk_file_chooser_dialog_new(_("Specify new image location"), GTK_WINDOW (winMain),
+				       GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				       GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+#ifdef FILE_DIALOG_SIZE_BUGFIX
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 400);
+#endif
 		     
-		  filt_all = gtk_file_filter_new();
-		  gtk_file_filter_set_name(filt_all, _("All files"));
-		  gtk_file_filter_add_pattern(filt_all, "*");
-		  filt_gdkimage = gtk_file_filter_new();
-		  gtk_file_filter_set_name(filt_gdkimage, _("supported image files"));
-		  gtk_file_filter_add_pixbuf_formats(filt_gdkimage);
-		  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_gdkimage);
-		  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
+  filt_all = gtk_file_filter_new();
+  gtk_file_filter_set_name(filt_all, _("All files"));
+  gtk_file_filter_add_pattern(filt_all, "*");
+  filt_gdkimage = gtk_file_filter_new();
+  gtk_file_filter_set_name(filt_gdkimage, _("supported image files"));
+  gtk_file_filter_add_pixbuf_formats(filt_gdkimage);
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_gdkimage);
+  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
 
-		  if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
+  if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
 
-		  if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
-		    gtk_widget_destroy(dialog);
-		    return;
-		  }
-		  tmp_filename=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
-		  item->image = gdk_pixbuf_new_from_file(tmp_filename, NULL);
-		  gtk_widget_destroy(dialog);
-		  ui.saved = FALSE;
-	  }
-	  item->image_path=tmp_filename;
-	  item->image_scaled=gdk_pixbuf_scale_simple(item->image,
-					item->bbox.right-item->bbox.left,
-					item->bbox.bottom-item->bbox.top,
-					GDK_INTERP_BILINEAR);
-	  item->canvas_item = gnome_canvas_item_new(group,
-                             GNOME_TYPE_CANVAS_PIXBUF,
-				"anchor",GTK_ANCHOR_NW,
-				"height-in-pixels",0,
-				"width-in-pixels",0,
-				"x-in-pixels",0,
-				"y-in-pixels",0,
-				"pixbuf",item->image_scaled,
-				"x", item->bbox.left, 
-				"y", item->bbox.top,
-				"height",item->bbox.bottom-item->bbox.top, 
-				"width", item->bbox.right-item->bbox.left,  
-				NULL);
-	  update_item_bbox(item);
+  if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
+    gtk_widget_destroy(dialog);
+    return;
+  }
+  tmp_filename=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
+  item->image = gdk_pixbuf_new_from_file(tmp_filename, NULL);
+  gtk_widget_destroy(dialog);
+  ui.saved = FALSE;
+}
+
+void make_canvas_item_one_image(GnomeCanvasGroup *group, struct Item *item)
+{
+  char *tmp_filename;
+#ifdef IMAGE_DEBUG
+  printf("make_canvas_item_one of image '%s'\n",item->image_path);
+#endif
+  if(item->image==NULL)
+    item->image = gdk_pixbuf_new_from_file(item->image_path, NULL);
+  tmp_filename=item->image_path;
+  while(item->image==NULL) //  open failed 
+    prompt_user_for_image(item);
+
+  item->image_path=tmp_filename;
+  // Size we want for rendering is bbox * zoom factor
+  // for inst., if bbox is 100 canvas units and zoom factor is 1.333, 
+  // it will scale to 133x133 px and, which is good b/c we want to 
+  // render a 133x133 px square.
+  // If we had a 100 px original shrunk to 50 px but view it under 2x zoom, 
+  // this will resize stuff to 100 px 
+  item->image_scaled=gdk_pixbuf_scale_simple(item->image,
+    (item->bbox.right-item->bbox.left) * ui.zoom,
+    (item->bbox.bottom-item->bbox.top) * ui.zoom,
+    GDK_INTERP_BILINEAR);
+
+  // Another way to do this: set height/width-in-pixels to TRUE,
+  // height/width-set to FALSE; don't set height/width and (important) DON'T
+  // call update_item_bbox at the end
+  item->canvas_item = gnome_canvas_item_new(group,
+    GNOME_TYPE_CANVAS_PIXBUF,
+    "anchor",GTK_ANCHOR_NW,
+    /* "height-in-pixels",TRUE, */
+    /* "width-in-pixels",TRUE, */
+    "height-set",TRUE,
+    "width-set",TRUE,
+    "x-in-pixels",0,
+    "y-in-pixels",0,
+    "pixbuf",item->image_scaled,
+    "x", item->bbox.left, 
+    "y", item->bbox.top,
+    "height",(item->bbox.bottom-item->bbox.top),
+    "width", (item->bbox.right-item->bbox.left),
+    NULL);
+  update_item_bbox(item);
+}
+
+
+void make_canvas_item_one(GnomeCanvasGroup *group, struct Item *item)
+{
+  GnomeCanvasPoints points;
+  int j;
+  switch (item->type) {
+  case ITEM_STROKE:
+    make_canvas_item_one_stroke(group, item);
+    break;
+  case ITEM_TEXT:
+    make_canvas_item_one_text(group, item);
+    break;
+  case ITEM_IMAGE:
+    make_canvas_item_one_image(group, item);
+    break;
+  default:
+    break;
   }
 }
+ 
 
 void make_canvas_items(void)
 {
@@ -2058,12 +2098,13 @@ void move_journal_items_by(GList *itemlist, double dx, double dy,
   }
 }
 
+#define MIN_IMAGE_RESIZE_SIZE 8
 void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y,
                              double offset_x, double offset_y)
 {
   struct Item *item;
   GList *list;
-  double mean_scaling, temp;
+  double mean_scaling, temp, w, h;
   double *pt, *wid;
   GnomeCanvasGroup *group;
   int i; 
@@ -2122,7 +2163,20 @@ void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y
         item->bbox.top = item->bbox.bottom;
         item->bbox.bottom = temp;
       }
+      w = item->bbox.right - item->bbox.left;
+      h = item->bbox.bottom - item->bbox.top;
+      // if we try to rescale images to less than a pixel, bad things happen
+      if ((w < h ? w : h) <= MIN_IMAGE_RESIZE_SIZE) {
+	if ((w < h ? w : h) == w) {
+	  item->bbox.right = item->bbox.left + MIN_IMAGE_RESIZE_SIZE;
+	  item->bbox.bottom = item->bbox.top + MIN_IMAGE_RESIZE_SIZE * h / w;
+	} else {
+	  item->bbox.bottom = item->bbox.top + MIN_IMAGE_RESIZE_SIZE;
+	  item->bbox.right = item->bbox.left + MIN_IMAGE_RESIZE_SIZE * w / h;
+	}
+      }
     }
+  
     // redraw the item
     if (item->canvas_item!=NULL) {
       group = (GnomeCanvasGroup *) item->canvas_item->parent;

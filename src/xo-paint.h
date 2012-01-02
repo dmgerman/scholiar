@@ -59,6 +59,12 @@ void import_img_as_clipped_item();
 void recolor_selection(int color_no, guint color_rgba);
 void rethicken_selection(int val);
 
+/* object-related functions (textboxes, images) */
+
+void rescale_objects(void);
+struct Item *click_is_in_object(struct Layer *layer, double x, double y);
+gboolean item_under_point(struct Item *item, double x, double y);
+
 /* text functions */
 
 #define DEFAULT_FONT "Sans"
@@ -68,8 +74,6 @@ void start_text(GdkEvent *event, struct Item *item);
 void end_text(void);
 void update_text_item_displayfont(struct Item *item);
 void rescale_text_items(void);
-gboolean item_under_point(struct Item *item, double x, double y);
-struct Item *click_is_in_object(struct Layer *layer, double x, double y);
 struct Item *click_is_in_text(struct Layer *layer, double x, double y);
 void refont_text_item(struct Item *item, gchar *font_name, double font_size);
 void process_font_sel(gchar *str);
@@ -77,4 +81,5 @@ void process_font_sel(gchar *str);
 
 /* image functions */
 
+void update_scaled_image_display(struct Item *item);
 void insert_image(GdkEvent *event, struct Item *item);

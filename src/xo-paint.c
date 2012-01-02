@@ -1324,11 +1324,12 @@ void import_img_as_clipped_item()
     item->image_scaled=gdk_pixbuf_scale_simple(item->image,
 					       scale*gdk_pixbuf_get_width(item->image),
 					       scale*gdk_pixbuf_get_height(item->image),
-					       GDK_INTERP_NEAREST);
+					       GDK_INTERP_BILINEAR);
   /* gdk_pixbuf_save(item->image_scaled,"/tmp/testpixbuf3","png", &error, NULL); */
 
   item->bbox.right = item->bbox.left + gdk_pixbuf_get_width(item->image_scaled);
   item->bbox.bottom = item->bbox.top + gdk_pixbuf_get_height(item->image_scaled);
+
   g_memmove(&(item->brush), ui.cur_brush, sizeof(struct Brush));
   /* ui.cur_layer->items = g_list_append(ui.cur_layer->items, item); */
   /* ui.cur_layer->nitems++; */
@@ -1467,7 +1468,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
 
   if (! use_provided_offset)
     clipboard_paste_get_offset(&hoffset, &voffset);
-
+  
   ui.selection->bbox.left += hoffset;
   ui.selection->bbox.right += hoffset;
   ui.selection->bbox.top += voffset;
@@ -1767,6 +1768,40 @@ void update_text_item_displayfont(struct Item *item)
     update_item_bbox(item);
   }
   pango_font_description_free(font_desc);
+}
+
+void rescale_objects(void)
+{
+  GList *pagelist, *layerlist, *itemlist;
+  struct Item *item;
+
+  for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next)
+    for (layerlist = ((struct Page *)pagelist->data)->layers; layerlist!=NULL; layerlist = layerlist->next)
+      for (itemlist = ((struct Layer *)layerlist->data)->items; itemlist!=NULL; itemlist = itemlist->next) {
+	item = (struct Item *)itemlist->data;
+	if (item->type == ITEM_TEXT || item->type == ITEM_TEMP_TEXT) 
+	  update_text_item_displayfont(item);
+	else if (item->type == ITEM_IMAGE)
+	  update_scaled_image_display(item);
+	else 
+	  return;
+      }
+}
+
+void update_scaled_image_display(struct Item *item)
+{
+  GnomeCanvasGroup *group;
+  if (item->type != ITEM_IMAGE) return;
+  if (item->canvas_item==NULL) return;
+  if (item->canvas_item!=NULL) {
+    group = (GnomeCanvasGroup *) item->canvas_item->parent;
+    gtk_object_destroy(GTK_OBJECT(item->canvas_item));
+    printf("ui.zoom is %f; bbox dims are %f x %f; scaled bbox is %f x %f\n",
+	   ui.zoom,     (item->bbox.right-item->bbox.left),
+    (item->bbox.bottom-item->bbox.top),   (item->bbox.right-item->bbox.left) * ui.zoom / DEFAULT_ZOOM,
+    (item->bbox.bottom-item->bbox.top) * ui.zoom / DEFAULT_ZOOM);
+    make_canvas_item_one(group, item);
+  } 
 }
 
 void rescale_text_items(void)

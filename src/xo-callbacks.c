@@ -1033,7 +1033,7 @@ on_viewZoomIn_activate                 (GtkMenuItem     *menuitem,
   if (ui.zoom > MAX_ZOOM) return;
   ui.zoom *= ui.zoom_step_factor;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-  rescale_text_items();
+  rescale_objects();
   rescale_bg_pixmaps();
 }
 
@@ -1045,7 +1045,7 @@ on_viewZoomOut_activate                (GtkMenuItem     *menuitem,
   if (ui.zoom < MIN_ZOOM) return;
   ui.zoom /= ui.zoom_step_factor;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-  rescale_text_items();
+  rescale_objects();
   rescale_bg_pixmaps();
 }
 
@@ -1056,7 +1056,7 @@ on_viewNormalSize_activate             (GtkMenuItem     *menuitem,
 {
   ui.zoom = DEFAULT_ZOOM;
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-  rescale_text_items();
+  rescale_objects();
   rescale_bg_pixmaps();
 }
 
@@ -1087,7 +1087,7 @@ on_viewPageWidth_activate              (GtkMenuItem     *menuitem,
   }
   
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-  rescale_text_items();
+  rescale_objects();
   rescale_bg_pixmaps();
 }
 
@@ -1750,7 +1750,7 @@ on_journalLoadBackground_activate      (GtkMenuItem     *menuitem,
   if (ui.zoom != DEFAULT_ZOOM) {
     ui.zoom = DEFAULT_ZOOM;
     gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-    rescale_text_items();
+    rescale_objects();
     rescale_bg_pixmaps();
   }
   do_switch_page(ui.pageno, TRUE, TRUE);
@@ -1796,7 +1796,7 @@ on_journalScreenshot_activate          (GtkMenuItem     *menuitem,
   if (ui.zoom != DEFAULT_ZOOM) {
     ui.zoom = DEFAULT_ZOOM;
     gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-    rescale_text_items();
+    rescale_objects();
     rescale_bg_pixmaps();
   }
   do_switch_page(ui.pageno, TRUE, TRUE);
@@ -3630,7 +3630,7 @@ on_viewSetZoom_activate                (GtkMenuItem     *menuitem,
     if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
       ui.zoom = DEFAULT_ZOOM*zoom_percent/100;
       gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-      rescale_text_items();
+      rescale_objects();
       rescale_bg_pixmaps();
     }
   } while (response == GTK_RESPONSE_APPLY);
