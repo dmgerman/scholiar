@@ -15,6 +15,7 @@ void do_hand(GdkEvent *event);
 #define DEFAULT_PADDING  2
 #define MIN_SEL_SCALE  0.01
 #define COPY_SEL_MAPPING 2
+#define IMG_INDEX_MAX_SIZE 11
 
 void get_selection_context(int selection_type, struct SelectionContext *sc);
 void free_selection_context(struct SelectionContext *sc);
@@ -81,5 +82,6 @@ void process_font_sel(gchar *str);
 
 /* image functions */
 
+void set_image_path_name(struct Item *item, char *fname_base, int image_id);
 void update_scaled_image_display(struct Item *item);
 void insert_image(GdkEvent *event, struct Item *item);

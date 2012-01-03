@@ -7,6 +7,8 @@
    and want to list the input events received by xournal. Caution, lots
    of output (redirect to a file). */
 
+#define ENABLE_IMAGE_EMBEDDING
+
 #define ENABLE_XINPUT_BUGFIX
 /* comment out this line if you are experiencing calibration problems with
    XInput and want to try things differently. This will probably break
@@ -169,7 +171,10 @@ typedef struct Item {
   // the following fields for ITEM_IMAGE:
   gchar *image_path;
   gboolean image_pasted;
-  unsigned int image_id;
+  gboolean image_embedded;
+  guint image_id;
+  guint base64_len;
+  guint stream_len;
   GdkPixbuf* image;  // original image for print and resizing quality
   GdkPixbuf* image_scaled; // scaled pixbuf for display
 } Item;
@@ -330,6 +335,7 @@ typedef struct UIData {
   gboolean shorten_menus; // shorten menus ?
   gchar *shorten_menu_items; // which items to hide
   gboolean is_sel_cursor; // displaying a selection-related cursor
+  gboolean embed_images;
 #if GTK_CHECK_VERSION(2,10,0)
   GtkPrintSettings *print_settings;
 #endif

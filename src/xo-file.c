@@ -14,6 +14,7 @@
 #include <zlib.h>
 #include <math.h>
 #include <gdk/gdkx.h>
+#include <gdk-pixbuf/gdk-pixdata.h>
 #include <X11/Xlib.h>
 #include <locale.h>
 #include <glib.h>
@@ -90,10 +91,12 @@ gboolean save_journal(const char *filename)
   char *tmpfn, *tmpstr, *tmpfn_img_path, *tmpfn_img_dir, *tmpfn_img_file;
   char dbg_buffer[1000];
   char *tmpfn_full_path, *tmpfn_full_path2, *tmpfn_full_path3, *tmpstr_write;
-  int buflen;
+  guint buflen, imgdatalen, pixdata_stream_len;
   char *img_extension;
   gboolean success, img_success;
   FILE *tmpf;
+  GdkPixdata pixdata;
+  guint8 *pixdata_stream;
   GList *pagelist, *layerlist, *itemlist, *list;
   GtkWidget *dialog;
   GError *error = NULL;
@@ -215,10 +218,8 @@ gboolean save_journal(const char *filename)
           gzprintf(f, "\">%s</text>\n", tmpstr);
           g_free(tmpstr);
         }
-	if (item->type == ITEM_IMAGE) {
-	  if (! item->image_pasted) {
-	    tmpstr = g_markup_escape_text(item->image_path, -1);
-	  } else {
+	if (item->type == ITEM_IMAGE) { //TODO-lva: handle both inserted and pasted images if embedding
+	  if (! ui.embed_images) {
 	    img_extension = "png";	
 	    tmpfn_img_path = g_path_get_dirname(filename);
 	    tmpfn_img_dir = g_path_get_basename(filename);
@@ -253,9 +254,22 @@ gboolean save_journal(const char *filename)
 	    g_free(tmpfn_img_dir);
 	    g_free(tmpfn_full_path);
 	    g_free(tmpfn_full_path2);
+	  } else { // image embedding
+	    gdk_pixdata_from_pixbuf(&pixdata,item->image,FALSE);
+	    pixdata_stream = gdk_pixdata_serialize(&pixdata, &pixdata_stream_len);
+	    tmpstr = g_base64_encode(pixdata_stream, pixdata_stream_len);
+#ifdef IMAGE_DEBUG
+	    printf("encoded base64 image of length %d\n",pixdata_stream_len);
+#endif
 	  }
-	  gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
-	  gzprintf(f, "\">%s</image>\n", tmpstr);
+	  gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f\"", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
+	  if (ui.embed_images) 
+	    gzprintf(f, " embedded=\"TRUE\" base64length=\"%d\" streamlength=\"%d\"",strlen(tmpstr),pixdata_stream_len);
+	  printf("tmpstring is of len %d\n",(int)strlen(tmpstr));
+	  /* printf("%s\n", tmpstr); */
+	  gzprintf(f, ">"); 
+	  gzputs(f, tmpstr);
+	  gzprintf(f, "</image>\n");
           g_free(tmpstr);
         }
       }
@@ -645,9 +659,9 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     if (has_attr!=31) *error = xoj_invalid();
   }
   else if (!strcmp(element_name, "image")) { // start of a image item
-	  #ifdef IMAGE_DEBUG
-	  printf("found image tag\n");
-	  #endif
+#ifdef IMAGE_DEBUG
+    printf("found image tag\n");
+#endif
     if (tmpLayer == NULL || tmpItem != NULL) {
       *error = xoj_invalid();
       return;
@@ -657,6 +671,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     tmpItem->canvas_item = NULL;
     tmpItem->image=NULL;
     tmpItem->image_scaled=NULL;
+    tmpItem->image_embedded = FALSE;
     tmpLayer->items = g_list_append(tmpLayer->items, tmpItem);
     tmpLayer->nitems++;
     // scan for x, y
@@ -689,6 +704,22 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         tmpItem->bbox.bottom = g_ascii_strtod(*attribute_values, &ptr);
         if (ptr == *attribute_values) *error = xoj_invalid();
         has_attr |= 8;
+      }
+      else if (!strcmp(*attribute_names, "embedded")) {
+	if (!strcmp(*attribute_values,"TRUE")) {
+#ifdef IMAGE_DEBUG
+	  printf("found embedded=TRUE tag\n");
+#endif
+	  tmpItem->image_embedded = TRUE;
+	}
+      }
+      else if (!strcmp(*attribute_names, "base64length")) {
+	tmpItem->base64_len = (int)g_ascii_strtoll(*attribute_values,&ptr,10);
+	if (ptr == *attribute_values) *error = xoj_invalid();
+      }
+      else if (!strcmp(*attribute_names, "streamlength")) {
+	tmpItem->stream_len = (int)g_ascii_strtoll(*attribute_values,&ptr,10);
+	if (ptr == *attribute_values) *error = xoj_invalid();
       }
       else *error = xoj_invalid();
       attribute_names++;
@@ -744,21 +775,24 @@ void xoj_parser_end_element(GMarkupParseContext *context,
 }
 
 
-
 void xoj_parser_text(GMarkupParseContext *context,
    const gchar *text, gsize text_len, gpointer user_data, GError **error)
 {
   const gchar *element_name, *ptr;
+  gchar *base64_str;
+  gsize png_buflen;
   int n;
   char *buf; int i;
-  
+  GdkPixdata pixdata;
+  guint8 *pixdata_stream;
+
   element_name = g_markup_parse_context_get_element(context);
   if (element_name == NULL) return;
   if (strcmp(element_name,"imageIdCount") == 0) {
     buf = g_malloc(text_len+1);
     g_snprintf(buf, text_len + 1, "%s", text);
     buf[text_len] = '\0';
-    tmpJournal.image_id_counter = (int)g_ascii_strtoll(buf,NULL,10);
+    tmpJournal.image_id_counter = (int)g_ascii_strtoll(buf,NULL,10); //base 10
     g_free(buf);
   }
   if (!strcmp(element_name, "stroke")) {
@@ -789,12 +823,27 @@ void xoj_parser_text(GMarkupParseContext *context,
     tmpItem->text[text_len]=0;
   }
   if (!strcmp(element_name, "image")) {
-    tmpItem->image_path = g_malloc(text_len+1);
-    g_memmove(tmpItem->image_path, text, text_len);
-    tmpItem->image_path[text_len]=0;
-	  #ifdef IMAGE_DEBUG
-    printf("found image with path '%s' and length %i \n",tmpItem->image_path,(int)text_len);
-	  #endif
+    if (tmpItem->image_embedded) {
+      base64_str = g_malloc(text_len + 1);
+      g_memmove(base64_str, text, text_len);
+      base64_str[text_len] = '\0';
+      pixdata_stream = (guint8 *)g_base64_decode(base64_str, &png_buflen);
+      g_free(base64_str);
+      if (gdk_pixdata_deserialize(&pixdata, tmpItem->stream_len, pixdata_stream, error)) {
+	tmpItem->image = gdk_pixbuf_from_pixdata(&pixdata, FALSE, error);
+      } else
+	tmpItem->image = NULL;
+#ifdef IMAGE_DEBUG
+      printf("found image in BASE64 format, with b64len=%d, streamlen=%d, put in buf of len %d \n",tmpItem->base64_len,tmpItem->stream_len,(int)png_buflen);
+#endif
+    } else {
+      tmpItem->image_path = g_malloc(text_len+1);
+      g_memmove(tmpItem->image_path, text, text_len);
+      tmpItem->image_path[text_len]=0;
+#ifdef IMAGE_DEBUG
+      printf("found image with path '%s' and length %i \n",tmpItem->image_path,(int)text_len);
+#endif
+    }
   }
 }
 
@@ -1496,6 +1545,11 @@ void init_config_default(void)
   ui.default_page.bg->color_no = COLOR_WHITE;
   ui.default_page.bg->color_rgba = predef_bgcolors_rgba[COLOR_WHITE];
   ui.default_page.bg->ruling = RULING_LINED;
+#ifdef ENABLE_IMAGE_EMBEDDING
+  ui.embed_images = TRUE;
+#else
+  ui.embed_images = FALSE;
+#endif
   ui.view_continuous = TRUE;
   ui.allow_xinput = TRUE;
   ui.discard_corepointer = FALSE;

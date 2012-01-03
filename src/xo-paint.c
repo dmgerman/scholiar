@@ -1279,6 +1279,14 @@ void clipboard_paste_get_offset(double *hoffset, double *voffset)
   *voffset = cy - (ui.selection->bbox.top+ui.selection->bbox.bottom)/2;
 }
 
+void set_image_path_name(struct Item *item, char *fname_base, int image_id)
+{
+  int buflen = strlen(fname_base) + IMG_INDEX_MAX_SIZE * sizeof(char) + 1;
+  item->image_path = g_malloc(buflen);
+  g_snprintf(item->image_path, buflen, "%s%d", fname_base, image_id);
+}
+
+
 
 void import_img_as_clipped_item()
 {
@@ -1290,10 +1298,9 @@ void import_img_as_clipped_item()
   struct BBox selection_bbox;
   double scale=1;
   char *paste_fname_base = "paste_";
-  int IMG_INDEX_MAX_SIZE = 11;
-  /* printf("wait for image...."); */
+
   pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
-  /* printf("got image..."); */
+  /* printf(got image..."); */
   if(pixbuf==NULL){
     /* open failed */
     ui.cur_item = NULL;
@@ -1304,9 +1311,7 @@ void import_img_as_clipped_item()
   item->type = ITEM_IMAGE;
   item->image_pasted = TRUE;
   item->image_id = journal.image_id_counter++;
-  item->image_path = g_malloc(strlen(paste_fname_base) + IMG_INDEX_MAX_SIZE * sizeof(char));
-  strcpy(item->image_path, paste_fname_base);
-  sprintf(&(item->image_path[strlen(paste_fname_base)]),"%d",item->image_id);
+  set_image_path_name(item, paste_fname_base, item->image_id);
   item->canvas_item = NULL;
 
   item->bbox.left = 0;
@@ -1353,11 +1358,10 @@ void import_img_as_clipped_item()
   target.target = "_XOURNAL";
   target.flags = 0;
   target.info = 0;
-  
+
   gtk_clipboard_set_with_data(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), 
 			      &target, 1,
 			      callback_clipboard_get, callback_clipboard_clear, buf);
-
 }
 
 
@@ -1774,7 +1778,6 @@ void rescale_objects(void)
 {
   GList *pagelist, *layerlist, *itemlist;
   struct Item *item;
-
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next)
     for (layerlist = ((struct Page *)pagelist->data)->layers; layerlist!=NULL; layerlist = layerlist->next)
       for (itemlist = ((struct Layer *)layerlist->data)->items; itemlist!=NULL; itemlist = itemlist->next) {
@@ -1783,8 +1786,6 @@ void rescale_objects(void)
 	  update_text_item_displayfont(item);
 	else if (item->type == ITEM_IMAGE)
 	  update_scaled_image_display(item);
-	else 
-	  return;
       }
 }
 
@@ -1796,10 +1797,6 @@ void update_scaled_image_display(struct Item *item)
   if (item->canvas_item!=NULL) {
     group = (GnomeCanvasGroup *) item->canvas_item->parent;
     gtk_object_destroy(GTK_OBJECT(item->canvas_item));
-    printf("ui.zoom is %f; bbox dims are %f x %f; scaled bbox is %f x %f\n",
-	   ui.zoom,     (item->bbox.right-item->bbox.left),
-    (item->bbox.bottom-item->bbox.top),   (item->bbox.right-item->bbox.left) * ui.zoom / DEFAULT_ZOOM,
-    (item->bbox.bottom-item->bbox.top) * ui.zoom / DEFAULT_ZOOM);
     make_canvas_item_one(group, item);
   } 
 }
@@ -1820,7 +1817,7 @@ struct Item *click_is_in_object(struct Layer *layer, double x, double y)
   struct Item *item, *object_item;
   object_item = NULL;
   
-  for (itemlist = ui.cur_layer->items; itemlist!=NULL; itemlist = itemlist->next) {
+  for (itemlist = layer->items; itemlist!=NULL; itemlist = itemlist->next) {
     item = (struct Item *)itemlist->data;
     if (item_under_point(item, x, y) && (item->type == ITEM_TEXT || item->type == ITEM_IMAGE)) 
       object_item = item;
@@ -1903,6 +1900,7 @@ void insert_image(GdkEvent *event, struct Item *item)
   char *filename;
   GdkPixbuf *pixbuf;
   double scale=1;
+  char *insert_fname_base = "insert_";
   
   dialog = gtk_file_chooser_dialog_new(_("Insert Image"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -1949,8 +1947,8 @@ void insert_image(GdkEvent *event, struct Item *item)
   if (item==NULL) {
     item = g_new(struct Item, 1);
     item->type = ITEM_IMAGE;
-    item->image_path = filename;
-	  printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path);
+    item->image_id = journal.image_id_counter++;
+    set_image_path_name(item, insert_fname_base, item->image_id);
     item->canvas_item = NULL;
     item->bbox.left = pt[0];
     item->bbox.top = pt[1];
