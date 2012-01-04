@@ -1988,7 +1988,11 @@ gboolean ok_to_close(void)
   GtkWidget *dialog;
   GtkResponseType response;
 
-  if (ui.saved) return TRUE;
+  if (ui.saved)
+  {
+     g_unlink(get_autosave_filename());
+	 return TRUE;
+  }
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
     GTK_MESSAGE_WARNING, GTK_BUTTONS_NONE, _("Save changes to '%s'?"),
     (ui.filename!=NULL) ? ui.filename:_("Untitled"));
@@ -2004,6 +2008,7 @@ gboolean ok_to_close(void)
     on_fileSave_activate(NULL, NULL);
     if (!ui.saved) return FALSE; // if save failed, then we abort
   }
+  g_unlink(get_autosave_filename());
   return TRUE;
 }
 
@@ -2586,6 +2591,31 @@ void install_focus_hooks(GtkWidget *w, gpointer data)
   }
   if(GTK_IS_CONTAINER(w))
     gtk_container_forall(GTK_CONTAINER(w), install_focus_hooks, data);
+}
+
+// This function should be called at the beginning of pertinent event handlers.
+// If Xournal ever becomes multithreaded, note that we assume 2 seconds is long
+// enough for the event handler to do what needs to get done--if this is not
+// acceptable you will need to split it up into two functions, the increment
+// done at the beginning of the event handler and the registration of the callback
+// at the end.
+void signal_canvas_changed(void)
+{
+  if (ui.enable_autosave) {
+    ui.block_autosave = FALSE;
+    ui.autosave_defers++;
+
+    // If there were no deferrals in the last two seconds:
+    //    ui.autosave_defers == 1
+    // Otherwise,
+    //    ui.autosave_defers == 1  number of deferrals
+    // If no deferrals occur in the next two seconds, ui.autosave_defers
+    // will equal 1 again.
+    //    ui.autosave_defers == 0
+    // indicates there are no deferred autosaves pending
+
+    g_timeout_add_seconds(AUTOSAVE_DEFER_SECONDS, on_autosave_activate_deferred, NULL);
+  }
 }
 
 #ifdef adfasdf

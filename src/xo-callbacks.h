@@ -644,6 +644,9 @@ void
 on_optionsAutoSavePrefs_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
+gboolean
+on_autosave_activate_deferred          (gpointer         user_data);
+
 void
 on_toolsReco_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data);

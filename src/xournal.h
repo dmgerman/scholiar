@@ -47,7 +47,9 @@
 #define MIN_ZOOM 0.2
 #define RESIZE_MARGIN 6.0
 #define MAX_SAFE_RENDER_DPI 720 // max dpi at which PDF bg's get rendered
-
+#define AUTOSAVE_DEFER_SECONDS 3
+#define AUTOSAVES_DIR "autosaves"
+#define AUTOSAVE_SUFFIX ".autosave~"
 #define VBOX_MAIN_NITEMS 5 // number of interface items in vboxMain
 
 /* a string (+ aux data) that maintains a refcount */
@@ -329,6 +331,9 @@ typedef struct UIData {
   gboolean shorten_menus; // shorten menus ?
   gchar *shorten_menu_items; // which items to hide
   gboolean is_sel_cursor; // displaying a selection-related cursor
+  gboolean enable_autosave; // whether or not autosave is allowed
+  guint autosave_defers; // number of stacked deferrals
+  gboolean block_autosave; // block autosave from occurring when true
   gint pre_fullscreen_width, pre_fullscreen_height; // for win32 fullscreen
   gboolean embed_images;
 #if GTK_CHECK_VERSION(2,10,0)

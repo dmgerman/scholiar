@@ -121,6 +121,7 @@ void add_scroll_bindings(void);
 gboolean is_event_within_textview(GdkEventButton *event);
 
 void hide_unimplemented(void);
+void signal_canvas_changed(void);
 
 void do_fullscreen(gboolean active);
 

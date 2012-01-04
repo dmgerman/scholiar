@@ -81,6 +81,7 @@ void init_stuff (int argc, char *argv[])
   // initialize data
   ui.default_page.bg->canvas_item = NULL;
   ui.layerbox_length = 0;
+  ui.autosave_defers = 0;
 
   // parse command line options
   context = g_option_context_new ("");
@@ -424,6 +425,17 @@ main (int argc, char *argv[])
   winMain = create_winMain ();
   
   init_stuff (argc, argv);
+
+  if (argc <= 1) {
+    // if any autosaves have been restored by spawning child processes, we exit
+    // this instance of xournal.
+    if (check_and_restore_autosaves (argc, argv))
+      return 0;
+  }
+  else
+    open_argv_file_or_its_autosave (argc, argv);
+
+  
   gtk_window_set_icon(GTK_WINDOW(winMain), create_pixbuf("xournal.png"));
   
   gtk_main ();
@@ -432,6 +444,8 @@ main (int argc, char *argv[])
 
   save_mru_list();
   if (ui.auto_save_prefs) save_config_to_file();
+
+  clear_autosave_entry();
   
   return 0;
 }
