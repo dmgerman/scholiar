@@ -225,7 +225,7 @@ gboolean save_journal(const char *filename)
           gzputs(f, "</text>\n");
           g_free(tmpstr);
         }
-	if (item->type == ITEM_IMAGE) { //TODO-lva: handle both inserted and pasted images if embedding
+	if (item->type == ITEM_IMAGE) { 
 	  if (! ui.embed_images) {
 	    img_extension = "png";	
 	    tmpfn_img_path = g_path_get_dirname(filename);

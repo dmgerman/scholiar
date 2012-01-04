@@ -8,6 +8,7 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <libart_lgpl/art_svp_point.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk-pixbuf/gdk-pixdata.h>
 #include <X11/Xlib.h>
 #include <assert.h>
 #include <ctype.h>
@@ -371,6 +372,24 @@ void refstring_unref(struct Refstring *rs)
 
 
 // some helper functions
+struct ImgSerContext serialize_image(GdkPixbuf* image)
+{
+  GdkPixdata pixdata;
+  struct ImgSerContext isc;
+  gdk_pixdata_from_pixbuf(&pixdata, image, FALSE);
+  isc.image_data = gdk_pixdata_serialize(&pixdata, &isc.stream_length);
+  return(isc);
+}
+
+GdkPixbuf* deserialize_image(ImgSerContext isc)
+{
+  GdkPixdata pixdata;
+  GError  **error = NULL;
+  if (gdk_pixdata_deserialize(&pixdata, isc.stream_length, (guint8 *)isc.image_data, error)) 
+    return(gdk_pixbuf_from_pixdata(&pixdata, FALSE, error));
+  else
+    return(NULL);
+}
 
 int get_mapping(GdkEventButton *event)
 {

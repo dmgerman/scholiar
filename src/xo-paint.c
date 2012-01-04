@@ -1149,28 +1149,15 @@ void callback_clipboard_get(GtkClipboard *clipboard,
 
 void callback_clipboard_clear(GtkClipboard *clipboard, gpointer user_data)
 {
-  unsigned char *p;
-  int nitems, nimages;
-  GdkPixbuf *imref;
-  struct Item *item;
-  p = (unsigned char *)user_data + sizeof(int); //skip bufsize
-  g_memmove(&nitems, p, sizeof(int)); p+= sizeof(int); //skip nitems
-  g_memmove(&nimages, p, sizeof(int)); p+= sizeof(int);
-  while(nimages-- > 0) {
-    g_memmove(&imref, p, sizeof(GdkPixbuf *));
-    g_object_unref(imref); p+= sizeof(GdkPixbuf *); //unref item->image
-    g_memmove(&imref, p, sizeof(GdkPixbuf *));
-    g_object_unref(imref); p+= sizeof(GdkPixbuf *); //unref item->image_scaled
-  }
   g_free(user_data);
 }
 
-void copy_to_buffer_advance_ptr(unsigned char **to, gpointer from, gsize size)
+void copy_to_buffer_advance_ptr(guchar **to, gpointer from, gsize size)
 {
   g_memmove(*to, from, size); *to+=size;
 }
 
-void copy_from_buffer_advance_ptr(gpointer to, unsigned char **from, gsize size)
+void copy_from_buffer_advance_ptr(gpointer to, guchar **from, gsize size)
 {
   g_memmove(to, *from, size); *from+=size;
 }
@@ -1214,21 +1201,15 @@ int buffer_size_for_item(struct Item *item)
 }
 
 // buffer layout:
-// bufsz, nitems, nimages, [img,img_sc]*, bbox, [item]*
+// bufsz, nitems, bbox, [item]*
 // everything before the item entries is considered a header
-// the [img,img_sc] pointer pairs are for proper reference counting
-int buffer_size_for_header(int nimages)
+int buffer_size_for_header()
 {
-  int bufsz = 0;
-  int img_ptr_store_size = 2*nimages*sizeof(GdkPixbuf *);
-  bufsz = 2*sizeof(int) // bufsz, nitems
-    + sizeof(struct BBox) // bbox
-    + sizeof(int) // nimages
-    + img_ptr_store_size; // store image pointers up front for easy unreferencing
-  return bufsz;
+  return (2*sizeof(int) // bufsz, nitems
+    + sizeof(struct BBox)); // bbox
 }
 
-void put_item_in_buffer(struct Item *item, unsigned char **pp)
+void put_item_in_buffer(struct Item *item, guchar **pp)
 {
   int val;
   copy_to_buffer_advance_ptr(pp, &item->type, sizeof(int));
@@ -1272,54 +1253,88 @@ void put_item_in_buffer(struct Item *item, unsigned char **pp)
   }
 }
 
+void get_nitems_update_bufsize(int* bufsz, int* nitems, int* nimages)
+{
+  GList *list;
+  struct Item *item;
+  *nitems = 0; *nimages = 0;
+  for (list = ui.selection->items; list != NULL; list = list->next) {
+    item = (struct Item *)list->data;
+    (*nitems)++;
+    if (item->type == ITEM_IMAGE) (*nimages)++;
+    (*bufsz) += buffer_size_for_item(item);
+  }
+}
+void update_bufsize_and_ser_images(int* bufsz, ImgSerContext** serialized_images)
+{    
+  GList *list;
+  struct Item *item;
+  int i = 0;
+  for (list = ui.selection->items; list != NULL; list = list->next) {
+    item = (struct Item *)list->data;
+    if (item->type == ITEM_IMAGE) {
+      (*serialized_images)[i] = serialize_image(item->image);
+      (*bufsz) += sizeof(guint) + (*serialized_images)[i].stream_length;
+      i++;
+    }
+  }
+}
+
+void put_header_in_buffer(int *bufsz, int *nitems, struct BBox *bbox, guchar **pp) {
+  copy_to_buffer_advance_ptr(pp, bufsz, sizeof(int));
+  copy_to_buffer_advance_ptr(pp, nitems, sizeof(int)); 
+  copy_to_buffer_advance_ptr(pp, bbox, sizeof(struct BBox));
+}
+
+void put_image_data_in_buffer(struct ImgSerContext *isc, guchar **pp)
+{
+  copy_to_buffer_advance_ptr(pp, &isc->stream_length, sizeof(guint));
+  copy_to_buffer_advance_ptr(pp, isc->image_data, isc->stream_length);
+}
+
+void populate_buffer(struct ImgSerContext *serialized_images, guchar **pp)
+{
+  GList *list;
+  struct Item *item;
+  int i = 0;
+  for (list = ui.selection->items; list != NULL; list = list->next) {
+    item = (struct Item *)list->data;
+    put_item_in_buffer(item, pp);
+    if (item->type == ITEM_IMAGE) 
+      put_image_data_in_buffer(&serialized_images[i++], pp);
+  }
+}
+
 void selection_to_clip(void) 
 {
-  int bufsz, nitems, nimages, val, img_ptr_store_size;
-  unsigned char *buf, *p, *p_imrefs;
+  int bufsz = 0, nitems = 0, nimages = 0, val, i, len;
+  unsigned char *buf, *p;
   GList *list;
   struct Item *item;
   GtkTargetEntry target;
+  ImgSerContext *serialized_images;
   
   if (ui.selection == NULL) return;
-  bufsz = 0; nitems = 0; nimages = 0;
-  for (list = ui.selection->items; list != NULL; list = list->next) {
-    item = (struct Item *)list->data;
-    nitems++;
-    if (item->type == ITEM_IMAGE) nimages++;
-    bufsz += buffer_size_for_item(item);
-  }
-  img_ptr_store_size = 2*nimages*sizeof(GdkPixbuf *);
-  bufsz += buffer_size_for_header(nimages); // size of header, incl. image
-					    // pointers which we store up
-					    // front for easy unreferencing
+  bufsz = buffer_size_for_header();  
+  get_nitems_update_bufsize(&bufsz, &nitems, &nimages);
+  serialized_images = g_new(struct ImgSerContext, nimages);
+  if (nimages > 0)
+    update_bufsize_and_ser_images(&bufsz, &serialized_images);
+
   p = buf = g_malloc(bufsz);
-  g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
-  g_memmove(p, &nitems, sizeof(int)); p+= sizeof(int);
-  g_memmove(p, &nimages, sizeof(int)); p+= sizeof(int);
-  // image pointers are kept in a region before the item storage
-  // These need to be decremented when the buffer is
-  // destroyed, else we have a memory leak.
-  // For every image, we store two pointers one after another (image and image_scaled)
-  p_imrefs = p;
-  p+= img_ptr_store_size;
-  // bbox also goes before the item storage
-  g_memmove(p, &ui.selection->bbox, sizeof(struct BBox)); p+= sizeof(struct BBox);
-  for (list = ui.selection->items; list != NULL; list = list->next) {
-    item = (struct Item *)list->data;
-    put_item_in_buffer(item, &p);
-    if (item->type == ITEM_IMAGE) {
-      g_memmove(p_imrefs, &item->image, sizeof(GdkPixbuf*)); p_imrefs+= sizeof(GdkPixbuf*);
-      g_memmove(p_imrefs, &item->image_scaled, sizeof(GdkPixbuf*)); p_imrefs+= sizeof(GdkPixbuf*);
-    }
-  }
+  put_header_in_buffer(&bufsz, &nitems, &ui.selection->bbox, &p);
+  populate_buffer(serialized_images, &p);
 
   target.target = "_XOURNAL";
   target.flags = 0;
   target.info = 0;
   
   gtk_clipboard_set_with_data(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), 
-       &target, 1,
-       callback_clipboard_get, callback_clipboard_clear, buf);
+       &target, 1, callback_clipboard_get, callback_clipboard_clear, buf);
+
+  for (i=0; i < nimages; i++)
+      g_free(serialized_images[i].image_data);
+  g_free(serialized_images);
 }
 
 void clipboard_paste(void)
@@ -1368,6 +1383,7 @@ void import_img_as_clipped_item()
   struct Item *item;
   struct BBox selection_bbox;
   double scale=1;
+  ImgSerContext isc;
   char *paste_fname_base = "paste_";
 
   pixbuf = gtk_clipboard_wait_for_image(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
@@ -1381,6 +1397,7 @@ void import_img_as_clipped_item()
   item = g_new(struct Item, 1);
   item->type = ITEM_IMAGE;
   item->image_pasted = TRUE;
+  item->image_path = NULL;
   item->image_id = journal.image_id_counter++;
   set_image_path_name(item, paste_fname_base, item->image_id);
   item->canvas_item = NULL;
@@ -1413,16 +1430,18 @@ void import_img_as_clipped_item()
   make_bbox_copy(&selection_bbox, &item->bbox, DEFAULT_PADDING);
   // now we put this item in a buffer in the same way that a selection item
   // would be processed on copy
-  bufsz = buffer_size_for_header(nimages); // size of header, incl. image
-  bufsz += buffer_size_for_item(item);
+  isc = serialize_image(item->image);
+  bufsz = buffer_size_for_header() + buffer_size_for_item(item);
+  bufsz += sizeof(guint) + isc.stream_length;
   p = buf = g_malloc(bufsz);
-  copy_to_buffer_advance_ptr(&p, &bufsz, sizeof(int));
-  copy_to_buffer_advance_ptr(&p, &nitems, sizeof(int));
-  copy_to_buffer_advance_ptr(&p, &nimages, sizeof(int));
-  copy_to_buffer_advance_ptr(&p, &item->image, sizeof(GdkPixbuf *));
-  copy_to_buffer_advance_ptr(&p, &item->image_scaled, sizeof(GdkPixbuf *));
-  copy_to_buffer_advance_ptr(&p, &selection_bbox, sizeof(struct BBox)); 
+  put_header_in_buffer(&bufsz, &nitems, &selection_bbox, &p);
   put_item_in_buffer(item, &p);
+  copy_to_buffer_advance_ptr(&p, &isc.stream_length, sizeof(guint));
+  copy_to_buffer_advance_ptr(&p, isc.image_data, isc.stream_length);
+
+  g_object_unref(item->image);
+  g_object_unref(item->image_scaled);
+  g_free(item->image_path);
   g_free(item);
    
    // finish setting this up as a regular selection
@@ -1436,9 +1455,10 @@ void import_img_as_clipped_item()
 }
 
 
-void get_item_from_buffer(struct Item *item, unsigned char **pp, double hoffset, double voffset)
+void get_item_from_buffer(struct Item *item, guchar **pp, double hoffset, double voffset)
 {
   int i, npts, len;
+  struct ImgSerContext isc;
   double *pf;
   GdkPixbuf *tmp_pixbuf_ptr;
   switch (item->type) {
@@ -1492,11 +1512,11 @@ void get_item_from_buffer(struct Item *item, unsigned char **pp, double hoffset,
     copy_from_buffer_advance_ptr(&item->image, pp, sizeof(GdkPixbuf*));
     copy_from_buffer_advance_ptr(&item->image_scaled, pp, sizeof(GdkPixbuf*));
       
-    // copied image has the same underlying "image" (referenced twice), but
-    // image_scaled is copied into its own storage
-    tmp_pixbuf_ptr = gdk_pixbuf_copy(item->image_scaled);
-    g_object_unref(item->image_scaled);
-    item->image_scaled = tmp_pixbuf_ptr;
+    copy_from_buffer_advance_ptr(&isc.stream_length, pp, sizeof(guint));
+    isc.image_data = g_malloc(isc.stream_length);
+    copy_from_buffer_advance_ptr(isc.image_data, pp, isc.stream_length);
+
+    item->image = deserialize_image(isc);
     break;
   default:
     break;
@@ -1512,7 +1532,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   GnomeCanvasItem *canvas_item;
   GtkSelectionData *sel_data;
   unsigned char *p;
-  int nitems, nimages, npts, i, len, im_refs, im_sc_refs;
+  int nitems, npts, i, len, im_refs, im_sc_refs;
   struct Item *item;
   double *pf;
   gboolean clipboard_has_image;
@@ -1532,11 +1552,6 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   
   p = sel_data->data + sizeof(int);
   copy_from_buffer_advance_ptr(&nitems, &p, sizeof(int));
-  copy_from_buffer_advance_ptr(&nimages, &p, sizeof(int));
-  p += 2*nimages*sizeof(GdkPixbuf *); // ignore the image pointers here
-				      // (adjust refcount when retrieving
-				      // images from buffer)
-  
   reset_selection();
   get_new_selection(ITEM_SELECTRECT, ui.cur_layer);
   copy_from_buffer_advance_ptr(&ui.selection->bbox, &p, sizeof(struct BBox));
