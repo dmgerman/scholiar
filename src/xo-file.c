@@ -13,13 +13,16 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <zlib.h>
 #include <math.h>
-#include <gdk/gdkx.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
-#include <X11/Xlib.h>
 #include <locale.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <poppler/glib/poppler.h>
+
+#ifndef WIN32
+ #include <gdk/gdkx.h>
+ #include <X11/Xlib.h>
+#endif
 
 #include "xournal.h"
 #include "xo-interface.h"
@@ -101,7 +104,7 @@ gboolean save_journal(const char *filename)
   GtkWidget *dialog;
   GError *error = NULL;
   
-  f = gzopen(filename, "w");
+  f = gzopen(filename, "wb");
   if (f==NULL) return FALSE;
   chk_attach_names();
 
@@ -110,6 +113,8 @@ gboolean save_journal(const char *filename)
   gzprintf(f, "<?xml version=\"1.0\" standalone=\"no\"?>\n"
      "<xournal version=\"" VERSION "\">\n"
      "<title>Xournal document - see http://math.mit.edu/~auroux/software/xournal/</title>\n");
+  //save last seen page number in file
+  gzprintf(f, "<lastpage number=\"%d\" />\n", ui.pageno); 
   gzprintf(f, "<imageIdCount>%d</imageIdCount>\n", journal.image_id_counter);
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
@@ -162,7 +167,7 @@ gboolean save_journal(const char *filename)
           success = FALSE;
           if (bgpdf.status != STATUS_NOT_INIT && bgpdf.file_contents != NULL)
           {
-            tmpf = fopen(tmpfn, "w");
+            tmpf = fopen(tmpfn, "wb");
             if (tmpf != NULL && fwrite(bgpdf.file_contents, 1, bgpdf.file_length, tmpf) == bgpdf.file_length)
               success = TRUE;
             fclose(tmpf);
@@ -215,7 +220,9 @@ gboolean save_journal(const char *filename)
           else
             gzprintf(f, "#%08x", item->brush.color_rgba);
           tmpstr = g_markup_escape_text(item->text, -1);
-          gzprintf(f, "\">%s</text>\n", tmpstr);
+          gzputs(f, "\">");
+          gzputs(f, tmpstr); // gzprintf() can't handle > 4095 bytes
+          gzputs(f, "</text>\n");
           g_free(tmpstr);
         }
 	if (item->type == ITEM_IMAGE) { //TODO-lva: handle both inserted and pasted images if embedding
@@ -304,8 +311,7 @@ gboolean close_journal(void)
   clear_redo_stack();
   clear_undo_stack();
 
-  shutdown_bgpdf();
-  
+  shutdown_bgpdf(); 
   delete_journal(&journal);
   
   return TRUE;
@@ -328,6 +334,7 @@ struct Layer *tmpLayer;
 struct Item *tmpItem;
 char *tmpFilename;
 struct Background *tmpBg_pdf;
+int page_to_load; //NIKO
 
 GError *xoj_invalid(void)
 {
@@ -342,6 +349,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   char *ptr, *tmpptr;
   struct Background *tmpbg;
   char *tmpbg_filename;
+  gdouble val;
   GtkWidget *dialog;
   
   if (!strcmp(element_name, "title") || !strcmp(element_name, "xournal") || !strcmp(element_name, "imageIdCount")) {
@@ -351,6 +359,20 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     }
     // nothing special to do
   }
+  else if (!strcmp(element_name, "lastpage")) {
+  	//handle loading the last seen page by NIKO
+  	has_attr=0;
+  	while(*attribute_names!=NULL) {
+  		if (!strcmp(*attribute_names, "number")) {
+  			//printf("pageno\n");
+  			//load number from pageno attribute
+  			page_to_load = atoi(*attribute_values);
+ 		}
+ 		//else *error = xoj_invalid();
+ 		attribute_names++;
+  		attribute_values++;
+ 	}
+  }	
   else if (!strcmp(element_name, "page")) { // start of a page
     if (tmpPage != NULL) {
       *error = xoj_invalid();
@@ -360,8 +382,6 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     tmpPage->layers = NULL;
     tmpPage->nlayers = 0;
     tmpPage->group = NULL;
-    tmpPage->searchLayer = (struct Layer *)g_malloc(sizeof(struct Layer));
-    init_layer(tmpPage->searchLayer);
     tmpPage->bg = g_new(struct Background, 1);
     tmpPage->bg->type = -1;
     tmpPage->bg->canvas_item = NULL;
@@ -824,6 +844,7 @@ void xoj_parser_text(GMarkupParseContext *context,
   }
   if (!strcmp(element_name, "image")) {
     if (tmpItem->image_embedded) {
+      tmpItem->image_path = g_strndup("",0); // make image_path a valid string
       base64_str = g_malloc(text_len + 1);
       g_memmove(base64_str, text, text_len);
       base64_str[text_len] = '\0';
@@ -902,6 +923,7 @@ gboolean open_journal(char *filename)
   int len;
   gchar *tmpfn, *tmpfn2, *p, *q;
   gboolean maybe_pdf;
+  page_to_load = -1; //by NIKO
   
   tmpfn = g_strdup_printf("%s.xoj", filename);
   if (ui.autoload_pdf_xoj && g_file_test(tmpfn, G_FILE_TEST_EXISTS) &&
@@ -913,7 +935,7 @@ gboolean open_journal(char *filename)
   }
   g_free(tmpfn);
 
-  f = gzopen(filename, "r");
+  f = gzopen(filename, "rb");
   if (f==NULL) {
 	  #ifdef IMAGE_DEBUG
 	  printf("gzopen failed\n");
@@ -1086,7 +1108,7 @@ GList *attempt_load_gv_bg(char *filename)
   char *pipename;
   int buflen, remnlen, file_pageno;
   
-  f = fopen(filename, "r");
+  f = fopen(filename, "rb");
   if (f == NULL) return NULL;
   buf = g_malloc(BUFSIZE); // a reasonable buffer size
   if (fread(buf, 1, 4, f) !=4 ||
@@ -1098,7 +1120,7 @@ GList *attempt_load_gv_bg(char *filename)
   
   fclose(f);
   pipename = g_strdup_printf(GS_CMDLINE, (double)GS_BITMAP_DPI, filename);
-  gs_pipe = popen(pipename, "r");
+  gs_pipe = popen(pipename, "rb");
   g_free(pipename);
   
   bg_list = NULL;
@@ -1144,6 +1166,7 @@ GList *attempt_load_gv_bg(char *filename)
 
 struct Background *attempt_screenshot_bg(void)
 {
+#ifndef WIN32
   struct Background *bg;
   GdkPixbuf *pix;
   XEvent x_event;
@@ -1180,6 +1203,10 @@ struct Background *attempt_screenshot_bg(void)
   bg->filename = new_refstring(NULL);
   bg->file_domain = DOMAIN_ATTACH;
   return bg;
+#else
+  // not implemented under WIN32
+  return FALSE;
+#endif
 }
 
 /************** pdf annotation ***************/
@@ -1208,6 +1235,8 @@ gboolean bgpdf_scheduler_callback(gpointer data)
   PopplerPage *pdfpage;
   gdouble height, width;
   int scaled_height, scaled_width;
+  GdkPixmap *pixmap;
+  cairo_t *cr;
 
   // if all requests have been cancelled, remove ourselves from main loop
   if (bgpdf.requests == NULL) { bgpdf.pid = 0; return FALSE; }
@@ -1225,11 +1254,26 @@ gboolean bgpdf_scheduler_callback(gpointer data)
     poppler_page_get_size(pdfpage, &width, &height);
     scaled_width = (int) (req->dpi * width/72);
     scaled_height = (int) (req->dpi * height/72);
-    pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-                FALSE, 8, scaled_width, scaled_height);
-    poppler_page_render_to_pixbuf(
+
+    if (ui.poppler_force_cairo) { // poppler -> cairo -> pixmap -> pixbuf
+      pixmap = gdk_pixmap_new(GTK_WIDGET(canvas)->window, scaled_width, scaled_height, -1);
+      cr = gdk_cairo_create(pixmap);
+      cairo_set_source_rgb(cr, 1., 1., 1.);
+      cairo_paint(cr);
+      cairo_scale(cr, scaled_width/width, scaled_height/height);
+      poppler_page_render(pdfpage, cr);
+      cairo_destroy(cr);
+      pixbuf = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(pixmap),
+        NULL, 0, 0, 0, 0, scaled_width, scaled_height);
+      g_object_unref(pixmap);
+    }
+    else { // directly poppler -> pixbuf: faster, but bitmap font bug
+      pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+                 FALSE, 8, scaled_width, scaled_height);
+      wrapper_poppler_page_render_to_pixbuf(
                 pdfpage, 0, 0, scaled_width, scaled_height,
                 req->dpi/72, 0, pixbuf);
+    }
     g_object_unref(pdfpage);
     set_cursor_busy(FALSE);
   }
@@ -1579,6 +1623,9 @@ void init_config_default(void)
   ui.autoload_pdf_xoj = FALSE;
   ui.autoexport_pdf = FALSE;
   ui.pdf_viewer_cmd = DEFAULT_PDF_VIEWER;
+
+  ui.poppler_force_cairo = FALSE;
+  
   // the default UI vertical order
   ui.vertical_order[0][0] = 1; 
   ui.vertical_order[0][1] = 2; 
@@ -1615,12 +1662,13 @@ void init_config_default(void)
   PDFTOPPM_PRINTING_DPI = 150;
   
   ui.hiliter_opacity = 0.5;
+
+  bgpdf.filename = NULL;
   
 #if GTK_CHECK_VERSION(2,10,0)
   ui.print_settings = NULL;
 #endif
-  ui_search_term_init();
-  
+
 }
 
 #if GLIB_CHECK_VERSION(2,6,0)
@@ -1756,7 +1804,9 @@ void save_config_to_file(void)
   update_keyval("general", "pdf_viewer",
     _(" command line to run the pdf viewer in a given page. Should contain %d %s (page number, filename), see example"),
     g_strdup((ui.pdf_viewer_cmd!=NULL)?ui.pdf_viewer_cmd:DEFAULT_PDF_VIEWER));
-
+  update_keyval("general", "poppler_force_cairo",
+    _(" force PDF rendering through cairo (slower but nicer) (true/false)"),
+    g_strdup(ui.poppler_force_cairo?"true":"false"));
   update_keyval("paper", "width",
     _(" the default page width, in points (1/72 in)"),
     g_strdup_printf("%.2f", ui.default_page.width));
@@ -2123,6 +2173,7 @@ void load_config_from_file(void)
     if (str!=NULL) { g_free(ui.shorten_menu_items); ui.shorten_menu_items = str; }
   parse_keyval_float("general", "highlighter_opacity", &ui.hiliter_opacity, 0., 1.);
   parse_keyval_boolean("general", "autosave_prefs", &ui.auto_save_prefs);
+  parse_keyval_boolean("general", "poppler_force_cairo", &ui.poppler_force_cairo);
   
   parse_keyval_float("paper", "width", &ui.default_page.width, 1., 5000.);
   parse_keyval_float("paper", "height", &ui.default_page.height, 1., 5000.);

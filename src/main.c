@@ -191,7 +191,7 @@ void init_stuff (int argc, char *argv[])
   GTK_WIDGET_SET_FLAGS(GTK_WIDGET(canvas), GTK_CAN_FOCUS);
   GTK_WIDGET_SET_FLAGS(GTK_WIDGET(GET_COMPONENT("spinPageNo")), GTK_CAN_FOCUS);
   
-  set_flags(GET_COMPONENT("findBar"), (gpointer)GTK_CAN_FOCUS);
+  GTK_WIDGET_SET_FLAGS(GET_COMPONENT("findBar"), GTK_CAN_FOCUS);
 
   // install hooks on button/key/activation events to make the spinPageNo lose focus
   gtk_container_forall(GTK_CONTAINER(winMain), install_focus_hooks, NULL);
@@ -245,14 +245,14 @@ void init_stuff (int argc, char *argv[])
   dev_list = gdk_devices_list();
   while (dev_list != NULL) {
     device = (GdkDevice *)dev_list->data;
-    if (device != gdk_device_get_core_pointer()) {
+    if (device != gdk_device_get_core_pointer() && device->num_axes >= 2) {
       /* get around a GDK bug: map the valuator range CORRECTLY to [0,1] */
 #ifdef ENABLE_XINPUT_BUGFIX
       gdk_device_set_axis_use(device, 0, GDK_AXIS_IGNORE);
       gdk_device_set_axis_use(device, 1, GDK_AXIS_IGNORE);
 #endif
       gdk_device_set_mode(device, GDK_MODE_SCREEN);
-      if (g_str_has_suffix(device->name, "eraser"))
+      if (g_strrstr(device->name, "raser"))
         gdk_device_set_source(device, GDK_SOURCE_ERASER);
       can_xinput = TRUE;
     }
@@ -352,6 +352,7 @@ void init_stuff (int argc, char *argv[])
   if (fileArguments == NULL || fileArguments[0] == NULL) return;
   //  fprintf(stderr, "Fiel name %s\n", fileArguments[0]);
   /*
+
   set_cursor_busy(TRUE);
   if (g_path_is_absolute(fileArguments[0]))
     tmpfn = g_strdup(fileArguments[0]);

@@ -126,6 +126,15 @@ gboolean handle_activate_signal(GtkWidget *widget, gpointer user_data);
 gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data);
 void install_focus_hooks(GtkWidget *w, gpointer data);
 
+// wrapper for a function no longer provided by poppler 0.17+
+void
+wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
+			       int src_x, int src_y,
+			       int src_width, int src_height,
+			       double scale,
+			       int rotation,
+			       GdkPixbuf *pixbuf);
+
 // defines for paper rulings
 
 #define RULING_MARGIN_COLOR 0xff0080ff
@@ -138,16 +147,10 @@ void install_focus_hooks(GtkWidget *w, gpointer data);
 #define RULING_GRAPHSPACING 14.17
 
 
+void draw_rubberband (GtkWidget *widget, GdkWindow *window,
+							      const GdkRectangle *rect, guchar alpha);
+
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 
 void unset_flags(GtkWidget *w, gpointer flag);
 void set_flags(GtkWidget *w, gpointer flag);
-
-
-void ui_search_term_init(void);
-void ui_search_term_release(void);
-void ui_search_term_set(const char *st);
-void ui_search_print(void) ;
-
-
-void page_search_draw_match(Page *pg, PopplerRectangle * rect) ;

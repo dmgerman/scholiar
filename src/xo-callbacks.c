@@ -22,6 +22,7 @@
 #include "xo-shapes.h"
 #include "eggfindbar.h"
 
+
 void
 on_fileNew_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
@@ -223,7 +224,7 @@ on_fileSaveAs_activate                 (GtkMenuItem     *menuitem,
   }
   else {
     curtime = time(NULL);
-    strftime(stime, 30, "%F-Note-%H-%M.xoj", localtime(&curtime));
+    strftime(stime, 30, "%Y-%m-%d-Note-%H-%M.xoj", localtime(&curtime));
     if (ui.default_path!=NULL)
       gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER (dialog), stime);
@@ -300,7 +301,9 @@ on_filePrint_activate                  (GtkMenuItem     *menuitem,
   GtkPrintOperation *print;
   GtkPrintOperationResult res;
   
-  char *p;
+  int fromPage, toPage;
+  int response;
+  char *in_fn, *p;
 
   end_text();
   if (!gtk_check_version(2, 10, 0)) {
@@ -374,7 +377,7 @@ on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER (dialog), g_basename(in_fn));
   } else {
     curtime = time(NULL);
-    strftime(stime, 30, "%F-Note-%H-%M.pdf", localtime(&curtime));
+    strftime(stime, 30, "%Y-%m-%d-Note-%H-%M.pdf", localtime(&curtime));
     if (ui.default_path!=NULL)
       gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER (dialog), stime);
@@ -908,6 +911,7 @@ on_editDelete_activate                 (GtkMenuItem     *menuitem,
   end_text();
   selection_delete();
 }
+
 
 
 void
@@ -1577,6 +1581,7 @@ on_papercolorOther_activate            (GtkMenuItem     *menuitem,
 {
   GtkWidget *dialog;
   GtkColorSelection *colorsel;
+  gint result;
   guint rgba;
   GdkColor gdkcolor;
   
@@ -2517,7 +2522,7 @@ on_helpAbout_activate                  (GtkMenuItem     *menuitem,
   aboutDialog = create_aboutDialog ();
   labelTitle = GTK_LABEL(g_object_get_data(G_OBJECT(aboutDialog), "labelTitle"));
   gtk_label_set_markup(labelTitle, 
-    "<span size=\"xx-large\" weight=\"bold\">Xournal " VERSION "</span>");
+    "<span size=\"xx-large\" weight=\"bold\">Xournal " VERSION_STRING "</span>");
   gtk_dialog_run (GTK_DIALOG(aboutDialog));
   gtk_widget_destroy(aboutDialog);
 }
@@ -2630,6 +2635,8 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   }
   if ((event->state & (GDK_CONTROL_MASK|GDK_MOD1_MASK)) != 0) return FALSE;
     // no control-clicking or alt-clicking
+  if (!is_core) gdk_device_get_state(event->device, event->window, event->axes, NULL);
+    // synaptics touchpads send bogus axis values with ButtonDown
   if (!is_core)
     fix_xinput_coords((GdkEvent *)event);
 
@@ -2696,6 +2703,9 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   
   ui.which_mouse_button = event->button;
   switch_mapping(mapping);
+#ifdef WIN32
+  update_cursor();
+#endif
 
   // in text tool, clicking in a text area edits it
   if (ui.toolno[mapping] == TOOL_TEXT) {
@@ -2817,10 +2827,15 @@ on_canvas_enter_notify_event           (GtkWidget       *widget,
     /* re-enable input devices after they've been emergency-disabled
        by leave_notify */
   if (!gtk_check_version(2, 17, 0)) {
+    gdk_flush();
+    gdk_error_trap_push();
     for (dev_list = gdk_devices_list(); dev_list != NULL; dev_list = dev_list->next) {
       dev = GDK_DEVICE(dev_list->data);
       gdk_device_set_mode(dev, GDK_MODE_SCREEN);
     }
+    ui.is_corestroke = ui.saved_is_corestroke;
+    gdk_flush();
+    gdk_error_trap_pop();
   }
   return FALSE;
 }
@@ -2838,11 +2853,17 @@ on_canvas_leave_notify_event           (GtkWidget       *widget,
 #endif
     /* emergency disable XInput to avoid segfaults (GTK+ 2.17) or 
        interface non-responsiveness (GTK+ 2.18) */
-  if (!gtk_check_version(2, 17, 0)) { 
+  if (!gtk_check_version(2, 17, 0)) {
+    gdk_flush();
+    gdk_error_trap_push();
     for (dev_list = gdk_devices_list(); dev_list != NULL; dev_list = dev_list->next) {
       dev = GDK_DEVICE(dev_list->data);
       gdk_device_set_mode(dev, GDK_MODE_DISABLED);
     }
+    ui.saved_is_corestroke = ui.is_corestroke;
+    ui.is_corestroke = TRUE;
+    gdk_flush();
+    gdk_error_trap_pop();
   }
   return FALSE;
 }
@@ -2977,6 +2998,9 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
     else if (ui.cur_item_type == ITEM_RESIZESEL) {
       finalize_resizesel();
     }
+    else if (ui.cur_item_type == ITEM_HAND) {
+      ui.cur_item_type = ITEM_NONE;
+    }
     switch_mapping(0);
     return FALSE;
   }
@@ -2990,17 +3014,14 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   }
   else if (ui.cur_item_type == ITEM_SELECTREGION) {
     get_pointer_coords((GdkEvent *)event, pt);
-    //	  ui.selection->bbox.right = pt[0];
-    //	  ui.selection->bbox.bottom = pt[1];
     gnome_canvas_path_def_lineto( ui.selection->lassopath, pt[0], pt[1] ); 
-    /*	  gnome_canvas_item_set(ui.selection->canvas_item,
-	  "x2", pt[0], "y2", pt[1], NULL); */
     
     gnome_canvas_path_def_unref(ui.selection->closedlassopath); 
     ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath); 
 
     bad_bpath_maybe = gnome_canvas_path_def_bpath (ui.selection->closedlassopath);
     while (! sp_bpath_good_check (bad_bpath_maybe)) {
+      printf("Bad bpath found\n");
       gnome_canvas_path_def_unref(ui.selection->closedlassopath); 
       ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath); 
       bad_bpath_maybe = gnome_canvas_path_def_bpath (ui.selection->closedlassopath);
@@ -3019,9 +3040,6 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   else if (ui.cur_item_type == ITEM_MOVESEL || ui.cur_item_type == ITEM_MOVESEL_VERT) {
     continue_movesel((GdkEvent *)event);
   }
-  /* else if (ui.cur_item_type == ITEM_COPYSEL) { */
-  /*   continue_copysel((GdkEvent *)event); */
-  /* } */
   else if (ui.cur_item_type == ITEM_RESIZESEL) {
     continue_resizesel((GdkEvent *)event);
   }
@@ -3103,7 +3121,9 @@ on_optionsUseXInput_activate           (GtkMenuItem     *menuitem,
    non-responsive). 
 */
 
+#ifndef WIN32
   if (!gtk_check_version(2, 17, 0)) {
+#endif
     /* GTK+ 2.17 and later: everybody shares a single native window,
        so we'll never get any core events, and we might as well set 
        extension events the way we're supposed to. Doing so helps solve 
@@ -3111,14 +3131,18 @@ on_optionsUseXInput_activate           (GtkMenuItem     *menuitem,
        events in 2.18 */
     gtk_widget_set_extension_events(GTK_WIDGET (canvas), 
        ui.use_xinput?GDK_EXTENSION_EVENTS_ALL:GDK_EXTENSION_EVENTS_NONE);
+#ifndef WIN32
   } else {
+#endif
     /* GTK+ 2.16 and earlier: we only activate extension events on the
        canvas's parent GdkWindow. This allows us to keep receiving core
        events. */
     gdk_input_set_extension_events(GTK_WIDGET(canvas)->window, 
       GDK_POINTER_MOTION_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK,
       ui.use_xinput?GDK_EXTENSION_EVENTS_ALL:GDK_EXTENSION_EVENTS_NONE);
+#ifndef WIN32
   }
+#endif
   
   update_mappings_menu();
 }
@@ -3852,6 +3876,112 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
   update_mappings_menu();
 }
 
+void
+open_relative_journal(int nextprev)
+{
+  const gchar *curname;
+  gchar *curdir, *ourname, *tmpname = NULL, *filename = NULL;
+  GDir *dirh;
+  GtkWidget *dialog;
+
+  if (ui.filename == NULL) {
+    // FIX ME... disable buttons
+    printf("FIXME: No file loaded,buttons should be disabled\n");
+    return;
+  }
+
+  // set the directory where to look
+  if (ui.filename == NULL) {
+    // no filename, so check if there is a PDF background
+    if (bgpdf.status != STATUS_NOT_INIT && bgpdf.filename != NULL) {
+      curdir = g_path_get_dirname(bgpdf.filename->s);
+    } else {
+
+      assert(ui.default_path!=NULL);
+      // we need to duplicate, since g_path_get_dirname allocates
+      curdir = g_strdup (ui.default_path);
+    }
+  } else {
+      curdir = g_path_get_dirname(ui.filename);
+  }
+
+  set_cursor_busy(TRUE);
+  dirh = g_dir_open(curdir, 0, NULL);
+  if (!dirh) {
+
+    dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Unable to scan directory '%s'"), curdir);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
+    g_free(curdir);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  ourname = g_path_get_basename(ui.filename);
+
+  // Scan the directory
+  while ((curname = g_dir_read_name(dirh))) {
+    int len = strlen(curname);
+    if (g_strcmp0(curname+len-4, ".xoj") != 0) {
+      continue;
+    }
+    if (g_strcmp0(curname, ourname) == nextprev) {
+      if (NULL == tmpname || g_strcmp0(curname, tmpname) == -nextprev) {
+        tmpname = g_strdup(curname);
+      }
+    }
+  }
+  g_dir_close(dirh);
+  g_free(ourname);
+
+  //  printf("FILENAME [%s][%s][%s]\n", curname,ourname,tmpname);
+
+  if (NULL == tmpname) {
+
+    dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("No %s Xournal file in directory '%s'"), nextprev==1?"Next":"Previous", curdir);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
+    g_free(curdir);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  filename = g_build_filename(curdir, tmpname, NULL);
+  g_free(curdir);
+  g_free(tmpname);
+
+  end_text();
+  reset_focus();
+  if (!ok_to_close()) {
+    g_free(filename);
+    set_cursor_busy(FALSE);
+    return;
+  }
+  //  printf("To open journal [%s]", filename);
+
+  open_journal(filename);
+  set_cursor_busy(FALSE);
+
+  g_free(filename);
+}
+
+void
+on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data)
+{
+  open_relative_journal(-1);
+}
+
+void
+on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data)
+{
+  open_relative_journal(1);
+}
+
+
 
 void
 on_buttonColorChooser_set              (GtkColorButton  *colorbutton,
@@ -3904,74 +4034,49 @@ egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
 
 // Display the pdf matches. Shoudl probably be moved to xo-misc.c 
 
-int find_pdf_matches(const char *st)
+gboolean find_pdf_matches(const char *st, int searchedPage)
 {
-  GList *list = NULL;
-  GList *l = NULL;
-  PopplerPage *pdfPage = NULL;
-  int currPage;
-  int nMatches = 0 ;
-  int nPages = 0;
+  GList *l;
+  int matches = 0 ;
+  double height;
+  double width;
+  GList *list;
+  PopplerPage *pdfPage;
+  
+  pdfPage = poppler_document_get_page(bgpdf.document, searchedPage);
+  if (pdfPage == NULL) {
+    printf("Could not retrieve page %d\n", searchedPage);
+    return 0;
+  }
+  list = poppler_page_find_text(pdfPage, st);
+  if (list != NULL) {
+    poppler_page_get_size (pdfPage, &width, &height);
+    matches = g_list_length (list);
 
-  assert(bgpdf.document != NULL);
+    printf("Page %d has %d matches\n", searchedPage+1, matches);
 
-  ui_search_term_set(st);
-
-  nPages = poppler_document_get_n_pages(bgpdf.document);
-
-
-  for (currPage=0;  currPage< nPages; currPage++) {
-    // find matches in this page
-    pdfPage = poppler_document_get_page(bgpdf.document, currPage);
-    if (pdfPage != NULL && 
-        (list = poppler_page_find_text(pdfPage, st)) != NULL) {
-
-      // The page exists, and we have match
-
-      double height;
-      double width;
-      Page *page;
-
-      // find page
-      page = g_list_nth_data(journal.pages, currPage);
-      assert(page != NULL);
-
-
-      // we have a page, get its size, well use it later
-      poppler_page_get_size (pdfPage, &width, &height);
-
-      // Fix the coordinates of each match
+    // Free list
+    for (l = list; l && l->data; l = g_list_next (l)) {
+      PopplerRectangle *rect = (PopplerRectangle *)l->data;
+      gdouble           tmp;
       
-      for (l = list; l && l->data; l = g_list_next (l)) {
-        PopplerRectangle *rect = (PopplerRectangle *)l->data;
-        gdouble           tmp;
-        
-        // PDF coordinates are bottom up, so swap.
-        // but the locations are backwards...
-
-        tmp = rect->y1;
-        rect->y1 = height - rect->y2;
-        rect->y2 = height - tmp;
-
-        /* display_rectangle */
-        printf("Page %d Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
-               currPage,
-               rect->x1/width,
-               rect->y1/height,
-               rect->x2/width,
-               rect->y2/height);
-        
-        // we need to save the rectangle in a new list
-        page_search_draw_match(page, rect) ;
+      // PDF coordinates are bottom up, so swap.
+      tmp = rect->y1;
+      rect->y1 = height - rect->y2;
+      rect->y2 = height - tmp;
+      /* display_rectangle */
+      printf("Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
+             rect->x1/width,
+             rect->y1/height,
+             rect->x2/width,
+             rect->y2/height);
 
 
-
-      } // for loop
-      // save the results
     }
-  } 
-  printf("Document has [%d] matches in %d pages\n", nMatches, nPages);
-  return nMatches;
+  } else {
+    printf("Page %d has no match\n", searchedPage+1);
+  }
+  return matches;
 }
 
 
@@ -4001,15 +4106,23 @@ on_find_bar_next                       (GtkWidget       *widget,
     if (bgpdf.document != NULL) {
       nPages = poppler_document_get_n_pages(bgpdf.document);
       printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
-      matches = find_pdf_matches(st);
 
-      // we know need to add the layer to the document
-      if (matches) {
-        // we found something... render it
-        //        document_render_pdf_matches();
-      }
-
-
+      searchedPage = iCurrentPage;
+      for (i=0; nextPage == -1 && i< nPages; i++) {
+        // we move one page forward
+        searchedPage++;
+        // Roll to the beginning if we hit end of doc
+        if (searchedPage >= nPages) {
+          searchedPage = 0;
+        }
+        // do not process the current page
+        if (searchedPage == iCurrentPage)
+          continue;
+        // Find and print
+        if ((matches = find_pdf_matches(st, searchedPage)) > 0) {
+          nextPage = searchedPage;
+        }
+      } // end of for loop
       sprintf(temp, "%d matches", matches);
       if (nextPage != -1) {
         // we have a next page.
@@ -4032,20 +4145,122 @@ on_find_bar_next                       (GtkWidget       *widget,
 
 
 
-
-
 gboolean
 on_find_bar_prev                       (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data)
 {
 
-  // this function has to be rewritten
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  const char *st;
+  char temp[100];
+  int iCurrentPage;
+  int i, nPages;
+  int prevPage = -1;
+  int searchedPage;
+  int matches;
+
+  gtk_widget_show(w);
+  findBar = EGG_FIND_BAR(w);
+  st = egg_find_bar_get_search_string(findBar);
+  if (strcmp(st, "") != 0) {
+    printf("Prev Searching for %s\n", st);
+
+    iCurrentPage = ui.pageno;
+    int searchedPage;
+    if (bgpdf.document != NULL) {
+      nPages = poppler_document_get_n_pages(bgpdf.document);
+      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
+      // moving backwards... so let us count backwards... now.. not all pages in the
+      
+      // searchPage points to the page we are currently searching at.
+
+      searchedPage = iCurrentPage;
+      for (i=0; prevPage== -1 && i< nPages; i++) {
+        // we move one page back
+        searchedPage --;
+        // Roll to end of document if we hit end of doc
+        if (searchedPage < 0) {
+          searchedPage = nPages-1;
+        }
+        // do not process the current page
+        if (searchedPage == iCurrentPage)
+          continue;
+
+        if ((matches = find_pdf_matches(st, searchedPage)) > 0) {
+          prevPage = searchedPage;
+        }
+      } // end of for loop
+      sprintf(temp, "%d matches", matches);
+      if (prevPage != -1) {
+        // we have a next page.
+        printf("Jumping to page %d\n", prevPage+1);
+        do_switch_page(prevPage, TRUE, FALSE);
+        egg_find_bar_set_status_text(findBar, temp);
+      } else {
+        // Not present
+        egg_find_bar_set_status_text(findBar, "Not found");
+      }
+    } else {
+      printf("Document has not pdf backgroun\n");
+    }
+
+  }
+  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
 
   return TRUE;
 }
 
-
-
-
+gboolean on_text_keypress_event(GtkWidget   *widget,
+                                GdkEventKey *event,
+                                gpointer     user_data) 
+{
+  gboolean stop_processing = FALSE;
+  PangoFontDescription *font;
+  gint font_size;
+  PangoStyle font_style;
+  PangoWeight font_weight;
+  char *font_string;
+  
+  if ((event->state & GDK_CONTROL_MASK) != 0
+      && (event->keyval == GDK_b ||
+          event->keyval == GDK_i ||
+          event->keyval == GDK_less ||
+          event->keyval == GDK_greater)) {
+    // get the current font, which we'll tweak
+    font = pango_font_description_from_string(ui.font_name);
+    font_size = (int)(ui.font_size + 0.5);
+    font_style = pango_font_description_get_style(font);
+    font_weight = pango_font_description_get_weight(font);
+    
+    if (event->keyval == GDK_less) {
+      font_size -= (font_size > 40 ? 8 : font_size > 28 ? 4 : font_size > 18 ? 2 : font_size > 1 ? 1 : 0);
+    }
+    if (event->keyval == GDK_greater) {
+      font_size += (font_size >= 72 ? 0 : font_size >= 40 ? 8 : font_size >= 32 ? 4 : font_size >= 18 ? 2 : 1);
+    }
+    if (event->keyval == GDK_b) {
+      font_weight = font_weight > PANGO_WEIGHT_NORMAL ? PANGO_WEIGHT_NORMAL : PANGO_WEIGHT_BOLD;
+    }
+    if (event->keyval == GDK_i) {
+      if (font_style == PANGO_STYLE_NORMAL) {
+        font_style = PANGO_STYLE_ITALIC;
+      } else {
+        font_style = PANGO_STYLE_NORMAL;
+      }
+    }
+    // make the updates
+    pango_font_description_set_size(font, font_size * PANGO_SCALE);
+    pango_font_description_set_style(font, font_style);
+    pango_font_description_set_weight(font, font_weight);
+    
+    font_string = pango_font_description_to_string(font); /* eventually free'd inside process_font_sel */
+    process_font_sel(font_string);
+    pango_font_description_free(font);
+    
+    stop_processing = TRUE;
+  }
+  return stop_processing;
+}
 

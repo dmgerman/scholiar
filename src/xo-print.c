@@ -728,7 +728,7 @@ int pdf_draw_bitmap_background(struct Page *pg, GString *str,
     width = (int) (PDFTOPPM_PRINTING_DPI * pgwidth/72.0);
     height = (int) (PDFTOPPM_PRINTING_DPI * pgheight/72.0);
     pix = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, width, height);
-    poppler_page_render_to_pixbuf(
+    wrapper_poppler_page_render_to_pixbuf(
        pdfpage, 0, 0, width, height, PDFTOPPM_PRINTING_DPI/72.0, 0, pix);
     g_object_unref(pdfpage);
   }
@@ -761,10 +761,10 @@ int pdf_draw_bitmap_background(struct Page *pg, GString *str,
 
   make_xref(xref, xref->last+1, pdfbuf->len);
   g_string_append_printf(pdfbuf, 
-    "%d 0 obj\n<< /Length %d /Filter /FlateDecode /Type /Xobject "
+    "%d 0 obj\n<< /Length %zu /Filter /FlateDecode /Type /Xobject "
     "/Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB "
     "/BitsPerComponent 8 >> stream\n",
-			 xref->last, (int)zpix->len, width, height);
+    xref->last, zpix->len, width, height);
   g_string_append_len(pdfbuf, zpix->str, zpix->len);
   g_string_free(zpix, TRUE);
   g_string_append(pdfbuf, "endstream\nendobj\n");
@@ -840,8 +840,10 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
   gboolean fallback, is_binary;
   guchar encoding[256];
   gushort glyphs[256];
-  int i, j, num, len1, len2;
-  gsize len;
+  int i, j, num;
+  guint32 len1, len2;
+  guint32 tt_len;
+  gsize t1_len;
   TrueTypeFont *ttfnt;
   char *seg1, *seg2;
   char *fontdata, *p;
@@ -862,15 +864,14 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
       }
     font->num_glyphs_used = num-1;
     if (OpenTTFont(font->filename, 0, &ttfnt) == SF_OK) {
-      guint32 tt_len = len;
-      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num, 
-					0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
+      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num,
+                   0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
         make_xref(xref, xref->last+1, pdfbuf->len);
         nobj_fontprog = xref->last;
         g_string_append_printf(pdfbuf, 
-          "%d 0 obj\n<< /Length %d /Length1 %d >> stream\n",
-          nobj_fontprog, (int)len, (int)len);
-        g_string_append_len(pdfbuf, fontdata, len);
+          "%d 0 obj\n<< /Length %u /Length1 %u >> stream\n",
+          nobj_fontprog, tt_len, tt_len);
+        g_string_append_len(pdfbuf, fontdata, tt_len);
         g_string_append(pdfbuf, "endstream\nendobj\n");
         g_free(fontdata);
       }
@@ -880,7 +881,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
     else fallback = TRUE;
   } else {
   // embed the font file: Type1 case
-    if (g_file_get_contents(font->filename, &fontdata, &len, NULL) && len>=8) {
+    if (g_file_get_contents(font->filename, &fontdata, &t1_len, NULL) && t1_len>=8) {
       if (fontdata[0]==(char)0x80 && fontdata[1]==(char)0x01) {
         is_binary = TRUE;
         len1 = pfb_get_length((unsigned char *)fontdata+2);
@@ -899,7 +900,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
           if (*p=='\n' || *p=='\r') p++;
           if (*p=='\n' || *p=='\r') p++;
           len1 = p-fontdata;
-          p = g_strrstr_len(fontdata, len, T1_SEGMENT_3_END);
+          p = g_strrstr_len(fontdata, t1_len, T1_SEGMENT_3_END);
           if (p==NULL) fallback = TRUE;
           else {
             // rewind 512 zeros
@@ -937,7 +938,7 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
         make_xref(xref, xref->last+1, pdfbuf->len);
         nobj_fontprog = xref->last;
         g_string_append_printf(pdfbuf, 
-          "%d 0 obj\n<< /Length %d /Length1 %d /Length2 %d /Length3 0 >> stream\n",
+          "%d 0 obj\n<< /Length %u /Length1 %u /Length2 %u /Length3 0 >> stream\n",
           nobj_fontprog, len1+len2, len1, len2);
         g_string_append_len(pdfbuf, seg1, len1);
         g_string_append_len(pdfbuf, seg2, len2);
@@ -1194,7 +1195,7 @@ gboolean print_to_pdf(char *filename)
   struct PdfFont *font;
   char *tmpbuf;
   
-  f = fopen(filename, "w");
+  f = fopen(filename, "wb");
   if (f == NULL) return FALSE;
   setlocale(LC_NUMERIC, "C");
   annot = FALSE;
@@ -1261,8 +1262,8 @@ gboolean print_to_pdf(char *filename)
       tmpstr = make_pdfprefix(pdfinfo.pages+(pg->bg->file_page_seq-1),
                               pg->width, pg->height);
       g_string_append_printf(pdfbuf,
-        "%d 0 obj\n<< /Length %d >> stream\n%s\nendstream\nendobj\n",
-			     n_obj_prefix, (int)tmpstr->len, tmpstr->str);
+        "%d 0 obj\n<< /Length %zu >> stream\n%s\nendstream\nendobj\n",
+        n_obj_prefix, tmpstr->len, tmpstr->str);
       g_string_free(tmpstr, TRUE);
       g_string_prepend(pgstrm, "Q Q Q ");
     }
@@ -1279,8 +1280,8 @@ gboolean print_to_pdf(char *filename)
     
     make_xref(&xref, xref.last+1, pdfbuf->len);
     g_string_append_printf(pdfbuf, 
-      "%d 0 obj\n<< /Length %d /Filter /FlateDecode>> stream\n",
-			   xref.last, (int)zpgstrm->len);
+      "%d 0 obj\n<< /Length %zu /Filter /FlateDecode>> stream\n",
+      xref.last, zpgstrm->len);
     g_string_append_len(pdfbuf, zpgstrm->str, zpgstrm->len);
     g_string_free(zpgstrm, TRUE);
     g_string_append(pdfbuf, "endstream\nendobj\n");

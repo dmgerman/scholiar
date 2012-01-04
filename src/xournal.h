@@ -9,7 +9,7 @@
 
 #define ENABLE_IMAGE_EMBEDDING
 
-#define ENABLE_XINPUT_BUGFIX
+//#define ENABLE_XINPUT_BUGFIX
 /* comment out this line if you are experiencing calibration problems with
    XInput and want to try things differently. This will probably break
    on-the-fly display rotation after application startup, though. */
@@ -27,6 +27,15 @@
 #define MRU_FILE "recent-files"
 #define MRU_SIZE 8 
 #define CONFIG_FILE "config"
+#define BRANCH_ID "-lva"
+
+// version string for about box
+
+#ifdef WIN32
+#define VERSION_STRING VERSION BRANCH_ID "-win32"
+#else
+#define VERSION_STRING VERSION BRANCH_ID
+#endif
 
 // DATA STRUCTURES AND CONSTANTS
 
@@ -53,18 +62,6 @@ typedef struct Refstring {
 /* The journal is mostly a list of pages. Each page is a list of layers,
    and a background. Each layer is a list of items, from bottom to top.
 */
-
-// typedef struct pageMatchesType {
-//   int pageNo;
-//   int count;
-//   GList *matches;
-// } pageMatchesType;
-// 
-typedef struct searchDataType {
-  int totalMatches;
-  int pagesWithMatches;
-  gchar *term;
-} searchDataType;
 
 typedef struct Background {
   int type;
@@ -169,7 +166,7 @@ typedef struct Item {
   gdouble font_size;
   GtkWidget *widget; // the widget while text is being edited (ITEM_TEMP_TEXT)
   // the following fields for ITEM_IMAGE:
-  gchar *image_path;
+  gchar *image_path; // this must be a valid string (can be an empty string)
   gboolean image_pasted;
   gboolean image_embedded;
   guint image_id;
@@ -207,7 +204,6 @@ typedef struct Item {
 #define ITEM_RECOGNIZER 23
 #define ITEM_IMAGE 24
 #define ITEM_SELECTREGION 25
-#define ITEM_COPYSEL 26
 
 #define ITEM_MOVE_PAGE 90
 
@@ -220,7 +216,6 @@ typedef struct Layer {
 typedef struct Page {
   GList *layers; // the layers on the page
   int nlayers;
-  Layer  *searchLayer;
   double height, width;
   double hoffset, voffset; // offsets of canvas group rel. to canvas root
   struct Background *bg;
@@ -231,7 +226,6 @@ typedef struct Journal {
   GList *pages;  // the pages in the journal
   int npages;
   int last_attach_no; // for naming of attached backgrounds
-  char *searchTerm;
   unsigned int image_id_counter;
 } Journal;
 
@@ -255,8 +249,7 @@ typedef struct Selection {
   GList *items; // the selected items (a list of struct Item)
   int move_pageno, orig_pageno; // if selection moves to a different page
   struct Layer *move_layer;
-  double move_pagedelta;
-  double move_pagehdelta ; 
+  float move_pagedelta;
 
   GnomeCanvasPathDef  *lassopath ; //  path for lasso selection 
   GnomeCanvasPathDef  *closedlassopath ; // for drawing lasso shape
@@ -293,6 +286,7 @@ typedef struct UIData {
   gboolean pressure_sensitivity; // use pen pressure to control stroke width?
   double width_minimum_multiplier, width_maximum_multiplier; // calibration for pressure sensitivity
   gboolean is_corestroke; // this stroke is painted with core pointer
+  gboolean saved_is_corestroke;
   GdkDevice *stroke_device; // who's painting this stroke
   int screen_width, screen_height; // initial screen size, for XInput events
   double hand_refpt[2];
@@ -335,11 +329,12 @@ typedef struct UIData {
   gboolean shorten_menus; // shorten menus ?
   gchar *shorten_menu_items; // which items to hide
   gboolean is_sel_cursor; // displaying a selection-related cursor
+  gint pre_fullscreen_width, pre_fullscreen_height; // for win32 fullscreen
   gboolean embed_images;
 #if GTK_CHECK_VERSION(2,10,0)
   GtkPrintSettings *print_settings;
 #endif
-  searchDataType searchData;
+  gboolean poppler_force_cairo; // force poppler to use cairo
 } UIData;
 
 #define BRUSH_LINKED 0

@@ -63,11 +63,6 @@ struct Page *new_page(struct Page *template)
   init_layer(l);
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
-
-  pg->searchLayer = g_new(struct Layer, 1);
-  init_search_layer(pg->searchLayer);
-
-
   pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
   pg->bg->canvas_item = NULL;
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
@@ -98,10 +93,6 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
 
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
-
-  pg->searchLayer = g_new(struct Layer, 1);
-  init_search_layer(pg->searchLayer);
-
   pg->bg = bg;
   pg->bg->canvas_item = NULL;
   pg->height = height;
@@ -110,15 +101,8 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
       gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
   make_page_clipbox(pg);
   update_canvas_bg(pg);
-
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
-  
-  pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
-
-  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);
-
-  update_canvas_bg(pg);
 
   return pg;
 }
@@ -322,11 +306,6 @@ void delete_page(struct Page *pg)
     delete_layer(l);
     pg->layers = g_list_delete_link(pg->layers, pg->layers);
   }
-
-  if (pg->searchLayer == NULL) printf("actually sl is null\n");
-  pg->searchLayer->group = NULL;
-  delete_layer(pg->searchLayer);
-
   if (pg->group!=NULL) gtk_object_destroy(GTK_OBJECT(pg->group));
               // this also destroys the background's canvas items
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
@@ -340,7 +319,6 @@ void delete_page(struct Page *pg)
 void delete_layer(struct Layer *l)
 {
   struct Item *item;
-
   if (l == NULL) return;
 
   while (l->items!=NULL) {
@@ -359,10 +337,7 @@ void delete_layer(struct Layer *l)
     g_free(item);
     l->items = g_list_delete_link(l->items, l->items);
   }
-  if (l->group!= NULL) {
-    printf("the group is not null\n");
-    gtk_object_destroy(GTK_OBJECT(l->group));
-  }
+  if (l->group!= NULL) gtk_object_destroy(GTK_OBJECT(l->group));
   g_free(l);
 }
 
@@ -1996,9 +1971,12 @@ gboolean ok_to_close(void)
 
   if (ui.saved) return TRUE;
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-    GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO, _("Save changes to '%s'?"),
+    GTK_MESSAGE_WARNING, GTK_BUTTONS_NONE, _("Save changes to '%s'?"),
     (ui.filename!=NULL) ? ui.filename:_("Untitled"));
+  gtk_dialog_add_button(GTK_DIALOG (dialog), GTK_STOCK_DISCARD, GTK_RESPONSE_NO);
+  gtk_dialog_add_button(GTK_DIALOG (dialog), GTK_STOCK_SAVE, GTK_RESPONSE_YES);
   gtk_dialog_add_button(GTK_DIALOG (dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+  gtk_dialog_set_default_response(GTK_DIALOG (dialog), GTK_RESPONSE_YES);
   response = gtk_dialog_run(GTK_DIALOG (dialog));
   gtk_widget_destroy(dialog);
   if (response == GTK_RESPONSE_CANCEL || response == GTK_RESPONSE_DELETE_EVENT) 
@@ -2403,10 +2381,6 @@ void hide_unimplemented(void)
 {
   gtk_widget_hide(GET_COMPONENT("filePrintOptions"));
   gtk_widget_hide(GET_COMPONENT("journalFlatten"));  
- // gtk_widget_hide(GET_COMPONENT("toolsSelectRegion"));
- // gtk_widget_hide(GET_COMPONENT("buttonSelectRegion"));
- // gtk_widget_hide(GET_COMPONENT("button2SelectRegion"));
- // gtk_widget_hide(GET_COMPONENT("button3SelectRegion"));
   gtk_widget_hide(GET_COMPONENT("helpIndex")); 
 
   /* config file only works with glib 2.6 and beyond */
@@ -2418,6 +2392,11 @@ void hide_unimplemented(void)
   if (gtk_check_version(2, 10, 0)) {
     gtk_widget_hide(GET_COMPONENT("filePrint"));
   }  
+  
+  /* screenshot feature doesn't work yet in Win32 */
+#ifdef WIN32
+  gtk_widget_hide(GET_COMPONENT("journalScreenshot"));
+#endif
 }  
 
 // toggle fullscreen mode
@@ -2430,9 +2409,23 @@ void do_fullscreen(gboolean active)
   gtk_toggle_tool_button_set_active(
     GTK_TOGGLE_TOOL_BUTTON(GET_COMPONENT("buttonFullscreen")), ui.fullscreen);
 
-  if (ui.fullscreen) gtk_window_fullscreen(GTK_WINDOW(winMain));
-  else gtk_window_unfullscreen(GTK_WINDOW(winMain));
-  
+  if (ui.fullscreen) {
+#ifdef WIN32
+    gtk_window_get_size(GTK_WINDOW(winMain), &ui.pre_fullscreen_width, &ui.pre_fullscreen_height);
+    gtk_widget_set_size_request(GTK_WIDGET(winMain), gdk_screen_width(),
+                                                     gdk_screen_height());
+#endif
+    gtk_window_fullscreen(GTK_WINDOW(winMain));
+  }
+  else {
+#ifdef WIN32
+    gtk_widget_set_size_request(GTK_WIDGET(winMain), -1, -1);
+    gtk_window_resize(GTK_WINDOW(winMain), ui.pre_fullscreen_width,
+                                           ui.pre_fullscreen_height);
+#endif
+    gtk_window_unfullscreen(GTK_WINDOW(winMain));
+  }
+
   update_vbox_order(ui.vertical_order[ui.fullscreen?1:0]);
 }
 
@@ -2535,6 +2528,7 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     /* the event won't be processed since the hbox1 doesn't know what to do with it,
        so we might as well kill it and avoid confusing ourselves when it gets
        propagated further ... */
+
   printf("Here I am 1\n");
     return TRUE;
   }
@@ -2542,12 +2536,14 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     /* we let the spin button take care of itself, and don't steal its focus,
        unless the user presses Esc or Tab (in those cases we intervene) */
   printf("Here I am 2\n");
+
     if (ev->type != GDK_KEY_PRESS) return FALSE;
     if (ev->key.keyval == GDK_Escape) 
        gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), ui.pageno+1); // abort
     else if (ev->key.keyval != GDK_Tab && ev->key.keyval != GDK_ISO_Left_Tab)
        return FALSE; // let the spin button process it
   }
+
   if (gtk_widget_is_ancestor(w, GET_COMPONENT("findBar"))) {
     // are we inside the findbar... then do not still focus
     printf("Inside the findbar\n");
@@ -2576,7 +2572,7 @@ void install_focus_hooks(GtkWidget *w, gpointer data)
 #ifdef adfasdf
 /* Code cloned from needs to be implemented but my gtk knowledge is to little */
 
-static void
+void
 draw_rubberband (GtkWidget *widget, GdkWindow *window,
 		 const GdkRectangle *rect, guchar alpha)
 {
@@ -2724,99 +2720,98 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri, int len)
   encoded_uri[k] = 0;
 }
 
-void page_search_draw_match(Page *pg, PopplerRectangle * rect) 
+
+// wrapper for missing poppler functions (defunct poppler-gdk api)
+
+static void
+wrapper_copy_cairo_surface_to_pixbuf (cairo_surface_t *surface,
+			      GdkPixbuf       *pixbuf)
 {
-  //gnome_canvas_item_new(ui.cur_layer->group,
-  Layer *searchLayer = pg->searchLayer;
+  int cairo_width, cairo_height, cairo_rowstride;
+  unsigned char *pixbuf_data, *dst, *cairo_data;
+  int pixbuf_rowstride, pixbuf_n_channels;
+  unsigned int *src;
+  int x, y;
 
-  struct Item * searchItem = (struct Item *)g_malloc(sizeof(*searchItem));
+  cairo_width = cairo_image_surface_get_width (surface);
+  cairo_height = cairo_image_surface_get_height (surface);
+  cairo_rowstride = cairo_image_surface_get_stride (surface);
+  cairo_data = cairo_image_surface_get_data (surface);
 
-  assert(searchLayer != NULL);
+  pixbuf_data = gdk_pixbuf_get_pixels (pixbuf);
+  pixbuf_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+  pixbuf_n_channels = gdk_pixbuf_get_n_channels (pixbuf);
 
-  searchItem->type = ITEM_SELECTRECT;
-  searchItem->path = NULL;
+  if (cairo_width > gdk_pixbuf_get_width (pixbuf))
+    cairo_width = gdk_pixbuf_get_width (pixbuf);
+  if (cairo_height > gdk_pixbuf_get_height (pixbuf))
+    cairo_height = gdk_pixbuf_get_height (pixbuf);
+  for (y = 0; y < cairo_height; y++)
+    {
+      src = (unsigned int *) (cairo_data + y * cairo_rowstride);
+      dst = pixbuf_data + y * pixbuf_rowstride;
+      for (x = 0; x < cairo_width; x++) 
+	{
+	  dst[0] = (*src >> 16) & 0xff;
+	  dst[1] = (*src >> 8) & 0xff; 
+	  dst[2] = (*src >> 0) & 0xff;
+	  if (pixbuf_n_channels == 4)
+	      dst[3] = (*src >> 24) & 0xff;
+	  dst += pixbuf_n_channels;
+	  src++;
+	}
+    }
+}	
 
-  searchItem->canvas_item = gnome_canvas_item_new(searchLayer->group,
-      gnome_canvas_rect_get_type(), "width-pixels", 2, 
-      "fill-color-rgba", 0xffff0080,
-      "x1", rect->x1, "x2", rect->x2, "y1", rect->y1, "y2", rect->y2, NULL);
-  searchLayer->items = g_list_append(searchLayer->items, searchItem);
-  searchLayer->nitems++;
-}
-
-
-
-void _search_page_set(int currPage, GList *matches)
+void
+wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
+			       int src_x, int src_y,
+			       int src_width, int src_height,
+			       double scale,
+			       int rotation,
+			       GdkPixbuf *pixbuf)
 {
-  
-}
+  cairo_t *cr;
+  cairo_surface_t *surface;
 
-void page_search_layer_set(Page *pg, GList *matches)
-{
-  // add the given matches to the current page
-  Layer *searchLayer = pg->searchLayer;
-  GList *l;
-
-  // make sure the current layer is empty
-  if (searchLayer != NULL)
-    delete_layer(searchLayer);
-  
-  searchLayer = g_new(struct Layer, 1);
-  searchLayer->items = NULL;
-  searchLayer->nitems = 0;
-  searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
-
-  // add the layer to the canvas (I don't understand the semantics
-
-  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(searchLayer->group), pg->bg->canvas_item);      
-
-  for (l = matches; l && l->data; l = g_list_next (l)) {
-    PopplerRectangle *rect = (PopplerRectangle *)l->data;
-    page_search_draw_match(pg, rect);
+  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+					src_width, src_height);
+  cr = cairo_create (surface);
+  cairo_save (cr);
+  switch (rotation) {
+  case 90:
+	  cairo_translate (cr, src_x + src_width, -src_y);
+	  break;
+  case 180:
+	  cairo_translate (cr, src_x + src_width, src_y + src_height);
+	  break;
+  case 270:
+	  cairo_translate (cr, -src_x, src_y + src_height);
+	  break;
+  default:
+	  cairo_translate (cr, -src_x, -src_y);
   }
+
+  if (scale != 1.0)
+	  cairo_scale (cr, scale, scale);
+
+  if (rotation != 0)
+	  cairo_rotate (cr, rotation * G_PI / 180.0);
+
+  poppler_page_render (page, cr);
+  cairo_restore (cr);
+
+  cairo_set_operator (cr, CAIRO_OPERATOR_DEST_OVER);
+  cairo_set_source_rgb (cr, 1., 1., 1.);
+  cairo_paint (cr);
+
+  cairo_destroy (cr);
+
+  wrapper_copy_cairo_surface_to_pixbuf (surface, pixbuf);
+  cairo_surface_destroy (surface);
 }
 
 
-// Initialize the PDF search  data structures
-void ui_search_term_init(void)
-{
-  ui.searchData.totalMatches = 0;
-  ui.searchData.pagesWithMatches = 0;
-  ui.searchData.term = NULL;
-}
-
-// Free any memory allocated by the searching
-void ui_search_term_release(void)
-{
-  // write code to release searching data
-  if (ui.searchData.term != NULL) {
-    g_free(ui.searchData.term);
-    ui.searchData.term = NULL;
-  }
-  ui.searchData.totalMatches = 0;
-  ui.searchData.pagesWithMatches = 0;
-}
-
-void ui_search_term_set(const char *st)
-{
-  if (ui.searchData.term != NULL) {
-    g_free(ui.searchData.term);
-  }
-  ui.searchData.term = g_strdup(st);
-}
-
-
-void ui_search_print(void) 
-{
-  if (ui.searchData.term == NULL)
-    return;
-
-  printf("Search term [%s]. Found [%d] times in [%d] pages \n", 
-         ui.searchData.term, 
-         ui.searchData.totalMatches, 
-         ui.searchData.pagesWithMatches );
-  
-}
 
 // Work around GTK path bugs
 // see https://bugzilla.gnome.org/show_bug.cgi?id=667077 and

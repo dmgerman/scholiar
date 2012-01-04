@@ -234,9 +234,7 @@ on_toolsImage_activate                  (GtkMenuItem     *menuitem,
 void
 on_toolsSelectRegion_activate          (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
-void
-on_toolsSelectObject_activate          (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
+
 void
 on_toolsSelectRectangle_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
@@ -655,6 +653,14 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_buttonPrevFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data);
+
+void
+on_buttonNextFile_clicked              (GtkToolButton   *toolbutton,
+                                        gpointer         user_data);
+
+void
 on_buttonColorChooser_set              (GtkColorButton  *colorbutton,
                                         gpointer         user_data);
 
@@ -689,3 +695,7 @@ gboolean
 on_find_bar_prev                       (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);
+
+gboolean on_text_keypress_event(GtkWidget   *widget,
+                                GdkEventKey *event,
+                                gpointer     user_data) ;
