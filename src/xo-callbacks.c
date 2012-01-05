@@ -3055,13 +3055,13 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
     gnome_canvas_path_def_lineto( ui.selection->lassopath, pt[0], pt[1] ); 
     
     gnome_canvas_path_def_unref(ui.selection->closedlassopath); 
-    ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath); 
+    ui.selection->closedlassopath = gnome_canvas_path_def_close_all_fixed(ui.selection->lassopath); 
 
     bad_bpath_maybe = gnome_canvas_path_def_bpath (ui.selection->closedlassopath);
     while (! sp_bpath_good_check (bad_bpath_maybe)) {
       printf("Bad bpath found\n");
       gnome_canvas_path_def_unref(ui.selection->closedlassopath); 
-      ui.selection->closedlassopath = gnome_canvas_path_def_close_all(ui.selection->lassopath); 
+      ui.selection->closedlassopath = gnome_canvas_path_def_close_all_fixed(ui.selection->lassopath); 
       bad_bpath_maybe = gnome_canvas_path_def_bpath (ui.selection->closedlassopath);
     }
     gnome_canvas_item_set((GnomeCanvasItem*) ui.selection->lasso, 

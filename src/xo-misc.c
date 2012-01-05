@@ -2886,6 +2886,78 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
 // from sp_bpath_good here, and will repeat closing the path until a valid path is
 // returned. The original names of functions are sp_bpath_good and sp_bpath_check_subpath;
 // here we name them sp_bpath_good_check and sp_bpath_check_subpath_check
+GnomeCanvasPathDef *
+gnome_canvas_path_def_close_all_fixed (const GnomeCanvasPathDef * path)
+{
+	GnomeCanvasPathDef * new;
+	ArtBpath * p, * d, * start;
+	gint len;
+	gboolean closed;
+
+	g_return_val_if_fail (path != NULL, NULL);
+
+	if (path->allclosed) {
+		new = gnome_canvas_path_def_duplicate (path);
+		return new;
+	}
+
+	len = 1;
+
+	/* Count MOVETO_OPEN */
+
+	for (p = path->bpath; p->code != ART_END; p++) {
+		len += 1;
+		if (p->code == ART_MOVETO_OPEN) len += 2;
+	}
+
+	new = gnome_canvas_path_def_new_sized (len);
+
+	d = start = new->bpath;
+	closed = TRUE;
+
+	for (p = path->bpath; p->code != ART_END; p++) {
+		switch (p->code) {
+		case ART_MOVETO_OPEN:
+			start = p;
+			closed = FALSE;
+		case ART_MOVETO:
+			if ((!closed) && ((start->x3 != p->x3) || (start->y3 != p->y3))) {
+				d->code = ART_LINETO;
+				d->x3 = start->x3;
+				d->y3 = start->y3;
+				d++;
+			}
+			if (p->code == ART_MOVETO) closed = TRUE;
+			d->code = ART_MOVETO;
+			d->x3 = p->x3;
+			d->y3 = p->y3;
+			d++;
+			break;
+		case ART_LINETO:
+		case ART_CURVETO:
+			*d++ = *p;
+			break;
+		default:
+			g_assert_not_reached ();
+		}
+	}
+
+	if (!closed) {
+		d->code = ART_LINETO;
+		d->x3 = start->x3;
+		d->y3 = start->y3;
+		d++;
+	}
+
+	d->code = ART_END;
+
+	new->end = d - new->bpath;
+	new->allclosed = TRUE;
+	new->allopen = FALSE;
+
+	return new;
+}
+
 gboolean sp_bpath_good_check (ArtBpath * bpath)
 {
 	ArtBpath * bp;

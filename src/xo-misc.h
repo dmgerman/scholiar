@@ -102,6 +102,7 @@ void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y
 // functions to work around GTK path bugs
 gboolean sp_bpath_good_check (ArtBpath * bpath); 
 ArtBpath * sp_bpath_check_subpath_check (ArtBpath * bpath); 
+GnomeCanvasPathDef * gnome_canvas_path_def_close_all_fixed (const GnomeCanvasPathDef * path);
 
 // switch between mappings
 
@@ -157,3 +158,19 @@ void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 
 void unset_flags(GtkWidget *w, gpointer flag);
 void set_flags(GtkWidget *w, gpointer flag);
+
+// this declaration is needed for gnome_canvas_path_def_close_all_fixed to compile
+struct _GnomeCanvasPathDef {
+	gint refcount;
+	ArtBpath * bpath;
+	gint end;		/* ART_END position */
+	gint length;		/* Num allocated Bpaths */
+	gint substart;		/* subpath start */
+	gdouble x, y;		/* previous moveto position */
+	guint sbpath : 1;	/* Bpath is static */
+	guint hascpt : 1;	/* Currentpoint is defined */
+	guint posset : 1;	/* Previous was moveto */
+	guint moving : 1;	/* Bpath end is moving */
+	guint allclosed : 1;	/* All subpaths are closed */
+	guint allopen : 1;	/* All subpaths are open */
+};

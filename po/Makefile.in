@@ -16,14 +16,14 @@ GETTEXT_PACKAGE = xournal
 PACKAGE = xournal
 VERSION = 0.4.5
 
-SHELL = /bin/sh
+SHELL = /bin/bash
 
 
 srcdir = .
 top_srcdir = ..
 
 
-prefix = /c/xournal
+prefix = /usr/local
 exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 datadir = ${datarootdir}
@@ -33,20 +33,20 @@ gnulocaledir = $(datadir)/locale
 gettextsrcdir = $(datadir)/glib-2.0/gettext/po
 subdir = po
 
-INSTALL = /bin/install -c
+INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 MKINSTALLDIRS = $(top_srcdir)/./mkinstalldirs
 
 CC = gcc
 GENCAT = @GENCAT@
-GMSGFMT = /mingw/bin/msgfmt
-MSGFMT = /mingw/bin/msgfmt
+GMSGFMT = /usr/bin/msgfmt
+MSGFMT = /usr/bin/msgfmt
 MSGFMT_OPTS = -c
-XGETTEXT = /mingw/bin/xgettext
+XGETTEXT = /usr/bin/xgettext
 MSGMERGE = msgmerge
 
 DEFS = -DHAVE_CONFIG_H
-CFLAGS = -ggdb3 -O0 -Wall -Wno-unused-variable
+CFLAGS = -g -O2
 CPPFLAGS = 
 
 INCLUDES = -I.. -I$(top_srcdir)/intl
