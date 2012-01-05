@@ -39,5 +39,5 @@ void save_config_to_file(void);
 
 gchar* get_autosave_filename(void);
 void clear_autosave_entry(void);
-gboolean check_and_restore_autosaves(int argc, char *argv[]);
-void open_argv_file_or_its_autosave(int argc, char *argv[]);
+gboolean check_and_restore_autosaves();
+gboolean open_file_or_its_autosave(const char *fname);

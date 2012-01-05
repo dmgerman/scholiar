@@ -3931,7 +3931,9 @@ on_autosave_activate_deferred           (gpointer         user_data)
   if (ui.autosave_defers-- != 1) return FALSE;
   if (ui.block_autosave) return FALSE;
   name = get_autosave_filename();
+  ui.this_is_autosave = TRUE;
   save_journal(name);
+  ui.this_is_autosave = FALSE;
   g_free(name);
   return FALSE;
 }

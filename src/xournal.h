@@ -49,6 +49,7 @@
 #define MAX_SAFE_RENDER_DPI 720 // max dpi at which PDF bg's get rendered
 #define AUTOSAVE_DEFER_SECONDS 3
 #define AUTOSAVES_DIR "autosaves"
+#define UNSAVED_AUTOSAVES_DIR "autosaves_tmp"
 #define AUTOSAVE_SUFFIX ".autosave~"
 #define VBOX_MAIN_NITEMS 5 // number of interface items in vboxMain
 
@@ -237,6 +238,11 @@ typedef struct SelectionContext {
   double x1, x2, y1, y2;
 } SelectionContext;
 
+typedef struct ImgSerContext {
+  guchar *image_data;
+  guint stream_length;
+} ImgSerContext;
+
 typedef struct Selection {
   int type;  // ITEM_SELECTRECT, ITEM_MOVESEL_VERT
   BBox bbox; // the rectangle bbox of the selection
@@ -340,6 +346,8 @@ typedef struct UIData {
   GtkPrintSettings *print_settings;
 #endif
   gboolean poppler_force_cairo; // force poppler to use cairo
+  char *xournal_exe_cmd; // command line w/ which xournal was invoked (argv[0])
+  gboolean this_is_autosave; // use to preclude auto-pdf export on autosave
 } UIData;
 
 #define BRUSH_LINKED 0

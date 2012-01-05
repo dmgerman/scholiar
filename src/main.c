@@ -60,6 +60,7 @@ void init_stuff (int argc, char *argv[])
 
   // create some data structures needed to populate the preferences
   ui.default_page.bg = g_new(struct Background, 1);
+  ui.xournal_exe_cmd = argv[0];
 
   // initialize config file names
   tmppath = g_build_filename(g_get_home_dir(), CONFIG_DIR, NULL);
@@ -82,6 +83,7 @@ void init_stuff (int argc, char *argv[])
   ui.default_page.bg->canvas_item = NULL;
   ui.layerbox_length = 0;
   ui.autosave_defers = 0;
+  ui.this_is_autosave = FALSE;
 
   // parse command line options
   context = g_option_context_new ("");
@@ -102,6 +104,15 @@ void init_stuff (int argc, char *argv[])
     show_gui = FALSE;
   }
 
+  // load the MRU
+  if (show_gui) init_mru();
+
+  // if any autosaves have been restored by spawning child processes, we exit
+  // this instance of xournal.  Note: check autosaves only if in gui mode, and 
+  // only if we aren't opening a file directly from command line
+  if (show_gui && (fileArguments == NULL) && check_and_restore_autosaves())
+    exit(1);
+
   if (fileArguments == NULL) {
     if(exportPdfFile) {
        // If exporting having a file to open is essential
@@ -117,13 +128,12 @@ void init_stuff (int argc, char *argv[])
       g_free(tmppath);
     }
 
-    success = open_journal(tmpfn);
+    success = open_file_or_its_autosave(tmpfn);
     g_free(tmpfn);
-  }
-  
-  if (!success && !show_gui) { // GUI error is showed later
-    printf(_("Error opening file '%s'"), argv[1]);
-    exit(2);
+    if (!success && !show_gui) { // GUI error is showed later
+      printf(_("Error opening file '%s'"), fileArguments[0]);
+      exit(2);
+    }
   }
 
   if(exportPdfFile) {
@@ -330,9 +340,6 @@ void init_stuff (int argc, char *argv[])
       NULL);
   }
 
-  // load the MRU
-  
-  init_mru();
 
   // here is the command line "option" is handled
 
@@ -367,9 +374,6 @@ void init_stuff (int argc, char *argv[])
   set_cursor_busy(FALSE);
   */
   if (!success) {
-	  #ifdef IMAGE_DEBUG
-	  printf("error opening file '%s'\n",fileArguments[0]);
-	  #endif
   
    // jump to desired page
    if (openAtPageNumber > journal.npages) {
@@ -425,16 +429,6 @@ main (int argc, char *argv[])
   winMain = create_winMain ();
   
   init_stuff (argc, argv);
-
-  if (argc <= 1) {
-    // if any autosaves have been restored by spawning child processes, we exit
-    // this instance of xournal.
-    if (check_and_restore_autosaves (argc, argv))
-      return 0;
-  }
-  else
-    open_argv_file_or_its_autosave (argc, argv);
-
   
   gtk_window_set_icon(GTK_WINDOW(winMain), create_pixbuf("xournal.png"));
   

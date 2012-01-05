@@ -272,8 +272,6 @@ gboolean save_journal(const char *filename)
 	  gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f\"", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
 	  if (ui.embed_images) 
 	    gzprintf(f, " embedded=\"TRUE\" base64length=\"%d\" streamlength=\"%d\"",strlen(tmpstr),pixdata_stream_len);
-	  printf("tmpstring is of len %d\n",(int)strlen(tmpstr));
-	  /* printf("%s\n", tmpstr); */
 	  gzprintf(f, ">"); 
 	  gzputs(f, tmpstr);
 	  gzprintf(f, "</image>\n");
@@ -289,7 +287,7 @@ gboolean save_journal(const char *filename)
   setlocale(LC_NUMERIC, "");
 
   // if we want to autoexport, this is the place to do it
-  if (ui.autoexport_pdf) {
+  if (ui.autoexport_pdf && !ui.this_is_autosave) {
     char pdfName[PATH_MAX+10];
     sprintf(pdfName, "%s.pdf", filename);
     print_to_pdf(pdfName);
@@ -2271,8 +2269,7 @@ set_autosave_filename(gchar *fn)
 
   // make an entry in ~/.xournal/autosaves
   gchar *autosave_table_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR,
-                                               AUTOSAVES_DIR,
-                                               NULL);
+                                               AUTOSAVES_DIR, NULL);
   if(!g_file_test(autosave_table_dir, G_FILE_TEST_EXISTS))
     g_mkdir(autosave_table_dir,0755);
 
@@ -2289,18 +2286,23 @@ set_autosave_filename(gchar *fn)
   g_free(autosave_table_entry_filename);
 }
 
-gchar*
-get_autosave_filename()
+gchar* get_autosave_filename()
 {
   gchar *default_basename;
+  gchar *default_dir; // when the files aren't saved yet
   gchar *retval = NULL;
   if(ui.filename == NULL) {
     if(autosave_filename == NULL) {      
       /* if the file has not been saved yet, make a generic autosave name
-         in the user's homedir */
-      default_basename = g_strdup_printf("xournal-%d.xoj%s", getpid(), AUTOSAVE_SUFFIX, NULL);
-      retval = g_build_filename(g_get_home_dir(), default_basename, NULL);     
+         in default_dir */
+      default_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR, UNSAVED_AUTOSAVES_DIR, NULL);
+      if(!g_file_test(default_dir, G_FILE_TEST_EXISTS))
+	g_mkdir(default_dir,0755);
+      
+      default_basename = g_strdup_printf("xournal-%d.xoj%s", getpid(), AUTOSAVE_SUFFIX);
+      retval = g_build_filename(default_dir, default_basename, NULL);     
       g_free(default_basename);
+      g_free(default_dir);
       set_autosave_filename(retval);
     }
     else
@@ -2342,7 +2344,7 @@ void clear_autosave_entry_by_contents(char *contents) {
                                                         NULL);
   GDir *dir = g_dir_open (autosave_table_dir, 0, NULL);
   const gchar *filename;
-  while (filename = g_dir_read_name (dir) ) {
+  while ( (filename = g_dir_read_name(dir)) ) {
       gchar *full_filename = g_build_filename(autosave_table_dir, filename, NULL);
       gchar *autosave_filename;
       if (g_file_get_contents (full_filename, &autosave_filename, NULL, NULL) ) {
@@ -2358,7 +2360,7 @@ void clear_autosave_entry_by_contents(char *contents) {
 
 // return value: TRUE if any autosaves have been restored by spawning child
 // processes. In this case, this instance of xournal should exit.
-gboolean check_and_restore_autosaves(int argc, char *argv[]) {
+gboolean check_and_restore_autosaves() {
   // check whether ~/.xournal/autosaves contains any entries which have
   // process ids that currently do not correspond to a xournal pid.
 
@@ -2374,7 +2376,7 @@ gboolean check_and_restore_autosaves(int argc, char *argv[]) {
   GList *autosave_filenames = NULL;
 
   const gchar *filename;
-  while (filename = g_dir_read_name (dir) ) {
+  while ( (filename = g_dir_read_name(dir)) ) {
     // check if any of the filenames are not currently xournal PIDs
     if(g_strstr_len (current_pids,-1, filename) == NULL) {
       // if so, open the file. Its contents should be the name of an autosave filename
@@ -2409,7 +2411,7 @@ gboolean check_and_restore_autosaves(int argc, char *argv[]) {
           iter;
           iter = iter->next) {
             
-        gchar *cmdline = g_strconcat(argv[0], " \"", iter->data, "\"", NULL);
+        gchar *cmdline = g_strconcat(ui.xournal_exe_cmd, " \"", iter->data, "\"", NULL);
         g_spawn_command_line_async(cmdline, NULL);
         g_free(cmdline);
         g_free(iter->data);
@@ -2432,7 +2434,7 @@ gboolean check_and_restore_autosaves(int argc, char *argv[]) {
   return FALSE;
 }
 
-void open_file_and_autosave (gchar *filename, gchar *autosavename)
+gboolean open_file_and_autosave (gchar *filename, gchar *autosavename)
 {
   int success;
   GtkWidget *w;
@@ -2464,22 +2466,21 @@ void open_file_and_autosave (gchar *filename, gchar *autosavename)
     else
       ui.saved=TRUE;     
   }
+  return (success);
 }
 
-void open_argv_file_or_its_autosave (int argc, char *argv[])
+gboolean open_file_or_its_autosave(const char *fname) 
 {
   gchar *tmpfn, *tmppath, *tmpautofn;
-  int success;
+  gboolean success;
   GtkWidget *w;
  
-  if(argc<=1) return;
-
   // make an absolute path
-  if (g_path_is_absolute(argv[1]))
-    tmpfn = g_strdup(argv[1]);
+  if (g_path_is_absolute(fname))
+    tmpfn = g_strdup(fname);
   else {
     tmppath = g_get_current_dir();
-    tmpfn = g_build_filename(tmppath, argv[1], NULL);
+    tmpfn = g_build_filename(tmppath, fname, NULL);
     g_free(tmppath);
   }
   /* check if the argument is an autosave file. If it is, this instance of xournal
@@ -2540,7 +2541,8 @@ void open_argv_file_or_its_autosave (int argc, char *argv[])
     }
   }
 
-  open_file_and_autosave(tmpfn, tmpautofn);
+  success = open_file_and_autosave(tmpfn, tmpautofn);
   g_free(tmpfn);
   g_free(tmpautofn);
+  return (success);
 }

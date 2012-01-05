@@ -9,9 +9,13 @@
 #include <libart_lgpl/art_svp_point.h>
 #include <gdk/gdkkeysyms.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
+#ifndef WIN32
 #include <X11/Xlib.h>
+#endif
 #include <assert.h>
 #include <ctype.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #include "xournal.h"
 #include "xo-interface.h"
