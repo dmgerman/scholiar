@@ -321,6 +321,7 @@ typedef struct UIData {
   gboolean hand_scrollto_pending;
   char *filename;
   gchar *default_path; // default path for new notes
+  gchar *default_image; // path for previous image
   gchar *pdf_viewer_cmd; // default command to open a pdf in a given page
   gboolean view_continuous, fullscreen, maximize_at_start;
   gboolean in_update_page_stuff; // semaphore to avoid scrollbar retroaction

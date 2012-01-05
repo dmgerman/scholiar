@@ -1620,6 +1620,7 @@ void init_config_default(void)
   ui.print_ruling = TRUE;
   ui.default_unit = UNIT_CM;
   ui.default_path = NULL;
+  ui.default_image = NULL;
   ui.default_font_name = g_strdup(DEFAULT_FONT);
   ui.default_font_size = DEFAULT_FONT_SIZE;
   ui.pressure_sensitivity = FALSE;

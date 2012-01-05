@@ -2024,7 +2024,7 @@ void insert_image(GdkEvent *event, struct Item *item)
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_gdkimage);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
 
-  if (ui.default_path!=NULL) gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), ui.default_path);
+  if (ui.default_image != NULL) gtk_file_chooser_set_filename(GTK_FILE_CHOOSER (dialog), ui.default_image);
 
   if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_OK) {
     gtk_widget_destroy(dialog);
@@ -2032,6 +2032,11 @@ void insert_image(GdkEvent *event, struct Item *item)
   }
   filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
   gtk_widget_destroy(dialog);
+  
+  if (filename == NULL) return; // nothing selected
+ 
+  if (ui.default_image != NULL) g_free(ui.default_image);
+  ui.default_image = g_strdup(filename);
   
   get_pointer_coords(event, pt);
 
