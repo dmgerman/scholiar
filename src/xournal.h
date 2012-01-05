@@ -1,3 +1,6 @@
+#ifndef XOURNAL_H
+#define XOURNAL_H
+
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <poppler/glib/poppler.h>
@@ -462,3 +465,5 @@ extern double DEFAULT_ZOOM;
 #define UNIT_IN 1
 #define UNIT_PX 2
 #define UNIT_PT 3
+
+#endif	/* XOURNAL_H */

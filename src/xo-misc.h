@@ -1,3 +1,6 @@
+#ifndef XO_MISC_H
+#define XO_MISC_H
+
 // data manipulation misc functions
 
 struct Page *new_page(struct Page *template);
@@ -18,8 +21,6 @@ struct Refstring *refstring_ref(struct Refstring *rs);
 void refstring_unref(struct Refstring *rs);
 
 // helper functions
-struct ImgSerContext serialize_image(GdkPixbuf *image);
-GdkPixbuf* deserialize_image(struct ImgSerContext buffer_ctxt);
 void init_layer(struct Layer *l);
 struct BBox make_bbox_from_lrtb(double l, double r, double t, double b);
 void make_bbox_copy(struct BBox *bbfrom, struct BBox *bbto, int padding);
@@ -91,9 +92,6 @@ gboolean ok_to_close(void);
 void reset_focus(void);
 
 // selection / clipboard stuff
-
-void get_possible_resize_direction(double *pt, gboolean *l, gboolean *r, gboolean *t, gboolean *b);
-void reset_selection(void);
 void move_journal_items_by(GList *itemlist, double dx, double dy,
                            struct Layer *l1, struct Layer *l2, GList *depths);
 void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y,
@@ -174,3 +172,6 @@ struct _GnomeCanvasPathDef {
 	guint allclosed : 1;	/* All subpaths are closed */
 	guint allopen : 1;	/* All subpaths are open */
 };
+
+
+#endif  /* XO_MISC_H */

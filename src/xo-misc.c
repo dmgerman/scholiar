@@ -546,45 +546,6 @@ double get_pressure_multiplier(GdkEvent *event)
   return ((1-rawpressure)*ui.width_minimum_multiplier + rawpressure*ui.width_maximum_multiplier);
 }
 
-void get_possible_resize_direction(double *pt, gboolean *l, gboolean *r, gboolean *t, gboolean *b)
-{
-  double h_corner_margin, v_corner_margin, hmargin, vmargin, resize_margin;
-  if (ui.selection==NULL) return;
-  if (ui.cur_layer != ui.selection->layer) return;
-
-  resize_margin = RESIZE_MARGIN/ui.zoom;
-  hmargin = (ui.selection->bbox.right-ui.selection->bbox.left)*0.3;
-  if (hmargin>resize_margin) hmargin = resize_margin;
-  vmargin = (ui.selection->bbox.bottom-ui.selection->bbox.top)*0.3;
-  if (vmargin>resize_margin) vmargin = resize_margin;
-
-  // make sure the click is within a box slightly bigger than the selection rectangle
-  if (pt[0]<ui.selection->bbox.left-resize_margin || 
-      pt[0]>ui.selection->bbox.right+resize_margin ||
-      pt[1]<ui.selection->bbox.top-resize_margin || 
-      pt[1]>ui.selection->bbox.bottom+resize_margin) {
-    *l = *r = *t = *b = FALSE;
-    return;
-  }
-
-  // If we got here, and if the click is near the edge, it's a resize operation.
-  // keep track of which edges we're close to, since those are the ones which should move
-
-  h_corner_margin = 0.25 * fabs(ui.selection->bbox.right - ui.selection->bbox.left);
-  v_corner_margin = 0.25 * fabs(ui.selection->bbox.top - ui.selection->bbox.bottom);
-
-  *l = (pt[0]<ui.selection->bbox.left+hmargin);
-  *r = (pt[0]>ui.selection->bbox.right-hmargin);
-  if (*l || *r) 
-    vmargin = v_corner_margin;
-  *t = (pt[1]<ui.selection->bbox.top+vmargin);
-  *b = (pt[1]>ui.selection->bbox.bottom-vmargin);
-  if (*t || *b) { // redo left/right tests with new margin
-    hmargin = h_corner_margin;
-    *l = (pt[0]<ui.selection->bbox.left+hmargin);
-    *r = (pt[0]>ui.selection->bbox.right-hmargin);
-  }
-}
 
 void update_item_bbox(struct Item *item)
 {
@@ -2027,34 +1988,6 @@ void reset_focus(void)
 }
 
 // selection / clipboard stuff
-
-void reset_selection(void)
-{
-  if (ui.selection == NULL) return;
-  if (ui.selection->canvas_item != NULL) 
-    gtk_object_destroy(GTK_OBJECT(ui.selection->canvas_item));
-
-  if( ui.selection->closedlassopath  != NULL )
-    gnome_canvas_path_def_unref(ui.selection->closedlassopath);  
-  if( ui.selection->lassopath  != NULL )
-    gnome_canvas_path_def_unref(ui.selection->lassopath);  
-  if(ui.selection->lasso != NULL ) 
-    gtk_object_destroy(GTK_OBJECT(ui.selection->lasso)); 
-
-  // if(ui.selection->lassoclip != NULL ) 
-  //  gtk_object_destroy(GTK_OBJECT(ui.selection->lassoclip)); 
-
- 
-  g_list_free(ui.selection->items);
-  g_free(ui.selection);
-  ui.selection = NULL;
-  update_copy_paste_enabled();
-  update_color_menu();
-  update_thickness_buttons();
-  update_color_buttons();
-  update_font_button();
-  update_cursor();
-}
 
 void move_journal_items_by(GList *itemlist, double dx, double dy,
                               struct Layer *l1, struct Layer *l2, GList *depths)

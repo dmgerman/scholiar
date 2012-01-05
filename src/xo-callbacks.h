@@ -1,3 +1,6 @@
+#ifndef XO_CALLBACKS_H
+#define XO_CALLBACKS_H
+
 #include <gtk/gtk.h>
 
 void
@@ -702,3 +705,6 @@ on_find_bar_prev                       (GtkWidget       *widget,
 gboolean on_text_keypress_event(GtkWidget   *widget,
                                 GdkEventKey *event,
                                 gpointer     user_data) ;
+
+#endif  /* XO_CALLBACKS_H */
+

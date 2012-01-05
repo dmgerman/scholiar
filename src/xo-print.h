@@ -1,3 +1,6 @@
+#ifndef XO_PRINT_H
+#define XO_PRINT_H
+
 typedef struct XrefTable {
   int *data;
   int last;
@@ -79,3 +82,6 @@ gboolean print_to_pdf(char *filename);
 #if GTK_CHECK_VERSION(2, 10, 0)
 void print_job_render_page(GtkPrintOperation *print, GtkPrintContext *context, gint pageno, gpointer user_data);
 #endif
+
+
+#endif  /* XO_PRINT_H */

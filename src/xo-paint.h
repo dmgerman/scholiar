@@ -1,3 +1,6 @@
+#ifndef XO_PAINT_H
+#define XO_PAINT_H
+
 void set_cursor_busy(gboolean busy);
 void update_cursor(void);
 void update_cursor_for_resize(double *pt);
@@ -12,60 +15,13 @@ void finalize_erasure(void);
 
 void do_hand(GdkEvent *event);
 
-#define DEFAULT_PADDING  2
-#define MIN_SEL_SCALE  0.01
-#define COPY_SEL_MAPPING 2
-#define IMG_INDEX_MAX_SIZE 11
-
-void get_selection_context(int selection_type, struct SelectionContext *sc);
-void free_selection_context(struct SelectionContext *sc);
-void get_selection_context_rect(struct SelectionContext *sc);
-void get_selection_context_lasso(struct SelectionContext *sc);
-gboolean item_within_selection(struct Item *item, struct SelectionContext *sc);
-void get_new_selection(int selection_type, struct Layer *layer);
-void start_selectregion(GdkEvent *event);
-void finalize_selectregion(void);
-void start_selectrect(GdkEvent *event);
-void finalize_selectrect(void);
-void populate_selection(struct SelectionContext *sc);
-void select_object_maybe(struct SelectionContext *sc);
-void render_selection_marquee(struct SelectionContext *sc);
-void finalize_selection(int selection_type);
-gboolean start_movesel(GdkEvent *event);
-void start_vertspace(GdkEvent *event);
-void continue_movesel(GdkEvent *event);
-void continue_copysel(GdkEvent *event);
-void finalize_movesel(void);
-void finalize_copysel(void);
-gboolean start_resizesel(GdkEvent *event);
-void continue_resizesel(GdkEvent *event);
-void finalize_resizesel(void);
-
-void selection_delete(void);
-
-/* clipboard-related functions */
-void copy_to_buffer_advance_ptr(guchar **to, gpointer from, gsize size);
-void copy_from_buffer_advance_ptr(gpointer to, guchar **from, gsize size);
-void put_header_in_buffer(int *bufsz, int *nitems, struct BBox *bbox, guchar **pp);
-void put_image_data_in_buffer(struct ImgSerContext *isc, guchar **pp);
-void populate_buffer_from_global_sel(struct ImgSerContext *serialized_images, guchar **pp);
-
-void selection_to_clip(void);
-void clipboard_paste_get_offset(double *hoffset, double *voffset);
-void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, double voffset);
-void clipboard_paste(void);
-int buffer_size_for_item(struct Item *item);
-int buffer_size_for_header();
-void put_item_in_buffer(struct Item *item, guchar **pp);
-void get_item_from_buffer(struct Item *item, guchar **pp, double hoffset, double voffset);
-void import_img_as_clipped_item();
-
 void recolor_selection(int color_no, guint color_rgba);
 void rethicken_selection(int val);
 
 /* object-related functions (textboxes, images) */
 
 void rescale_objects(void);
+void update_scaled_image_display(struct Item *item);
 struct Item *click_is_in_object(struct Layer *layer, double x, double y);
 gboolean item_under_point(struct Item *item, double x, double y);
 
@@ -83,8 +39,4 @@ void refont_text_item(struct Item *item, gchar *font_name, double font_size);
 void process_font_sel(gchar *str);
 
 
-/* image functions */
-
-void set_image_path_name(struct Item *item, char *fname_base, int image_id);
-void update_scaled_image_display(struct Item *item);
-void insert_image(GdkEvent *event, struct Item *item);
+#endif  /* XO_PAINT_H */

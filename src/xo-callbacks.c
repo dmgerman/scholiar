@@ -20,6 +20,9 @@
 #include "xo-paint.h"
 #include "xo-print.h"
 #include "xo-shapes.h"
+#include "xo-clipboard.h"
+#include "xo-selection.h"
+#include "xo-image.h"
 #include "eggfindbar.h"
 
 

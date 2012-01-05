@@ -1,3 +1,6 @@
+#ifndef XO_FILE_H
+#define XO_FILE_H
+
 #define DEFAULT_SHORTEN_MENUS \
   "optionsProgressiveBG optionsLeftHanded optionsButtonSwitchMapping"
 
@@ -41,3 +44,5 @@ gchar* get_autosave_filename(void);
 void clear_autosave_entry(void);
 gboolean check_and_restore_autosaves();
 gboolean open_file_or_its_autosave(const char *fname);
+
+#endif /* XO_FILE_H */

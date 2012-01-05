@@ -1,3 +1,6 @@
+#ifndef XO_SHAPES_H
+#define XO_SHAPES_H
+
 // #define RECOGNIZER_DEBUG  // uncomment for debug output
 
 #define MAX_POLYGON_SIDES 4
@@ -23,3 +26,5 @@
 
 void recognize_patterns(void);
 void reset_recognizer(void);
+
+#endif  /* XO_SHAPES_H */
