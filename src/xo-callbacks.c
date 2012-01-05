@@ -2421,11 +2421,11 @@ on_toolsSetAsDefault_activate          (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   struct Item *it;
-  
+  int i;
   if (ui.cur_mapping!=0 && !ui.button_switch_mapping) return;
-  if (ui.toolno[ui.cur_mapping] < NUM_STROKE_TOOLS)
-    g_memmove(ui.default_brushes+ui.toolno[ui.cur_mapping], 
-              &(ui.brushes[ui.cur_mapping][ui.toolno[ui.cur_mapping]]), sizeof(struct Brush));
+  for (i = 0; i < NUM_STROKE_TOOLS; i++) 
+    g_memmove(ui.default_brushes+i,
+              &(ui.brushes[ui.cur_mapping][i]), sizeof(struct Brush));
   if (ui.toolno[ui.cur_mapping] == TOOL_TEXT) {
     if (ui.cur_item_type == ITEM_TEXT) {
       g_free(ui.font_name);
@@ -2444,6 +2444,7 @@ on_toolsSetAsDefault_activate          (GtkMenuItem     *menuitem,
     ui.default_font_size = ui.font_size;
   }
   end_text();
+  if (ui.auto_save_prefs) save_config_to_file();
 }
 
 
@@ -2617,6 +2618,12 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   struct Item *item;
   GdkEvent scroll_event;
   gboolean deselect_without_stroke = TRUE; // tap pen on canvas to deselect
+
+#ifdef ERASER_BTN2_FORCE
+  if (strstr(event->device->name,"raser"))
+    event->button = 2;
+#endif
+
 
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonPress (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
@@ -2794,6 +2801,11 @@ on_canvas_button_release_event         (GtkWidget       *widget,
   gboolean is_core;
   signal_canvas_changed();
   
+#ifdef ERASER_BTN2_FORCE
+  if (strstr(event->device->name,"raser"))
+    event->button = 2;
+#endif
+
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonRelease (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
       event->device->name, event->x, event->y, event->button, event->state);

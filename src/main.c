@@ -64,7 +64,8 @@ void init_stuff (int argc, char *argv[])
 
   // initialize config file names
   tmppath = g_build_filename(g_get_home_dir(), CONFIG_DIR, NULL);
-  mkdir(tmppath, 0700); // safer (MRU data may be confidential)
+  if(!g_file_test(tmppath, G_FILE_TEST_EXISTS))
+    g_mkdir(tmppath, 0700); // safer (MRU data may be confidential)
   ui.mrufile = g_build_filename(tmppath, MRU_FILE, NULL);
   ui.configfile = g_build_filename(tmppath, CONFIG_FILE, NULL);
   g_free(tmppath);

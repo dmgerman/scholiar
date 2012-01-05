@@ -84,7 +84,9 @@ GdkCursor* fixed_gdk_cursor_new_from_pixmap(GdkPixmap *source, GdkPixmap *mask,
 
   return cursor;
 }
+#ifdef WIN32_CURSOR_WORKAROUND_1
 #define gdk_cursor_new_from_pixmap fixed_gdk_cursor_new_from_pixmap
+#endif
 #endif
 
 
@@ -104,6 +106,12 @@ static char cursor_eraser_mask[] = {
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0xf8, 0x0f, 0xf8, 0x0f,
    0xf8, 0x0f, 0xf8, 0x0f, 0xf8, 0x0f, 0xf8, 0x0f, 0xf8, 0x0f, 0xf8, 0x0f,
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+static char cursor_pen_mask[] = {
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+   0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
 
 void set_cursor_busy(gboolean busy)
 {
@@ -139,12 +147,20 @@ void update_cursor(void)
   else if (ui.cur_item_type == ITEM_MOVESEL)
     ui.cursor = gdk_cursor_new(GDK_FLEUR);
   else if (ui.toolno[ui.cur_mapping] == TOOL_PEN) {
+#ifndef WIN32_CURSOR_WORKAROUND_2
     fg.red = (ui.cur_brush->color_rgba >> 16) & 0xff00;
     fg.green = (ui.cur_brush->color_rgba >> 8) & 0xff00;
     fg.blue = (ui.cur_brush->color_rgba >> 0) & 0xff00;
     source = gdk_bitmap_create_from_data(NULL, cursor_pen_bits, 16, 16);
     ui.cursor = gdk_cursor_new_from_pixmap(source, source, &fg, &bg, 7, 7);
     gdk_bitmap_unref(source);
+#else    
+    source = gdk_bitmap_create_from_data(NULL, cursor_pen_bits, 16, 16);
+    mask = gdk_bitmap_create_from_data(NULL, cursor_pen_mask, 16, 16);
+    ui.cursor = gdk_cursor_new_from_pixmap(source, mask, &fg, &bg, 7, 7);
+    gdk_bitmap_unref(source);
+    gdk_bitmap_unref(mask);
+#endif    
   }
   else if (ui.toolno[ui.cur_mapping] == TOOL_ERASER) {
     source = gdk_bitmap_create_from_data(NULL, cursor_eraser_bits, 16, 16);

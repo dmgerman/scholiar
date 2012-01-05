@@ -2,6 +2,25 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <poppler/glib/poppler.h>
 
+
+#define ERASER_BTN2_FORCE
+/* uncomment to enable a workaround for broken Wacom drivers on
+   Windows 7 x64. (The driver bug creates bogus button 2 release events.)
+   This workaround watches the device string of xinput
+   and if it contains a string "eraser" it will act as button 2.  
+   For that to work, you might need to explicitly map the button to 
+   eraser in the Wacom control panel.  This was tested with
+   Wacom driver 7.02-21 on Win 7 x64; button 2 is the top stylus button. */
+
+//#define WIN32_CURSOR_WORKAROUND_1
+/* uncomment if you'd like to use Dirk Gerrits' cursor fix (described 
+   here: http://dirkgerrits.com/2009/10/28/xournal-on-windows/)
+   This might not work with the latest Windows GTK */
+#define WIN32_CURSOR_WORKAROUND_2
+/* uncomment if you'd like to use alternative cursor for the pen; 
+   this is a possibly acceptable alternative if the previous workaround 
+   doesn't produce desired effect */
+
 //#define INPUT_DEBUG
 /* uncomment this line if you experience event-processing problems
    and want to list the input events received by xournal. Caution, lots

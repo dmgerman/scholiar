@@ -20,8 +20,12 @@
 #include <poppler/glib/poppler.h>
 
 #ifndef WIN32
- #include <gdk/gdkx.h>
- #include <X11/Xlib.h>
+# include <gdk/gdkx.h>
+# include <X11/Xlib.h>
+#else
+# include <windows.h>
+# include <tchar.h>
+# include <psapi.h>
 #endif
 
 #include "xournal.h"
@@ -2259,6 +2263,14 @@ void load_config_from_file(void)
 
 gchar *autosave_filename=NULL;
 
+gint get_process_id() {
+#ifndef WIN32
+  return(getpid());
+#else
+  return(GetCurrentProcessId());
+#endif
+}
+
 void
 set_autosave_filename(gchar *fn)
 {
@@ -2273,7 +2285,7 @@ set_autosave_filename(gchar *fn)
   if(!g_file_test(autosave_table_dir, G_FILE_TEST_EXISTS))
     g_mkdir(autosave_table_dir,0755);
 
-  gint pid = getpid();
+  gint pid = get_process_id();
   gchar *pid_str = g_strdup_printf("%d", pid);
   gchar *autosave_table_entry_filename = g_build_filename(autosave_table_dir,
                                                           pid_str,
@@ -2299,7 +2311,7 @@ gchar* get_autosave_filename()
       if(!g_file_test(default_dir, G_FILE_TEST_EXISTS))
 	g_mkdir(default_dir,0755);
       
-      default_basename = g_strdup_printf("xournal-%d.xoj%s", getpid(), AUTOSAVE_SUFFIX);
+      default_basename = g_strdup_printf("xournal-%d.xoj%s", get_process_id(), AUTOSAVE_SUFFIX);
       retval = g_build_filename(default_dir, default_basename, NULL);     
       g_free(default_basename);
       g_free(default_dir);
@@ -2324,7 +2336,7 @@ void clear_autosave_entry() {
   gchar *autosave_table_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR,
                                                       AUTOSAVES_DIR,
                                                         NULL);
-  gint pid = getpid();
+  gint pid = get_process_id();
   gchar *pid_str = g_strdup_printf("%d", pid);
   gchar *autosave_table_entry_filename = g_build_filename(autosave_table_dir,
                                                           pid_str,
@@ -2358,6 +2370,59 @@ void clear_autosave_entry_by_contents(char *contents) {
   g_free(autosave_table_dir);
 }
 
+#ifdef WIN32
+boolean pid_matches(char *name, DWORD processID)
+{
+    TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
+    // Get a handle to the process.
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                       FALSE,  processID);
+    // Get the process name.
+    if (NULL != hProcess) {
+        HMODULE hMod;
+        DWORD cbNeeded;
+        if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded)) {
+              GetModuleBaseName(hProcess, hMod, szProcessName, 
+                                   sizeof(szProcessName)/sizeof(TCHAR));
+        }
+    }
+    CloseHandle(hProcess);
+    return(!g_ascii_strcasecmp(szProcessName, name));
+}
+#endif
+
+gchar* get_xournal_pids()
+{
+  gchar *current_pids, *p;
+#ifndef WIN32
+  g_spawn_command_line_sync ("pidof xournal", &current_pids, NULL, NULL, NULL);
+  return (current_pids);
+#else
+  DWORD aProcesses[2048], cbNeeded, cProcesses;
+  guint i, nmatches = 0;
+  char buf[20];
+  if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded)) 
+    current_pids = g_strndup("",0);
+  else {
+    current_pids = p = g_malloc(2048);
+    // Calculate how many process identifiers were returned.
+    cProcesses = cbNeeded / sizeof(DWORD);
+    // Print the name and process identifier for each process.
+    for (i = 0; i < cProcesses; i++)
+      if (pid_matches("xournal.exe", aProcesses[i])) {
+	g_snprintf(buf,20,"%u",(guint)aProcesses[i]);
+	g_sprintf(p, "%s", buf);
+	p += strlen(buf);
+	if (i < cProcesses - 1) {
+	  g_sprintf(p, " ");
+	  p++;
+	}
+      }
+  }
+  return (current_pids);
+#endif
+}
+
 // return value: TRUE if any autosaves have been restored by spawning child
 // processes. In this case, this instance of xournal should exit.
 gboolean check_and_restore_autosaves() {
@@ -2370,8 +2435,7 @@ gboolean check_and_restore_autosaves() {
   GDir *dir = g_dir_open (autosave_table_dir, 0, NULL);
 
   // get all PIDs that currently belong to xournal
-  gchar *current_pids;
-  g_spawn_command_line_sync ("pidof xournal", &current_pids, NULL, NULL, NULL);
+  gchar *current_pids = get_xournal_pids();
 
   GList *autosave_filenames = NULL;
 
@@ -2410,8 +2474,11 @@ gboolean check_and_restore_autosaves() {
       for(iter = g_list_first(autosave_filenames); 
           iter;
           iter = iter->next) {
-            
+#ifndef WIN32            
         gchar *cmdline = g_strconcat(ui.xournal_exe_cmd, " \"", iter->data, "\"", NULL);
+#else	
+        gchar *cmdline = g_strconcat("\"",ui.xournal_exe_cmd,"\"", " \"", iter->data, "\"", NULL);
+#endif	
         g_spawn_command_line_async(cmdline, NULL);
         g_free(cmdline);
         g_free(iter->data);
