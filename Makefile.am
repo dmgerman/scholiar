@@ -31,6 +31,30 @@ install-data-local:
 	echo "*** Desktop files, icons, MIME types not installed. Run 'make desktop-install'"; \
 	echo "*** (or 'make home-desktop-install' for installation in a home directory)."
 
+install-windows:
+	echo "Copying pixmaps"; \
+	if test -d $(srcdir)/pixmaps; then \
+	  $(mkinstalldirs) $(DESTDIR)$(prefix)/pixmaps; \
+	  for pixmap in $(srcdir)/pixmaps/*; do \
+	    if test -f $$pixmap; then \
+	      $(INSTALL_DATA) $$pixmap $(DESTDIR)$(prefix)/pixmaps; \
+	    fi \
+	  done \
+	fi; \
+	echo "Copying exe"; \
+	if test -f $(srcdir)/src/xournal.exe; then \
+	  $(INSTALL_DATA) $(srcdir)/src/xournal.exe $(DESTDIR)$(prefix)/; \
+	fi; \
+	echo "Copying dll files"; \
+	if test -d /mingw/bin; then \
+	  for dll in /mingw/bin/*.dll; do \
+	    if test -f $$dll; then \
+	      $(INSTALL_DATA) $$dll $(DESTDIR)$(prefix)/; \
+	    fi \
+	  done \
+	fi; 
+
+
 desktop-install:
 	if test "$(datadir)" = "/usr/share"; then \
 	  desktopdir=/usr/share; \
