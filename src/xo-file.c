@@ -38,6 +38,7 @@
 #include "xo-paint.h"
 #include "xo-print.h"
 #include "xo-shapes.h"
+#include "xo-image.h"
 
 const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "selectregion", "selectrect", "vertspace", "hand"};
 const char *color_names[COLOR_MAX] = {"black", "blue", "red", "green",
@@ -267,16 +268,11 @@ gboolean save_journal(const char *filename)
 	    g_free(tmpfn_full_path);
 	    g_free(tmpfn_full_path2);
 	  } else { // image embedding
-	    gdk_pixdata_from_pixbuf(&pixdata,item->image,FALSE);
-	    pixdata_stream = gdk_pixdata_serialize(&pixdata, &pixdata_stream_len);
-	    tmpstr = g_base64_encode(pixdata_stream, pixdata_stream_len);
-#ifdef IMAGE_DEBUG
-	    printf("encoded base64 image of length %d\n",pixdata_stream_len);
-#endif
+	    tmpstr = encode_embedded_image(item->image);
 	  }
 	  gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f\"", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
 	  if (ui.embed_images) 
-	    gzprintf(f, " embedded=\"TRUE\" base64length=\"%d\" streamlength=\"%d\"",strlen(tmpstr),pixdata_stream_len);
+	    gzprintf(f, " embedded=\"TRUE\"");
 	  gzprintf(f, ">"); 
 	  gzputs(f, tmpstr);
 	  gzprintf(f, "</image>\n");
@@ -736,14 +732,6 @@ void xoj_parser_start_element(GMarkupParseContext *context,
 	  tmpItem->image_embedded = TRUE;
 	}
       }
-      else if (!strcmp(*attribute_names, "base64length")) {
-	tmpItem->base64_len = (int)g_ascii_strtoll(*attribute_values,&ptr,10);
-	if (ptr == *attribute_values) *error = xoj_invalid();
-      }
-      else if (!strcmp(*attribute_names, "streamlength")) {
-	tmpItem->stream_len = (int)g_ascii_strtoll(*attribute_values,&ptr,10);
-	if (ptr == *attribute_values) *error = xoj_invalid();
-      }
       else *error = xoj_invalid();
       attribute_names++;
       attribute_values++;
@@ -802,12 +790,8 @@ void xoj_parser_text(GMarkupParseContext *context,
    const gchar *text, gsize text_len, gpointer user_data, GError **error)
 {
   const gchar *element_name, *ptr;
-  gchar *base64_str;
-  gsize png_buflen;
   int n;
   char *buf; int i;
-  GdkPixdata pixdata;
-  guint8 *pixdata_stream;
 
   element_name = g_markup_parse_context_get_element(context);
   if (element_name == NULL) return;
@@ -848,18 +832,7 @@ void xoj_parser_text(GMarkupParseContext *context,
   if (!strcmp(element_name, "image")) {
     if (tmpItem->image_embedded) {
       tmpItem->image_path = g_strndup("",0); // make image_path a valid string
-      base64_str = g_malloc(text_len + 1);
-      g_memmove(base64_str, text, text_len);
-      base64_str[text_len] = '\0';
-      pixdata_stream = (guint8 *)g_base64_decode(base64_str, &png_buflen);
-      g_free(base64_str);
-      if (gdk_pixdata_deserialize(&pixdata, tmpItem->stream_len, pixdata_stream, error)) {
-	tmpItem->image = gdk_pixbuf_from_pixdata(&pixdata, FALSE, error);
-      } else
-	tmpItem->image = NULL;
-#ifdef IMAGE_DEBUG
-      printf("found image in BASE64 format, with b64len=%d, streamlen=%d, put in buf of len %d \n",tmpItem->base64_len,tmpItem->stream_len,(int)png_buflen);
-#endif
+      tmpItem->image = decode_embedded_image(text, text_len);
     } else {
       tmpItem->image_path = g_malloc(text_len+1);
       g_memmove(tmpItem->image_path, text, text_len);

@@ -15,6 +15,7 @@ void finalize_erasure(void);
 
 void do_hand(GdkEvent *event);
 
+void make_dashed(GnomeCanvasItem *item);
 void recolor_selection(int color_no, guint color_rgba);
 void rethicken_selection(int val);
 

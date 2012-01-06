@@ -6,6 +6,8 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #include "xournal.h"
 #include "xo-interface.h"

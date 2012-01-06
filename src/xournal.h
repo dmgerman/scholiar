@@ -262,7 +262,7 @@ typedef struct SelectionContext {
 
 typedef struct ImgSerContext {
   guchar *image_data;
-  guint stream_length;
+  gsize stream_length;
 } ImgSerContext;
 
 typedef struct Selection {
