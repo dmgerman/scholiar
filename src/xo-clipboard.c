@@ -304,6 +304,7 @@ void get_item_from_buffer(struct Item *item, guchar **pp, double hoffset, double
 
     item->image = deserialize_image(isc);
     item->image_scaled = NULL;
+    g_free(isc.image_data);
     break;
   default:
     break;

@@ -33,6 +33,7 @@ GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len)
 {
   struct ImgSerContext isc;
   gsize png_buflen;
+  GdkPixbuf *image;
   gchar* base64_str = g_malloc(text_len + 1);
   g_memmove(base64_str, text, text_len);
   base64_str[text_len] = '\0';
@@ -41,46 +42,32 @@ GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len)
 #ifdef IMAGE_DEBUG
   printf("Decoded base64 str of length %d to stream of length %d\n",(int)strlen(base64_str),(int)isc.stream_length);
 #endif
+  image = deserialize_image(isc);
   g_free(base64_str);
-  return deserialize_image(isc);
+  g_free(isc.image_data);
+  return image;
 }
 
 // Returns newly allocated serialized data
 struct ImgSerContext serialize_image(GdkPixbuf* image)
 {
-  /* struct ImgSerContext isc; */
-  /* GError *error = NULL; */
-  /* gdk_pixbuf_save_to_buffer(image, (gchar **)&isc.image_data, &isc.stream_length, "png", &error, NULL); */
-  /* return isc; */
-
-  GdkPixdata pixdata;
   struct ImgSerContext isc;
-  guint len;
-  gdk_pixdata_from_pixbuf(&pixdata, image, FALSE);
-  isc.image_data = gdk_pixdata_serialize(&pixdata, &len);
-  isc.stream_length = (gsize)len;
+  GError *error = NULL;
+  gdk_pixbuf_save_to_buffer(image, (gchar **)&isc.image_data, &isc.stream_length, "png", &error, NULL);
   return isc;
 }
 
-// This reuses memory in isc.image_data; no new allocation takes place
+// This allocates new memory for the pixbuf
 GdkPixbuf* deserialize_image(ImgSerContext isc)
 {
-  /* GInputStream *istream; */
-  /* GdkPixbuf *pixbuf; */
-  /* GError *error = NULL; */
+  GInputStream *istream;
+  GdkPixbuf *pixbuf;
+  GError *error = NULL;
 
-  /* istream = g_memory_input_stream_new_from_data(isc.image_data, isc.stream_length, NULL); */
-  /* pixbuf = gdk_pixbuf_new_from_stream(istream, NULL, &error); */
-  /* g_input_stream_close(istream, NULL, &error); */
-  /* g_free(isc.image_data); */
-  /* return pixbuf; */
-
-  GdkPixdata pixdata;
-  GError **error = NULL;
-  if (gdk_pixdata_deserialize(&pixdata, isc.stream_length, (guint8 *)isc.image_data, error))
-    return gdk_pixbuf_from_pixdata(&pixdata, FALSE, error);
-  else
-    return NULL;
+  istream = g_memory_input_stream_new_from_data(isc.image_data, isc.stream_length, NULL);
+  pixbuf = gdk_pixbuf_new_from_stream(istream, NULL, &error);
+  g_input_stream_close(istream, NULL, &error);
+  return pixbuf;
 }
 
 
