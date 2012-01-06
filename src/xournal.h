@@ -342,6 +342,8 @@ typedef struct UIData {
   int zoom_step_increment; // the increment in the zoom dialog box
   double zoom_step_factor; // the multiplicative factor in zoom in/out
   double startup_zoom;
+  double image_one_to_one_zoom; // zoom factor at which inserted images will
+  //appear at native resolution.  Logical values are DEFAULT_ZOOM and 1.0
   gboolean autoload_pdf_xoj;
   gboolean autoexport_pdf;
 

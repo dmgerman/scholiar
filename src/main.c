@@ -76,6 +76,7 @@ void init_stuff (int argc, char *argv[])
   ui.font_name = g_strdup(ui.default_font_name);
   ui.font_size = ui.default_font_size;
   ui.hiliter_alpha_mask = 0xffffff00 + (guint)(255*ui.hiliter_opacity);
+  ui.image_one_to_one_zoom = DEFAULT_ZOOM;
 
   // we need an empty canvas prior to creating the journal structures
   canvas = GNOME_CANVAS (gnome_canvas_new_aa ());

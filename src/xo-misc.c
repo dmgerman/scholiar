@@ -25,6 +25,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-shapes.h"
+#include "xo-image.h"
 
 // some global constants
 
@@ -683,20 +684,16 @@ void make_canvas_item_one_image(GnomeCanvasGroup *group, struct Item *item)
     prompt_user_for_image(item);
 
   item->image_path=tmp_filename;
-  // Size we want for rendering is bbox * zoom factor
-  // for inst., if bbox is 100 canvas units and zoom factor is 1.333, 
-  // it will scale to 133x133 px and, which is good b/c we want to 
-  // render a 133x133 px square.
-  // If we had a 100 px original shrunk to 50 px but view it under 2x zoom, 
-  // this will resize stuff to 100 px 
-  item->image_scaled=gdk_pixbuf_scale_simple(item->image,
-    (item->bbox.right-item->bbox.left) * ui.zoom,
-    (item->bbox.bottom-item->bbox.top) * ui.zoom,
-    GDK_INTERP_BILINEAR);
 
-  // Another way to do this: set height/width-in-pixels to TRUE,
-  // height/width-set to FALSE; don't set height/width and (important) DON'T
-  // call update_item_bbox at the end
+  // The apparent size of the bbox on screen (in pixels) is bb * ui.zoom. 
+  // We thus feed ui.zoom as the scale factor to get_image_scaled_maybe
+  // Example of how this works: native size = 100 px, ui.image_one_to_one_zoom = 4/3, thus
+  // bbox = 75 (displays as native 100 px at ui.zoom = 1.333).  Now shrink the bbox to 25 
+  // and view the object under ui.zoom = 4: the
+  // scaled bbox will be 25 * 4 = 100, and will again render at native res.
+  if (item->image_scaled) g_object_unref(item->image_scaled);
+  item->image_scaled = get_image_scaled_maybe(item, ui.zoom);
+
   item->canvas_item = gnome_canvas_item_new(group,
     GNOME_TYPE_CANVAS_PIXBUF,
     "anchor",GTK_ANCHOR_NW,
@@ -712,6 +709,9 @@ void make_canvas_item_one_image(GnomeCanvasGroup *group, struct Item *item)
     "height",(item->bbox.bottom-item->bbox.top),
     "width", (item->bbox.right-item->bbox.left),
     NULL);
+  // Note: another way to update canvas_item is: set height/width-in-pixels to TRUE,
+  // height/width-set to FALSE; don't set height/width and (important) 
+  // if you do this, then DON'T call update_item_bbox 
   update_item_bbox(item);
 }
 
