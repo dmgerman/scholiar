@@ -232,7 +232,8 @@ gboolean save_journal(const char *filename)
           g_free(tmpstr);
         }
 	if (item->type == ITEM_IMAGE) { 
-	  if (! ui.embed_images) {
+	  if (! ui.embed_images && ! ui.this_is_autosave) { // this is disabled on autosave, since
+	    // autosave functions don't know about the separate image directory, etc.
 	    img_extension = "png";	
 	    tmpfn_img_path = g_path_get_dirname(filename);
 	    tmpfn_img_dir = g_path_get_basename(filename);
@@ -2273,34 +2274,70 @@ set_autosave_filename(gchar *fn)
   g_free(autosave_table_entry_filename);
 }
 
+gchar* autosave_make_directory_maybe(const char *autosave_basename)
+{
+  gchar *autosave_dir;
+  autosave_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR, autosave_basename, NULL);
+  if(!g_file_test(autosave_dir, G_FILE_TEST_EXISTS))
+    g_mkdir(autosave_dir,0755);
+  return autosave_dir;
+}
+
+gchar* autosave_name_of_this_file(const char *fname)
+{
+  gchar *autosave_basename, *autosave_dir, *file_dirname, *file_basename;
+  const gchar *file_basename_sha;
+  GChecksum *checksum; // for path hash
+  gchar *retval = NULL;
+  if (!fname) return NULL;
+  autosave_dir = autosave_make_directory_maybe(SAVED_AUTOSAVES_DIR);
+  file_dirname = g_path_get_dirname(fname);
+  file_basename = g_path_get_basename(fname);
+  checksum = g_checksum_new(G_CHECKSUM_SHA1);
+  g_checksum_update(checksum, (guchar *)file_dirname,strlen(file_dirname));
+  file_basename_sha = g_checksum_get_string(checksum);
+  autosave_basename = g_strdup_printf("%s~%s%s", file_basename, file_basename_sha, AUTOSAVE_SUFFIX);
+  g_checksum_free(checksum);
+  g_free(file_dirname);
+  g_free(file_basename);    
+  retval = g_build_filename(autosave_dir, autosave_basename, NULL);
+  g_free(autosave_basename);
+  g_free(autosave_dir);
+  return retval;
+}
+
+gchar* autosave_name_for_unsaved()
+{
+  gchar *autosave_basename;
+  gchar *autosave_dir = autosave_make_directory_maybe(UNSAVED_AUTOSAVES_DIR);
+  gchar *retval;
+  autosave_basename = g_strdup_printf("xournal-%d.xoj%s", get_process_id(), AUTOSAVE_SUFFIX);
+  retval = g_build_filename(autosave_dir, autosave_basename, NULL);
+  g_free(autosave_basename);
+  g_free(autosave_dir);
+  return retval;
+}
+
 gchar* get_autosave_filename()
 {
-  gchar *default_basename;
-  gchar *default_dir; // when the files aren't saved yet
   gchar *retval = NULL;
   if(ui.filename == NULL) {
     if(autosave_filename == NULL) {      
-      /* if the file has not been saved yet, make a generic autosave name
-         in default_dir */
-      default_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR, UNSAVED_AUTOSAVES_DIR, NULL);
-      if(!g_file_test(default_dir, G_FILE_TEST_EXISTS))
-	g_mkdir(default_dir,0755);
-      
-      default_basename = g_strdup_printf("xournal-%d.xoj%s", get_process_id(), AUTOSAVE_SUFFIX);
-      retval = g_build_filename(default_dir, default_basename, NULL);     
-      g_free(default_basename);
-      g_free(default_dir);
+      /* if the file has not been saved yet, make a generic autosave name in default_dir */
+      retval = autosave_name_for_unsaved();
       set_autosave_filename(retval);
     }
     else
       /* return this generic name if it has already been generated */
       retval = g_strdup(autosave_filename);
   } else {
-		/* use the filename with .autosave~ suffix if the file has been saved */
+    /*  if the file has been saved, hash the path to a SHA1, 
+	append to basename, and store in autosaves dir in ~/.xournal */
     if(autosave_filename != NULL)
-			// remove the "generic" autosave in the homedir
+      // remove the "generic" autosave in the homedir
       g_unlink(autosave_filename);
-    retval = g_strconcat(ui.filename, AUTOSAVE_SUFFIX, NULL);
+
+    retval = autosave_name_of_this_file(ui.filename);
     set_autosave_filename(retval);
   }
   return retval;
@@ -2320,9 +2357,7 @@ void clear_autosave_entry() {
   g_free(autosave_table_dir);
 
   g_unlink(autosave_table_entry_filename);
-
   g_free(autosave_table_entry_filename);
-
 }
 
 void clear_autosave_entry_by_contents(char *contents) {
@@ -2476,18 +2511,18 @@ gboolean check_and_restore_autosaves() {
   return FALSE;
 }
 
-gboolean open_file_and_autosave (gchar *filename, gchar *autosavename)
+gboolean open_file_and_autosave(gchar *filename, gchar *autosavename)
 {
   int success;
   GtkWidget *w;
 
-  set_cursor_busy (TRUE);
+  set_cursor_busy(TRUE);
   if (autosavename)
-    success = open_journal (autosavename);
+    success = open_journal(autosavename);
   else
-    success = open_journal (filename);
-  signal_canvas_changed ();
-  set_cursor_busy (FALSE);
+    success = open_journal(filename);
+  signal_canvas_changed();
+  set_cursor_busy(FALSE);
   
   if (!success) {
     if(autosavename)
@@ -2508,7 +2543,7 @@ gboolean open_file_and_autosave (gchar *filename, gchar *autosavename)
     else
       ui.saved=TRUE;     
   }
-  return (success);
+  return success;
 }
 
 gboolean open_file_or_its_autosave(const char *fname) 
@@ -2538,7 +2573,7 @@ gboolean open_file_or_its_autosave(const char *fname)
     }
   } else {
     // if it is not, we check if an autosave of this file exists
-    tmpautofn = g_strconcat(tmpfn, AUTOSAVE_SUFFIX, NULL);
+    tmpautofn = autosave_name_of_this_file(tmpfn);
     if (g_file_test (tmpautofn, G_FILE_TEST_EXISTS)) {
       // we only want to load the autosave file if it is newer
       GFile *tmp = g_file_new_for_path(tmpfn);

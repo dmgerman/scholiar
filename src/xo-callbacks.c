@@ -153,7 +153,7 @@ on_fileOpen_activate                   (GtkMenuItem     *menuitem,
   gtk_widget_destroy(dialog);
 
   set_cursor_busy(TRUE);
-  success = open_journal(filename);
+  success = open_file_or_its_autosave(filename);
   set_cursor_busy(FALSE);
   if (success) { g_free(filename); return; }
   
@@ -3483,7 +3483,7 @@ on_mru_activate                        (GtkMenuItem     *menuitem,
   if (which == MRU_SIZE || ui.mru[which] == NULL) return; // not found...
 
   set_cursor_busy(TRUE);
-  success = open_journal(ui.mru[which]);
+  success = open_file_or_its_autosave(ui.mru[which]);
   set_cursor_busy(FALSE);
   if (success) return;
 

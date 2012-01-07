@@ -649,24 +649,25 @@ void prompt_user_for_image(struct Item *item)
   }
   tmp_filename=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
   item->image = gdk_pixbuf_new_from_file(tmp_filename, NULL);
+  g_free(item->image_path);
+  item->image_path = tmp_filename;
   gtk_widget_destroy(dialog);
   ui.saved = FALSE;
 }
 
 void make_canvas_item_one_image(GnomeCanvasGroup *group, struct Item *item)
 {
-  char *tmp_filename;
 #ifdef IMAGE_DEBUG
   printf("make_canvas_item_one of image '%s'\n",item->image_path);
 #endif
-  if(item->image==NULL)
-    item->image = gdk_pixbuf_new_from_file(item->image_path, NULL);
-  tmp_filename=item->image_path;
-  while(item->image==NULL) //  open failed 
-    prompt_user_for_image(item);
-
-  item->image_path=tmp_filename;
-
+  if(item->image==NULL) {
+    if(!item->image_embedded)
+      item->image = gdk_pixbuf_new_from_file(item->image_path, NULL);
+    else 
+      prompt_user_for_image(item);
+  }
+  if(item->image==NULL) return;
+  
   // The apparent size of the bbox on screen (in pixels) is bb * ui.zoom. 
   // We thus feed ui.zoom as the scale factor to get_image_scaled_maybe
   // Example of how this works: native size = 100 px, ui.image_one_to_one_zoom = 4/3, thus

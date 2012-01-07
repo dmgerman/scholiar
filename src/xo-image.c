@@ -20,6 +20,7 @@ gchar* encode_embedded_image(GdkPixbuf* image)
 {
   char *base64_data;
   struct ImgSerContext isc;
+  if (!image) return g_strndup("",0); // returns empty string on invalid input
   isc = serialize_image(image);
   base64_data = g_base64_encode(isc.image_data, isc.stream_length);
 #ifdef IMAGE_DEBUG

@@ -70,9 +70,10 @@
 #define RESIZE_MARGIN 6.0
 #define MAX_SAFE_RENDER_DPI 720 // max dpi at which PDF bg's get rendered
 #define AUTOSAVE_DEFER_SECONDS 3
-#define AUTOSAVES_DIR "autosaves"
-#define UNSAVED_AUTOSAVES_DIR "autosaves_tmp"
-#define AUTOSAVE_SUFFIX ".autosave~"
+#define AUTOSAVES_DIR "autosaves_meta" // for pids and autosave metadata
+#define SAVED_AUTOSAVES_DIR "autosaves" // for files that already have a filename
+#define UNSAVED_AUTOSAVES_DIR "autosaves_tmp" // for new, unsaved files
+#define AUTOSAVE_SUFFIX ".as~"
 #define VBOX_MAIN_NITEMS 5 // number of interface items in vboxMain
 
 /* a string (+ aux data) that maintains a refcount */
