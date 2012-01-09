@@ -1,0 +1,134 @@
+
+* Branches (inherited from dmgerman branch)
+
+- master: the main branch with my code and many extra features
+- upstream: original code maintained on Sourceforge, reflecting this CVS repository
+- debian:   ubuntu xournal packages
+
+* Changes by Leo Alekseyev:
+  
+** New features
+   
+- resize selection improvements:
+  1. fixed aspect ratio when resizing selection by dragging corner
+  2. larger margin for grabbing a corner handle
+  3. (cosmetic) added small selection box padding
+
+- pressing stylus button-2 and dragging duplicates selection
+  
+- autosave patch ported to Windows (see below)
+
+- image support (combination of my code and Simon Guest's code; see below)
+
+** Patches applied
+
+|-----------------------+-------------------------------------------------------------------------------------|
+| Name                  | URL                                                                                 |
+|-----------------------+-------------------------------------------------------------------------------------|
+| Autosave (Timo Kluck) | http://sourceforge.net/tracker/?func=detail&aid=3122782&group_id=163434&atid=827735 |
+| Part of enhance image | http://sourceforge.net/tracker/?func=detail&aid=2987520&group_id=163434&atid=827735 |
+| (Simon Guest)         |                                                                                     |
+| Lasso (Ian-Woo Kim)   | http://sourceforge.net/tracker/?func=detail&aid=2679096&group_id=163434&atid=827735 |
+|-----------------------+-------------------------------------------------------------------------------------|
+
+*** Image functionality
+
+Images can be pasted from the clipboard; image copy/paste works between
+Xournal instances. Images are embedded inside the XOJ files with Base64
+encoding. They are currently stored at the original resolution, and are
+resized as needed for display.  
+
+The code is a combination of contributions by Leo Alekseyev and Simon Guest
+(in particular SG's code handles PDF export of images).
+Overall functionality is very close to that of SG's enhanced image patch on
+Sourceforge, with the major difference that the images are appropriately
+rescaled as the zoom level changes.
+
+The code builds on the original insert image patch by Victor Saase
+
+*** Autosave 
+
+Original patch is Timo Kluck's modification of code from Edward Z. Yang and
+Paulo Neves. The following changes were made to Timo Kluck's version:
+- code made compatible with Leo Alekseyev's and D. M. German's current
+  codebase
+- autosaves are stored in the central location (default: ~/.xournal/autosaves/
+  and ~/.xournal/autosaves_tmp/ for files that have not been saved). The
+  current path of the file is encoded as a SHA1 hash appended to the file name.
+- checking for possible autosaves is done on opening a file, not just program startup  
+- autosave now works on Windows (PIDs are obtained from Windows process API (psapi.dll)).
+  
+*** Lasso
+
+Original patch is due to Ian-Woo Kim. As written, it triggers a bug in
+libgnomecanvas 2.30 that results in an invalid path and a subsequent segfault due
+to poor error handling in libgnomecanvas.  A fixed version of
+gnome_canvas_path_def_close_all function is included here.
+  
+Some of the code was refactored to avoid code duplication between rectangle
+and lasso selection.
+
+** Code reorganization 
+
+- Separated out image, selection, and clipboard functionality into their
+  own files (xo-image.c, xo-selection.c, xo-clipboard.c).
+
+- Put include guards into all headers.
+
+- Refactored much of the clipboard copy/paste code.
+
+- Refactored rectangle selection code to maximize code reuse between
+  lasso and rectangle selection functions.
+
+** Build system 
+
+- Modified automake files to enable seamless compilation under Windows
+  (code was taken from Georg Wechslberger's branch at https://github.com/tauu/xournal)
+
+- Added Windows installation instructions (Georg Wechslberger's modifications of
+  Dirk Gerrits' instructions with some modifications by L.A.).
+
+- Added 64-bit patch to the repository (originally found in the Xournal SUSE
+  package). This patch only deals with the included Sun font tools (that
+  code is not 64-bit safe).
+
+* Patches applied by D. M. German:
+
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+| Name                        | URL                                                                                           |
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+| Last page seen              | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
+| Add next-prev file          | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
+| Cmd Line: Open a given page | https://sourceforge.net/tracker/index.php?func=detail&aid=2924825&group_id=163434&atid=827735 |
+| Text font sizing            | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
+| Poor man's bookmarks        | https://sourceforge.net/tracker/index.php?func=detail&aid=2838282&group_id=163434&atid=827735 |
+| Image insert                | http://sourceforge.net/tracker/?func=detail&aid=2890925&group_id=163434&atid=827735                                                                                              |
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+
+** Load page seen
+
+ Saves the current page number in the xoj file. When you open it
+ again, jumps there
+
+** Add next-prev file
+
+Opens the next/pref .xoj file  in the current directory
+
+** Text font sizing
+
+Use Ctrl-B to bold, Ctrl > and Ctr < to increase size or reduce size
+of annotation
+
+** Poor man's bookmarks
+
+Jumps to "next notable" page, e.g. a page that has inking on it.  
+This is mostly useful when working with marked-up PDF documents, which might
+not have inking on every page.
+
+** Image insert
+
+Basic image support from Victor Saase
+
+# Local Variables:
+# mode: org
+# End:
