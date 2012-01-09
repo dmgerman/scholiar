@@ -1,0 +1,139 @@
+Xournal Windows Installation instructions
+=========================================
+
+
+This manual is an updated version of 
+  http://dirkgerrits.com/2009/10/28/xournal-on-windows/ 
+and was taken from Georg Wechslberger's Xournal branch 
+(https://github.com/tauu/xournal/); adapted to the LVA branch.
+  
+
+Creating a build environment
+----------------------------
+
+In order to compile xournal you have to install mingw, msys and download couple
+of pre compiled GTK+ and Gnome libraries.
+
+* download mingw-get from
+   http://sourceforge.net/projects/mingw/files/Installer/mingw-get/ 
+and unzip its contents to suitable folder. e.g. c:\mingw. After unzipping run
+the following commands to install necessary packages:
+  - mingw-get update
+  - mingw-get install mingw32-base
+  - mingw-get install mingw32-automake
+  - mingw-get install mingw32-autoconf
+  - mingw-get install mingw32-zlib
+  - mingw-get install msys-base
+  - mingw-get install g++
+
+* maybe necessary additional packages for compiling poppler (needs testing):
+  - mingw-get install mingw32-libtool
+  - mingw-get install mingw32-gettext
+
+* edit msys\1.0\etc\fstab and add the line
+  c:\mingw  /mingw
+(c:\mingw should be replaced with root folder of your mingw installation)
+
+* if you would like to use a nicer tabbed console when working with mingw, do
+  mingw-get install msys-console
+  console-config 
+  (the latter will put shorcut named MSys in your home directory)
+
+* if you are a cygwin user, make sure that when you are working in the mingw
+  shell, you don't accidentally end up using cygwin binaries (e.g. make.exe). 
+  Double-check your path in mingw and set it if necessary.
+
+* download the following pre compiled packages (binary and dev) from
+  http://www.gtk.org/download/win32.php
+
+ 1. GTK+
+  - Glib
+  - ATK
+  - Pango
+  - gdk-pixbuf
+  - GTK+
+
+ 2. Third Party dependencies
+  - zlib
+  - cairo
+  - libpng
+  - Freetype
+  - Fontconfig
+  - expat
+  - gettext-runtime
+
+ 3. Other third party software
+  - pkg-config
+
+* after unpacking all zip files copy their content into the root folder of your
+  mingw installation.
+
+* download the following recompiled packages from (binary and dev)
+    http://ftp.gnome.org/pub/gnome/binaries/win32/
+  - libgnomecanvas
+  - libgnomeprintui
+  - libgnomeprint
+  - libart_lgpl
+  - libxml2
+  - win_iconv  (can be found in the folder dependencies; not sure if that is
+                actually necessary any more)
+
+* after unpacking all zip files, copy their content into the root folder of
+  your mingw installation.
+
+* compile poppler. The pre compiled versions of poppler from gtk/gnome are to
+  old and lack some functionality used by xournal, consequently we have to
+  compile it ourself. Download poppler from 
+    http://poppler.freedesktop.org/ 
+  unzip it, and compile it with
+  - ./configure --disable-utils -disable-gtk-test --enable-poppler-glib --prefix=/mingw
+  - make
+  - make install
+
+* edit /mingw/lib/pkgconfig/poppler-glib.pc and change line 9 to
+Requires: glib-2.0 >= 2.28.1 gobject-2.0 >= 2.28.1 cairo >= 1.10.0 
+
+* copy psapi.dll from c:\windows\system32 to the mingw bin directory
+
+Compiling xournal
+-----------------
+
+* install git (http://git-scm.com/) and clone the git repository using
+  git clone https://github.com/leoalekseyev/xournal.git
+
+* compile and install xournal with
+  - ./autogen.sh --prefix=/d/xournal/
+  - make 
+  - make install-windows
+The path after --prefix= specifies the directory in which xournal should
+be installed. (In this example it's D:\xournal.)
+
+Possible issues
+-----------------
+
+* Wacom driver doesn't work in GTK on Windows 7 x64 
+  If the strokes don't look smooth and "Use XInput" is grayed out, 
+  your Wacom drivers aren't working.  On Windows 7 x64, one driver
+  that is known to work is version 7.02-21.  It might not be available
+  from the Wacom site, but it's out there (several OEMs seem to use it), 
+  google for ISD_DualTouch_702-21.rar to try and find it.  Note that 
+  by default, after installation, the driver might have the touch set to
+  gestures which will interfere with the pen input.  Make sure to toggle it 
+  off in the Control Panel under "Touch Settings".  
+
+* Cursors don't appear, or appear as a big black square
+  Uncomment one of
+  #define WIN32_CURSOR_WORKAROUND_1
+  #define WIN32_CURSOR_WORKAROUND_2
+  in xournal.h.  With latest GTK, it seems that WIN32_CURSOR_WORKAROUND_2 is 
+  a better choice.
+
+* Button 2 gets "stuck" sometimes
+  It appears to be either a GTK or a driver bug.  See if button 2 is 
+  functional in another GTK app (e.g. Gimp or Inkscape).  You should
+  see the same bad behavior.
+  As a workaround, uncomment
+  #define ERASER_BTN2_FORCE
+  in xournal.h; this mostly fixes the issue.  
+  
+  
