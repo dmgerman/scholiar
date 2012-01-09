@@ -443,6 +443,13 @@ void get_pointer_coords(GdkEvent *event, gdouble *ret)
   ret[1] -= ui.cur_page->voffset;
 }
 
+gboolean items_overlap(struct Item *i1, struct Item *i2)
+{
+  struct BBox bbox_union = bboxadd(i1->bbox, i2->bbox);
+  return (bbox_width(bbox_union) < bbox_width(i1->bbox) + bbox_width(i2->bbox)) &&
+    (bbox_height(bbox_union) < bbox_height(i1->bbox) + bbox_height(i2->bbox));
+}
+
 void fix_xinput_coords(GdkEvent *event)
 {
   double *axes, *px, *py, axis_width;
@@ -533,8 +540,9 @@ double get_pressure_multiplier(GdkEvent *event)
 void update_item_bbox(struct Item *item)
 {
   int i;
-  gdouble *p, h, w;
-  
+  gdouble *p, h, w, scale;
+  gboolean meas_pixels = FALSE;
+
   if (item->type == ITEM_STROKE) {
     item->bbox.left = item->bbox.right = item->path->coords[0];
     item->bbox.top = item->bbox.bottom = item->path->coords[1];
@@ -554,9 +562,10 @@ void update_item_bbox(struct Item *item)
   }
   if (item->type == ITEM_IMAGE && item->canvas_item!=NULL) {
     h=0.; w=0.;
-    g_object_get(item->canvas_item, "width", &w, "height", &h, NULL);
-    item->bbox.right = item->bbox.left + w;
-    item->bbox.bottom = item->bbox.top + h;
+    g_object_get(item->canvas_item, "width", &w, "height", &h, "width-in-pixels", &meas_pixels, NULL);
+    scale = meas_pixels ? 1 / ui.zoom : 1;
+    item->bbox.right = item->bbox.left + w * scale;
+    item->bbox.bottom = item->bbox.top + h * scale;
   }
 }
 
@@ -676,25 +685,28 @@ void make_canvas_item_one_image(GnomeCanvasGroup *group, struct Item *item)
   // scaled bbox will be 25 * 4 = 100, and will again render at native res.
   if (item->image_scaled) g_object_unref(item->image_scaled);
   item->image_scaled = get_image_scaled_maybe(item, ui.zoom);
-
+  /* printf("imsc height is %f, bbox height is %f\n",(double)gdk_pixbuf_get_height(item->image_scaled),item->bbox.bottom-item->bbox.top); */
+  // Note: get_image_scaled_maybe is not guaranteed to scale the image as requested,
+  // in particular, if it's close enough to native resolution, it will use the native resolution
+  // Thus, it is important here to use the actual size of the image for canvas item dimensions
+  // and to update the item bbox based on the actual size of the canvas item.
   item->canvas_item = gnome_canvas_item_new(group,
-    GNOME_TYPE_CANVAS_PIXBUF,
-    "anchor",GTK_ANCHOR_NW,
-    /* "height-in-pixels",TRUE, */
-    /* "width-in-pixels",TRUE, */
-    "height-set",TRUE,
-    "width-set",TRUE,
-    "x-in-pixels",0,
-    "y-in-pixels",0,
-    "pixbuf",item->image_scaled,
-    "x", item->bbox.left, 
-    "y", item->bbox.top,
-    "height",(item->bbox.bottom-item->bbox.top),
-    "width", (item->bbox.right-item->bbox.left),
-    NULL);
-  // Note: another way to update canvas_item is: set height/width-in-pixels to TRUE,
-  // height/width-set to FALSE; don't set height/width and (important) 
-  // if you do this, then DON'T call update_item_bbox 
+					    GNOME_TYPE_CANVAS_PIXBUF,
+					    "anchor",GTK_ANCHOR_NW,
+					    "height-in-pixels",TRUE,
+					    "width-in-pixels",TRUE,
+					    "height-set",TRUE,
+					    "width-set",TRUE,
+					    "x-in-pixels",0,
+					    "y-in-pixels",0,
+					    "pixbuf",item->image_scaled,
+					    "x", item->bbox.left, 
+					    "y", item->bbox.top,
+					    "height", (double)gdk_pixbuf_get_height(item->image_scaled),
+					    "width", (double)gdk_pixbuf_get_width(item->image_scaled),
+    /* "height",(item->bbox.bottom-item->bbox.top), */
+    /* "width", (item->bbox.right-item->bbox.left), */
+					    NULL);
   update_item_bbox(item);
 }
 

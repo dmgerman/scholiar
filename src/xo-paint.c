@@ -13,6 +13,7 @@
 #include "xo-support.h"
 #include "xo-misc.h"
 #include "xo-paint.h"
+#include "xo-image.h"
 #include "xo-selection.h"
 
 /***** Win32 fix for gdk_cursor_new_from_pixmap() by Dirk Gerrits ****/
@@ -830,7 +831,7 @@ void update_text_item_displayfont(struct Item *item)
 
 void rescale_objects(void)
 {
-  GList *pagelist, *layerlist, *itemlist;
+  GList *pagelist, *layerlist, *itemlist, *check_items;
   struct Item *item;
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next)
     for (layerlist = ((struct Page *)pagelist->data)->layers; layerlist!=NULL; layerlist = layerlist->next)
@@ -838,7 +839,7 @@ void rescale_objects(void)
 	item = (struct Item *)itemlist->data;
 	if (item->type == ITEM_TEXT || item->type == ITEM_TEMP_TEXT) 
 	  update_text_item_displayfont(item);
-	else if (item->type == ITEM_IMAGE)
+	else if (item->type == ITEM_IMAGE) 
 	  update_scaled_image_display(item);
       }
 }
@@ -847,13 +848,14 @@ void update_scaled_image_display(struct Item *item)
 {
   GnomeCanvasGroup *group;
   if (item->type != ITEM_IMAGE) return;
-  if (item->canvas_item==NULL)
-    return;
-  else {
-    group = (GnomeCanvasGroup *) item->canvas_item->parent;
-    gtk_object_destroy(GTK_OBJECT(item->canvas_item));
-    make_canvas_item_one(group, item);
-  } 
+  if (item->canvas_item==NULL) return;
+  if (item->image_scaled && G_IS_OBJECT(item->image_scaled)) g_object_unref(item->image_scaled);
+  item->image_scaled = get_image_scaled_maybe(item, ui.zoom);
+  gnome_canvas_item_set(item->canvas_item, "pixbuf", item->image_scaled, 
+			"height", (double)gdk_pixbuf_get_height(item->image_scaled),
+			"width", (double)gdk_pixbuf_get_width(item->image_scaled),NULL);
+  // setting "x" or "y" here redraws item in a shifted location: why???
+  /* update_item_bbox(item); */
 }
 
 void rescale_text_items(void)

@@ -87,14 +87,21 @@ GdkPixbuf* get_image_scaled_maybe(struct Item *item, double scale)
   double required_height, required_width, native_width, native_height;
   gboolean use_native;
   double pixels_per_canvas_unit = DEFAULT_ZOOM; // bbox of 75 (canvas units) corresponds 
+  double native_threshold_pct = 5;
+  double native_thr_w, native_thr_h;
   // to 100 pixels.  Note that this relies on DEFAULT_ZOOM being equal to DISPLAY_DPI / 72
   if (! item || ! item->image) return NULL;
   required_height = (item->bbox.bottom-item->bbox.top) * scale;
   required_width = (item->bbox.right-item->bbox.left) * scale;
   native_width  = gdk_pixbuf_get_width(item->image);
   native_height = gdk_pixbuf_get_height(item->image);
-  use_native = (fabs(native_width - required_width) < 1 && 
-		fabs(native_height - required_height) < 1);
+  native_thr_w = MAX(2, native_width * native_threshold_pct / 100);
+  native_thr_h = MAX(2, native_height * native_threshold_pct / 100);
+  use_native = (fabs(native_width - required_width) < native_thr_w && 
+		fabs(native_height - required_height) < native_thr_h);
+  /* printf("height diff %f; threshold is %f\n",fabs(native_height - required_height), native_thr_h); */
+  /* if(use_native) printf("using NATIVE\n"); */
+  /* else printf("rescaling w/ scale %f\n",scale); */
   if (!use_native) 
     return gdk_pixbuf_scale_simple(item->image, required_width, 
 				   required_height, GDK_INTERP_BILINEAR);    

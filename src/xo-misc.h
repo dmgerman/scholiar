@@ -53,6 +53,7 @@ gboolean hittest_item(ArtSVP* lassosvp, Item* item);
 double bbox_width(struct BBox b);
 double bbox_height(struct BBox b);
 void bbox_pad_symm(struct BBox *b, double xpadding, double ypadding);
+gboolean items_overlap(struct Item *i1, struct Item *i2);
 struct BBox bboxadd(struct BBox a, struct BBox b);  
 
 // interface misc functions
