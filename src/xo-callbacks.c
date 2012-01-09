@@ -2625,6 +2625,7 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 #ifdef ERASER_BTN2_FORCE
   if (strstr(event->device->name,"raser"))
     event->button = 2;
+    /* printf("DEBUG eraser button PRESS: Button: ui cur brush is %d, ui cur mapping is %d,  get_mapping gives %d\n",	 ui.cur_brush->tool_type, ui.cur_mapping, get_mapping(event)); */
 #endif
 
 
@@ -2803,15 +2804,26 @@ on_canvas_button_release_event         (GtkWidget       *widget,
 {
   gboolean is_core;
   signal_canvas_changed();
-  
-#ifdef ERASER_BTN2_FORCE
-  if (strstr(event->device->name,"raser"))
-    event->button = 2;
-#endif
 
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonRelease (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
       event->device->name, event->x, event->y, event->button, event->state);
+  printf("DEBUG: Button RELEASE\n");
+#endif
+  
+#ifdef ERASER_BTN2_FORCE
+  /* printf("DEBUG: Button: ui cur brush is %d, ui cur mapping is %d,  get_mapping gives %d\n", 
+     ui.cur_brush->tool_type, ui.cur_mapping, get_mapping(event)); */
+  if (strstr(event->device->name,"raser"))
+    event->button = 2;
+  /* With Wacom driver 7.02-21, button 2 release isn't even
+     registered when button 1 is still pressing on the canvas.
+     This hack fixes this. I don't know if this has adverse
+     effects when button 2 is mapped to other tools because,
+     frankly, I don't quite understand how mappings work here 
+     - LVA */
+  if (ui.cur_mapping != 0) 
+    event->button = 2;
 #endif
 
   is_core = (event->device == gdk_device_get_core_pointer());

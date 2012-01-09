@@ -16,14 +16,14 @@ GETTEXT_PACKAGE = xournal
 PACKAGE = xournal
 VERSION = 0.4.5
 
-SHELL = /bin/bash
+SHELL = /bin/sh
 
 
 srcdir = .
 top_srcdir = ..
 
 
-prefix = /usr/local
+prefix = /c/xournal
 exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 datadir = ${datarootdir}
@@ -33,20 +33,20 @@ gnulocaledir = $(datadir)/locale
 gettextsrcdir = $(datadir)/glib-2.0/gettext/po
 subdir = po
 
-INSTALL = /usr/bin/install -c
+INSTALL = /bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 MKINSTALLDIRS = $(top_srcdir)/./mkinstalldirs
 
 CC = gcc
 GENCAT = @GENCAT@
-GMSGFMT = /usr/bin/msgfmt
-MSGFMT = /usr/bin/msgfmt
+GMSGFMT = /mingw/bin/msgfmt
+MSGFMT = /mingw/bin/msgfmt
 MSGFMT_OPTS = -c
-XGETTEXT = /usr/bin/xgettext
+XGETTEXT = /mingw/bin/xgettext
 MSGMERGE = msgmerge
 
 DEFS = -DHAVE_CONFIG_H
-CFLAGS = -ggdb3 -O0 -Wall -Wno-unused-variable
+CFLAGS = -g -O2
 CPPFLAGS = 
 
 INCLUDES = -I.. -I$(top_srcdir)/intl
@@ -97,7 +97,9 @@ $(srcdir)/$(GETTEXT_PACKAGE).pot: $(POTFILES)
 	  --add-comments --keyword=_ --keyword=N_ \
 	  --keyword=C_:1c,2 \
 	  --keyword=NC_:1c,2 \
+	  --keyword=g_dcgettext:2 \
 	  --keyword=g_dngettext:2,3 \
+	  --keyword=g_dpgettext2:2c,3 \
 	  --flag=N_:1:pass-c-format \
 	  --flag=C_:2:pass-c-format \
 	  --flag=NC_:2:pass-c-format \
@@ -216,7 +218,7 @@ maintainer-clean: distclean
 	rm -f $(GMOFILES)
 
 distdir = ../$(GETTEXT_PACKAGE)-$(VERSION)/$(subdir)
-dist distdir: update-po $(DISTFILES)
+dist distdir: $(DISTFILES)
 	dists="$(DISTFILES)"; \
 	for file in $$dists; do \
 	  ln $(srcdir)/$$file $(distdir) 2> /dev/null \

@@ -13,7 +13,7 @@
    and if it contains a string "eraser" it will act as button 2.  
    For that to work, you might need to explicitly map the button to 
    eraser in the Wacom control panel.  This was tested with
-   Wacom driver 7.02-21 on Win 7 x64; button 2 is the top stylus button. */
+   Wacom driver 7.02-21 on Win 7 x64; button 2 is the top stylus rocker button. */
 
 //#define WIN32_CURSOR_WORKAROUND_1
 /* uncomment if you'd like to use Dirk Gerrits' cursor fix (described 
