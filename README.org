@@ -1,35 +1,48 @@
+* Project information
 
-* Branches (inherited from dmgerman branch)
+This is a fork of Xournal, the inking / PDF markup application written by
+Denis Aroux. It is based on [[https://github.com/dmgerman/xournal][D. M. German's github branch]] and builds on
+Xournal 0.4.5, adding several features. These include image pasting and
+embedding, lasso selection tool, and autosave. Xournal provides subpixel
+resolution, PDF annotation and export, and runs on both Linux and Windows. 
+
+This branch uses patched 64-bit font tool components. When building on a
+32-bit system, remove this patch via =patch -p1 -R < xournal-64bit.patch=
+
+*Installation:*   see INSTALL or INSTALL.win32
+
+*User's manual:*  see html-doc/manual.html
+
+*Original project page:* [[http://sourceforge.net/projects/xournal]]
+
+* Branches 
 
 - master: the main branch with my code and many extra features
-- upstream: original code maintained on Sourceforge, reflecting this CVS repository
+- upstream: original code maintained on Sourceforge
 - debian:   ubuntu xournal packages
+
+The latter two branches are inherited from dmgerman's repository.
 
 * Changes by Leo Alekseyev:
   
 ** New features
    
 - resize selection improvements:
-  1. fixed aspect ratio when resizing selection by dragging corner
-  2. larger margin for grabbing a corner handle
-  3. (cosmetic) added small selection box padding
-
+  - fixed aspect ratio when resizing selection by dragging corner
+  - larger margin for grabbing a corner handle
+  - (cosmetic) added small selection box padding
 - pressing stylus button-2 and dragging duplicates selection
-  
 - autosave patch ported to Windows (see below)
-
 - image support (combination of my code and Simon Guest's code; see below)
 
 ** Patches applied
 
-|-----------------------+-------------------------------------------------------------------------------------|
-| Name                  | URL                                                                                 |
-|-----------------------+-------------------------------------------------------------------------------------|
-| Autosave (Timo Kluck) | http://sourceforge.net/tracker/?func=detail&aid=3122782&group_id=163434&atid=827735 |
-| Part of enhance image | http://sourceforge.net/tracker/?func=detail&aid=2987520&group_id=163434&atid=827735 |
-| (Simon Guest)         |                                                                                     |
-| Lasso (Ian-Woo Kim)   | http://sourceforge.net/tracker/?func=detail&aid=2679096&group_id=163434&atid=827735 |
-|-----------------------+-------------------------------------------------------------------------------------|
+| Name                                | URL                                                                                 |
+|-------------------------------------+-------------------------------------------------------------------------------------|
+| Autosave (Timo Kluck)               | [[http://sourceforge.net/tracker/?func=detail&aid=3122782&group_id=163434&atid=827735][http://sourceforge.net/tracker/?func=detail&aid=3122782&group_id=163434&atid=827735]] |
+| Part of enhance image (Simon Guest) | [[http://sourceforge.net/tracker/?func=detail&aid=2987520&group_id=163434&atid=827735][http://sourceforge.net/tracker/?func=detail&aid=2987520&group_id=163434&atid=827735]] |
+| Lasso (Ian-Woo Kim)                 | [[http://sourceforge.net/tracker/?func=detail&aid=2679096&group_id=163434&atid=827735][http://sourceforge.net/tracker/?func=detail&aid=2679096&group_id=163434&atid=827735]] |
+
 
 *** Image functionality
 
@@ -92,9 +105,9 @@ and lasso selection.
   package). This patch only deals with the included Sun font tools (that
   code is not 64-bit safe).
 
-* Patches applied by D. M. German:
+* Patches from other sources
+** Patches applied by D. M. German:
 
-|-----------------------------+-----------------------------------------------------------------------------------------------|
 | Name                        | URL                                                                                           |
 |-----------------------------+-----------------------------------------------------------------------------------------------|
 | Last page seen              | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
@@ -103,32 +116,29 @@ and lasso selection.
 | Text font sizing            | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
 | Poor man's bookmarks        | https://sourceforge.net/tracker/index.php?func=detail&aid=2838282&group_id=163434&atid=827735 |
 | Image insert                | http://sourceforge.net/tracker/?func=detail&aid=2890925&group_id=163434&atid=827735                                                                                              |
-|-----------------------------+-----------------------------------------------------------------------------------------------|
 
-** Load page seen
+*** Load page seen
 
  Saves the current page number in the xoj file. When you open it
  again, jumps there
 
-** Add next-prev file
+*** Add next-prev file
 
 Opens the next/pref .xoj file  in the current directory
 
-** Text font sizing
+*** Text font sizing
 
 Use Ctrl-B to bold, Ctrl > and Ctr < to increase size or reduce size
 of annotation
 
-** Poor man's bookmarks
+*** Poor man's bookmarks
 
 Jumps to "next notable" page, e.g. a page that has inking on it.  
 This is mostly useful when working with marked-up PDF documents, which might
 not have inking on every page.
 
-** Image insert
+*** Image insert
 
 Basic image support from Victor Saase
 
-# Local Variables:
-# mode: org
-# End:
+
