@@ -1302,7 +1302,7 @@ void cmapAdd(TrueTypeTable *table, guint32 id, guint32 c, guint32 g)
 guint32 glyfAdd(TrueTypeTable *table, GlyphData *glyphdata, TrueTypeFont *fnt)
 {
     list l;
-    glong currentID;
+    guint32 currentID;
     int ret, n, ncomponents;
     list glyphlist;
     GlyphData *gd;
@@ -1330,7 +1330,7 @@ guint32 glyfAdd(TrueTypeTable *table, GlyphData *glyphdata, TrueTypeFont *fnt)
         listPositionAt(glyphlist, 1);       /* glyphData->glyphID is always the first glyph on the list */
         do {
             int found = 0;
-            currentID = (glong) listCurrent(glyphlist);
+            currentID = (guint32) listCurrent(glyphlist);
             /* XXX expensive! should be rewritten with sorted arrays! */
             listToFirst(l);
             do {

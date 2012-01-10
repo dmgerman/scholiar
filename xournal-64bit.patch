@@ -60,17 +60,3 @@ index 907df81..07cc38a 100644
              /* XXX expensive! should be rewritten with sorted arrays! */
              listToFirst(l);
              do {
-diff --git a/src/xo-print.c b/src/xo-print.c
-index bb80653..3d1bda3 100644
---- a/src/xo-print.c
-+++ b/src/xo-print.c
-@@ -862,7 +862,8 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
-       }
-     font->num_glyphs_used = num-1;
-     if (OpenTTFont(font->filename, 0, &ttfnt) == SF_OK) {
--      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &len, glyphs, encoding, num, 
-+      guint32 tt_len = len;
-+      if (CreateTTFromTTGlyphs_tomemory(ttfnt, (guint8**)&fontdata, &tt_len, glyphs, encoding, num, 
-                    0, NULL, TTCF_AutoName | TTCF_IncludeOS2) == SF_OK) {
-         make_xref(xref, xref->last+1, pdfbuf->len);
-         nobj_fontprog = xref->last;
