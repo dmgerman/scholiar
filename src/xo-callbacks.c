@@ -3744,10 +3744,29 @@ on_optionsAutoloadPdfXoj_activate      (GtkMenuItem     *menuitem,
 
 void
 on_optionsAutoExportPdf_activate      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
+                                       gpointer         user_data)
 {
   end_text();
   ui.autoexport_pdf = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+}
+
+void
+on_optionsShowInterface_activate      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  end_text();
+  ui.showInterface = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+  update_interface();
+
+}
+
+void
+on_optionsShowInterfaceFullscreen_activate      (GtkMenuItem     *menuitem,
+                                                 gpointer         user_data)
+{
+  end_text();
+  ui.showInterfaceFullscreen = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+  update_interface();
 }
 
 
@@ -4093,7 +4112,7 @@ on_find_bar_next                       (GtkWidget       *widget,
         egg_find_bar_set_status_text(findBar, "Not found");
       }
     } else {
-      printf("Document has not pdf backgroun\n");
+      printf("Document does not have a pdf backgroun\n");
     }
 
   }

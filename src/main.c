@@ -15,6 +15,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-shapes.h"
+#include "xo-print.h"
 
 static gint openAtPageNumber = 1;
 static const char **fileArguments = NULL;
@@ -23,10 +24,17 @@ static const char **fileArguments = NULL;
 static gchar* exportPdfFile;
 static gboolean show_gui = TRUE;
 
+static gboolean donotShowInterface = FALSE;
+static gboolean donotShowInterfaceFullscreen = FALSE;
+static gboolean fullScreen = FALSE;
+
 static GOptionEntry entries[] =
 {
   { "page", 'p', 0, G_OPTION_ARG_INT, &openAtPageNumber, "Jump to Page", "N" },
   { "export-pdf", 'A', 0, G_OPTION_ARG_STRING, &exportPdfFile, "Export document to a PDF file", "FILENAME" },
+  { "no-interface", 'A', 0, G_OPTION_ARG_NONE, &donotShowInterface, "Show interface" },
+  { "no-interface-fullscreen", 'A', 0, G_OPTION_ARG_NONE, &donotShowInterfaceFullscreen, "Do not show interface in fullscreen mode." },
+  { "fullscreen", 'A', 0, G_OPTION_ARG_NONE, &fullScreen, "Run xournal in full screen" },
   { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &fileArguments, NULL, N_("[FILE]") },
   { NULL }
 };
@@ -52,7 +60,7 @@ void init_stuff (int argc, char *argv[])
   GdkScreen *screen;
   int i, j;
   struct Brush *b;
-  gboolean can_xinput, success;
+  gboolean can_xinput, success = 0;
   gchar *tmppath, *tmpfn;
   GError  *error = NULL;
   GOptionContext *context;
@@ -70,6 +78,7 @@ void init_stuff (int argc, char *argv[])
   // initialize preferences
   init_config_default();
   load_config_from_file();
+
   ui.font_name = g_strdup(ui.default_font_name);
   ui.font_size = ui.default_font_size;
   ui.hiliter_alpha_mask = 0xffffff00 + (guint)(255*ui.hiliter_opacity);
@@ -89,6 +98,12 @@ void init_stuff (int argc, char *argv[])
       printf(_("option parsing failed: %s\n"), error->message);
       exit (1);
   }
+
+  // force options according to command line
+  if (fullScreen) ui.fullscreen = TRUE;
+  if (donotShowInterface) ui.showInterface = FALSE;
+  if (donotShowInterfaceFullscreen) ui.showInterfaceFullscreen = FALSE;
+
   
   undo = NULL; redo = NULL;
   journal.pages = NULL;
@@ -190,7 +205,7 @@ void init_stuff (int argc, char *argv[])
   GTK_WIDGET_SET_FLAGS(GTK_WIDGET(canvas), GTK_CAN_FOCUS);
   GTK_WIDGET_SET_FLAGS(GTK_WIDGET(GET_COMPONENT("spinPageNo")), GTK_CAN_FOCUS);
   
-  set_flags(GET_COMPONENT("findBar"), GTK_CAN_FOCUS);
+  set_flags(GET_COMPONENT("findBar"), (gpointer)GTK_CAN_FOCUS);
 
   // install hooks on button/key/activation events to make the spinPageNo lose focus
   gtk_container_forall(GTK_CONTAINER(winMain), install_focus_hooks, NULL);
@@ -271,6 +286,10 @@ void init_stuff (int argc, char *argv[])
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsAutoExportPdf")), ui.autoexport_pdf);
   gtk_check_menu_item_set_active(
+    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsShowInterface")), ui.showInterface);
+  gtk_check_menu_item_set_active(
+    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsShowInterfaceFullscreen")), ui.showInterfaceFullscreen);
+  gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsTouchAsHandTool")), ui.touch_as_handtool);
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsLeftHanded")), ui.left_handed);
@@ -285,7 +304,8 @@ void init_stuff (int argc, char *argv[])
 
   update_undo_redo_enabled();
   update_copy_paste_enabled();
-  update_vbox_order(ui.vertical_order[ui.fullscreen?1:0]);
+  update_interface();
+
   gtk_widget_grab_focus(GTK_WIDGET(canvas));
 
   // show everything...

@@ -33,6 +33,14 @@ on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_optionsShowInterface_activate      (GtkMenuItem     *menuitem,
+                                       gpointer         user_data);
+
+void
+on_optionsShowInterfaceFullscreen_activate      (GtkMenuItem     *menuitem,
+                                                 gpointer         user_data);
+
+void
 on_fileQuit_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 

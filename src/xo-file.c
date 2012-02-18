@@ -1511,6 +1511,8 @@ void init_config_default(void)
   ui.autoload_pdf_xoj = FALSE;
   ui.autoexport_pdf = FALSE;
   ui.pdf_viewer_cmd = DEFAULT_PDF_VIEWER;
+  ui.showInterface = TRUE;
+  ui.showInterfaceFullscreen = TRUE;
 
   ui.poppler_force_cairo = FALSE;
   
@@ -1667,12 +1669,21 @@ void save_config_to_file(void)
   update_keyval("general", "width_maximum_multiplier",
      _(" maximum width multiplier"),
      g_strdup_printf("%.2f", ui.width_maximum_multiplier));
+
   update_keyval("general", "interface_order",
     _(" interface components from top to bottom\n valid values: drawarea menu main_toolbar pen_toolbar statusbar"),
     verbose_vertical_order(ui.vertical_order[0]));
+  update_keyval("general", "show_interface",
+    _(" show interface in normal mode (true/false)"),
+    g_strdup(ui.showInterface?"true":"false"));
+
   update_keyval("general", "interface_fullscreen",
     _(" interface components in fullscreen mode, from top to bottom"),
     verbose_vertical_order(ui.vertical_order[1]));
+  update_keyval("general", "show_interface_fullscreen",
+    _(" show interface in full screen mode (true/false)"),
+    g_strdup(ui.showInterfaceFullscreen?"true":"false"));
+
   update_keyval("general", "touch_screen_as_hand_tool",
     _(" always use the touch screen as the hand tool (true/false) requires stylus tool to draw"),
     g_strdup(ui.touch_as_handtool?"true":"false"));
@@ -2057,6 +2068,9 @@ void load_config_from_file(void)
 
   parse_keyval_vorderlist("general", "interface_order", ui.vertical_order[0]);
   parse_keyval_vorderlist("general", "interface_fullscreen", ui.vertical_order[1]);
+  parse_keyval_boolean("general", "show_interface", &ui.showInterface);
+  parse_keyval_boolean("general", "show_interface_fullscreen", &ui.showInterfaceFullscreen);
+
   parse_keyval_boolean("general", "touch_screen_as_hand_tool", &ui.touch_as_handtool);
   parse_keyval_boolean("general", "interface_lefthanded", &ui.left_handed);
 

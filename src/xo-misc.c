@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <gdk/gdkkeysyms.h>
@@ -366,7 +367,8 @@ void get_pointer_coords(GdkEvent *event, gdouble *ret)
 
 void fix_xinput_coords(GdkEvent *event)
 {
-  double *axes, *px, *py, axis_width;
+  double *axes, *px, *py;
+  //  double axis_width;
   GdkDevice *device;
   int wx, wy, sx, sy, ix, iy;
 
@@ -632,10 +634,10 @@ void update_canvas_bg(struct Page *pg)
 {
   GnomeCanvasGroup *group;
   GnomeCanvasPoints *seg;
-  GdkPixbuf *scaled_pix;
+  //  GdkPixbuf *scaled_pix;
   double *pt;
   double x, y;
-  int w, h;
+  //  int w, h;
   gboolean is_well_scaled;
   
   if (pg->bg->canvas_item != NULL)
@@ -1960,24 +1962,52 @@ void process_mapping_activate(GtkMenuItem *menuitem, int m, int tool)
 const char *vbox_component_names[VBOX_MAIN_NITEMS]=
  {"scrolledwindowMain", "menubar", "toolbarMain", "toolbarPen", "hbox1"};
 
-void update_vbox_order(int *order)
+void update_vbox_order(int *order, gboolean show)
 {
+  // first is the flags indicating the order of the elements,
+  // but they are shown only is show is true
   int i, j;
   GtkWidget *child;
   GtkBox *vboxMain = GTK_BOX(GET_COMPONENT("vboxMain"));
   gboolean present[VBOX_MAIN_NITEMS];
-  
+
+  // start by setting values to non-shown
   for (i=0; i<VBOX_MAIN_NITEMS; i++) present[i] = FALSE;
-  j=0;
-  for (i=0; i<VBOX_MAIN_NITEMS; i++) {
-    if (order[i]<0 || order[i]>=VBOX_MAIN_NITEMS) continue;
-    present[order[i]] = TRUE;
-    child = GET_COMPONENT(vbox_component_names[order[i]]);
-    gtk_box_reorder_child(vboxMain, child, j++);
-    gtk_widget_show(child);
+
+  if (show) {
+    // only if we want to show...
+    // then scan them to determine the order
+
+    j=0;
+    for (i=0; i<VBOX_MAIN_NITEMS; i++) {
+      if (order[i]<0 || order[i]>=VBOX_MAIN_NITEMS) continue;
+      present[order[i]] = TRUE;
+      child = GET_COMPONENT(vbox_component_names[order[i]]);
+      gtk_box_reorder_child(vboxMain, child, j++);
+      gtk_widget_show(child);
+    }
+    for (i=1; i<VBOX_MAIN_NITEMS; i++) // hide others, but not the drawing area!
+      if (!present[i]) gtk_widget_hide(GET_COMPONENT(vbox_component_names[i]));
+  } else {
+    int showMenu = 0;
+    if (!ui.fullscreen) {
+      child = GET_COMPONENT("menubar");
+      gtk_box_reorder_child(vboxMain, child, 0);
+      gtk_widget_show(child);
+      showMenu = 1;
+    }
+    // hide them
+    for (i=1; i<VBOX_MAIN_NITEMS; i++) { // hide components, but not the drawing area nor menubar
+      if (strcmp(vbox_component_names[i], "menubar") != 0) {
+        gtk_widget_hide(GET_COMPONENT(vbox_component_names[i]));
+      }
+      else {
+        if (!showMenu)
+          gtk_widget_hide(GET_COMPONENT("menubar"));
+      }
+    }
   }
-  for (i=1; i<VBOX_MAIN_NITEMS; i++) // hide others, but not the drawing area!
-    if (!present[i]) gtk_widget_hide(GET_COMPONENT(vbox_component_names[i]));
+
 }
 
 gchar *make_cur_font_name(void)
@@ -2156,6 +2186,11 @@ void hide_unimplemented(void)
 #endif
 }  
 
+void update_interface(void)
+{
+  update_vbox_order(ui.vertical_order[ui.fullscreen?1:0], ui.fullscreen?ui.showInterfaceFullscreen:ui.showInterface);
+}
+
 // toggle fullscreen mode
 void do_fullscreen(gboolean active)
 {
@@ -2183,7 +2218,7 @@ void do_fullscreen(gboolean active)
     gtk_window_unfullscreen(GTK_WINDOW(winMain));
   }
 
-  update_vbox_order(ui.vertical_order[ui.fullscreen?1:0]);
+  update_interface();
 }
 
 /* attempt to work around GTK+ 2.16/2.17 bugs where random interface

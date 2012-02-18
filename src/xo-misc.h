@@ -54,7 +54,7 @@ void update_toolbar_and_menu(void);
 void update_file_name(char *filename);
 void update_undo_redo_enabled(void);
 void update_copy_paste_enabled(void);
-void update_vbox_order(int *order);
+void update_interface();
 
 gchar *make_cur_font_name(void);
 void update_font_button(void);
@@ -104,6 +104,8 @@ gboolean filter_extended_events(GtkWidget *widget, GdkEvent *event, gpointer use
 // help with focus
 gboolean handle_activate_signal(GtkWidget *widget, gpointer user_data);
 void unset_flags(GtkWidget *w, gpointer flag);
+void set_flags(GtkWidget *w, gpointer flag);
+
 gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data);
 void install_focus_hooks(GtkWidget *w, gpointer data);
 
@@ -128,10 +130,12 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
 #define RULING_GRAPHSPACING 14.17
 
 
+/*
 static void       draw_rubberband                            (GtkWidget          *widget,
 							      GdkWindow          *window,
 							      const GdkRectangle *rect,
 							      guchar              alpha);
+*/
 
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 

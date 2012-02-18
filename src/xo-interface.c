@@ -256,6 +256,8 @@ create_winMain (void)
   GtkWidget *optionsPrintRuling;
   GtkWidget *optionsAutoloadPdfXoj;
   GtkWidget *optionsAutoExportPdf;
+  GtkWidget *optionsShowInterface;
+  GtkWidget *optionsShowInterfaceFullscreen;
   GtkWidget *optionsTouchAsHandTool;
   GtkWidget *optionsLeftHanded;
   GtkWidget *optionsShortenMenus;
@@ -1448,6 +1450,22 @@ create_winMain (void)
   gtk_widget_show (optionsAutoExportPdf);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsAutoExportPdf);
 
+  optionsShowInterface = gtk_check_menu_item_new_with_mnemonic (_("Show _interface"));
+  gtk_widget_show (optionsShowInterface);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsShowInterface);
+
+  gtk_widget_add_accelerator (optionsShowInterface, "activate", accel_group,
+                              GDK_I, (GdkModifierType) GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
+  optionsShowInterfaceFullscreen = gtk_check_menu_item_new_with_mnemonic (_("Show interface f_ullscreen"));
+  gtk_widget_show (optionsShowInterfaceFullscreen);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsShowInterfaceFullscreen);
+
+  gtk_widget_add_accelerator (optionsShowInterfaceFullscreen, "activate", accel_group,
+                              GDK_I, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
+                              GTK_ACCEL_VISIBLE);
+
   optionsTouchAsHandTool = gtk_check_menu_item_new_with_mnemonic (_("Always use _Touch screen as hand tool"));
   gtk_widget_show (optionsTouchAsHandTool);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsTouchAsHandTool);
@@ -2482,6 +2500,14 @@ create_winMain (void)
                     G_CALLBACK (on_optionsAutoExportPdf_activate),
                     NULL);
 
+  g_signal_connect ((gpointer) optionsShowInterface, "activate",
+                    G_CALLBACK (on_optionsShowInterface_activate),
+                    NULL);
+
+  g_signal_connect ((gpointer) optionsShowInterfaceFullscreen, "activate",
+                    G_CALLBACK (on_optionsShowInterfaceFullscreen_activate),
+                    NULL);
+
   g_signal_connect ((gpointer) optionsTouchAsHandTool, "activate",
                     G_CALLBACK (on_optionsTouchAsHandTool_activate),
                     NULL);
@@ -2880,6 +2906,8 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, separator21, "separator21");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoSavePrefs, "optionsAutoSavePrefs");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoExportPdf, "optionsAutoExportPdf");
+  GLADE_HOOKUP_OBJECT (winMain, optionsShowInterface, "optionsShowInterface");
+  GLADE_HOOKUP_OBJECT (winMain, optionsShowInterfaceFullscreen, "optionsShowInterfaceFullscreen");
   GLADE_HOOKUP_OBJECT (winMain, optionsTouchAsHandTool, "optionsTouchAsHandTool");
   GLADE_HOOKUP_OBJECT (winMain, optionsSavePreferences, "optionsSavePreferences");
   GLADE_HOOKUP_OBJECT (winMain, menuHelp, "menuHelp");

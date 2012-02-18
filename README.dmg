@@ -4,6 +4,45 @@
 - upstream: denis code, reflecting this CVS repository
 - debian:   ubuntu xournal packages
 
+* Features Implemented
+
+** See patches aplied below
+
+** Autosave to PDF
+
+ Any time that a .XOJ file is saved, a PDF is exported
+
+** Enable/disable interface menus in full screen mode and default mode
+
+I have added the ability to remove the interface in normal mode and
+full screen. In fullscreen no interface is shown.  In normal mode the
+menubar is shown (you can remove it too, using the .config file, but
+that is sort of undocumented feature).
+
+There are now two config options that control it:
+
+  # show interface in normal mode (true/false)
+  show_interface=true
+  # show interface in full screen mode (true/false)
+  show_interface_fullscreen=false
+
+Remember, in fullscreen mode you can always exit it with F11.
+
+I have also added a command line option to start xournal in fullscreen mode, and with or without interface in
+either mode.
+
+  --no-interface                Do not show interface
+  --no-interface-fullscreen     Do not show interface in fullscreen 
+  --fullscreen                  Run xournal in full screen mode
+
+The contents of the interface and their order is controlled by the config variables:
+
+   # interface components from top to bottom
+   # valid values: drawarea menu main_toolbar pen_toolbar statusbar
+  interface_order=menu main_toolbar pen_toolbar drawarea statusbar
+   # interface components in fullscreen mode, from top to bottom
+   interface_fullscreen=main_toolbar pen_toolbar drawarea
+
 * Patches applied:
 
 |-----------------------------+-----------------------------------------------------------------------------------------------|

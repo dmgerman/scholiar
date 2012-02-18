@@ -286,8 +286,10 @@ typedef struct UIData {
   int zoom_step_increment; // the increment in the zoom dialog box
   double zoom_step_factor; // the multiplicative factor in zoom in/out
   double startup_zoom;
-  gboolean autoload_pdf_xoj;
-  gboolean autoexport_pdf;
+  gboolean autoload_pdf_xoj; // automatically load the xoj if it exists when opining a pdf
+  gboolean autoexport_pdf; // automatically export to PDF on save
+  gboolean showInterface; // show interface in normal mode
+  gboolean showInterfaceFullscreen; // show interface in full screen mode
 
 #if GLIB_CHECK_VERSION(2,6,0)
   GKeyFile *config_data;
