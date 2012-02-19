@@ -378,3 +378,29 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   update_cursor(); // FIXME: can't know if pointer is within selection!
 }
 
+struct Layer* create_layer_copy(struct Layer* orig) {
+  struct Layer *l = g_new(struct Layer, 1);
+  init_layer(l);
+  
+}
+
+struct Page* duplicate_page() {
+  GList *layer, *item;
+  struct Page *pg = new_page(ui.cur_page);
+  for (layer = ui.cur_page->layers; layer != NULL; layer = layer->next) {
+    //create a duplicate of the layer
+    //append via  g_list_append(pg->layers, 
+    //increment the layer number counter
+  }
+  //set the ui.cur_page pointer to point the new page
+  //set the ui.cur_layer pointer to the appropriate layer on the new page based on the ui.layerno
+    if (ui.layerno<0) ui.cur_layer = NULL;
+    else ui.cur_layer = (struct Layer *)g_list_nth_data(ui.cur_page->layers, ui.layerno);
+    
+    //insert the page into the journal pages list
+    journal.pages = g_list_insert(journal.pages, undo->page, undo->val);
+    journal.npages++;
+    make_canvas_items(); // re-create the canvas items
+    do_switch_page(undo->val, TRUE, TRUE);
+ 
+}

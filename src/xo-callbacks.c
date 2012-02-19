@@ -901,6 +901,15 @@ on_editCopy_activate                   (GtkMenuItem     *menuitem,
   selection_to_clip();
 }
 
+void
+on_editDuplicatePage_activate           (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  signal_canvas_changed();
+  end_text();
+  duplicate_page();
+}
+
 
 void
 on_editPaste_activate                  (GtkMenuItem     *menuitem,

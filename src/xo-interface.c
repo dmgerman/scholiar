@@ -68,6 +68,7 @@ create_winMain (void)
   GtkWidget *separator26;
   GtkWidget *editCut;
   GtkWidget *editCopy;
+  GtkWidget *editDuplicatePage;
   GtkWidget *editPaste;
   GtkWidget *editDelete;
   GtkWidget *editRemember;
@@ -537,6 +538,10 @@ create_winMain (void)
   editCopy = gtk_image_menu_item_new_from_stock ("gtk-copy", accel_group);
   gtk_widget_show (editCopy);
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), editCopy);
+  
+  editDuplicatePage = gtk_image_menu_item_new_with_mnemonic(_("Duplicate P_age"));
+  gtk_widget_show (editDuplicatePage);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editDuplicatePage);
 
   editPaste = gtk_image_menu_item_new_from_stock ("gtk-paste", accel_group);
   gtk_widget_show (editPaste);

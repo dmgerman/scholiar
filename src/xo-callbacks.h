@@ -54,6 +54,9 @@ on_editCut_activate                    (GtkMenuItem     *menuitem,
 void
 on_editCopy_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+void
+on_editDuplicatePage_activate               (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
 
 void
 on_editPaste_activate                  (GtkMenuItem     *menuitem,
