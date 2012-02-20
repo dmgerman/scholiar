@@ -113,13 +113,13 @@ int buffer_size_for_item(struct Item *item)
 // everything before the item entries is considered a header
 int buffer_size_for_header()
 {
-  return (2*sizeof(int) // bufsz, nitems
+  return (2*sizeof(int) //bufsz, nitems
     + sizeof(struct BBox)); // bbox
 }
 
 int buffer_size_for_page_header()
 {
-  return 2*sizeof(int); // bufsz, nitems
+  return 2*sizeof(int); //bufsz, nitems
 }
 
 int buffer_size_for_serialized_image(ImgSerContext isc)
@@ -139,28 +139,21 @@ struct PageCopyContext *prepare_page_copy_buffers(struct Page *p) {
   pcc->serialized_images = g_malloc(p->nlayers * sizeof(*(pcc->serialized_images)));
   pcc->nimages = g_malloc(p->nlayers * sizeof(int));
   pcc->bufsz = buffer_size_for_page_header();  
-  printf("alloc %d for header\n",pcc->bufsz);
   pcc->bufsz += buffer_size_for_special(ITEM_COPY_PAGE);
-  printf("alloc %d for page data\n",buffer_size_for_special(ITEM_COPY_PAGE));
   pcc->nitems++; // page itself
   i = 0;
   for (llist = p->layers; llist != NULL; llist = llist->next) {
     pcc->nitems++; // layer is a buffer item
     pcc->bufsz += buffer_size_for_special(ITEM_COPY_LAYER);
-    printf("alloc %d for layer data\n",buffer_size_for_special(ITEM_COPY_LAYER));
     ilist = ((struct Layer*)llist->data)->items; // this layer's items
     get_nitems_update_bufsize(ilist, &pcc->bufsz, &n_it_tmp, &n_im_tmp);
     pcc->serialized_images[i] = g_new(struct ImgSerContext, n_im_tmp);
     pcc->nimages[i] = n_im_tmp;
     pcc->nitems += n_it_tmp;
-    if (n_im_tmp > 0) {
+    if (n_im_tmp > 0)
       update_bufsize_and_ser_images(ilist, &pcc->bufsz, &(pcc->serialized_images[i]));
-      printf("%d images in layer %d; growing buf size to %d\n",n_im_tmp,i,pcc->bufsz);
-    }
     i++;
   }
-  printf("now report a total of %d items in %d layers\n",pcc->nitems,p->nlayers);
-  printf("allocating %d for bs\n",pcc->bufsz);
   pcc->buf = g_malloc(pcc->bufsz);
   return pcc; 
 }
@@ -178,7 +171,6 @@ void free_image_ser_buffers_and_pcc(struct PageCopyContext *pcc) {
 }
 
 void put_page_in_buffer(struct PageCopyContext *pcc) {
-  int item_type = ITEM_COPY_PAGE;
   guchar **pp = &(pcc->buf);
   ImgSerContext **ser_images = pcc->serialized_images;
   GList *llist, *ilist;
@@ -187,7 +179,6 @@ void put_page_in_buffer(struct PageCopyContext *pcc) {
   copy_to_buffer_advance_ptr(pp, &pcc->bufsz, sizeof(int));
   copy_to_buffer_advance_ptr(pp, &pcc->nitems, sizeof(int)); 
   //store page:
-  printf("storing page metadata at location %p\n",*pp);
   put_page_metadata_in_buffer(pcc->pg, pp);
   for (llist = pcc->pg->layers; llist != NULL; llist = llist->next) {
     put_layer_metadata_in_buffer((struct Layer*)llist->data, pp);
@@ -208,27 +199,22 @@ void put_page_metadata_in_buffer(struct Page *p, guchar **pp) {
   copy_to_buffer_advance_ptr(pp, &p->hoffset, sizeof(double));
   copy_to_buffer_advance_ptr(pp, &p->voffset, sizeof(double));
   copy_to_buffer_advance_ptr(pp, p->bg, sizeof(struct Background));
-  printf("PAGE: wrote %d bytes to buffer\n",(int)(*pp - start));
 }
 
 
 void put_layer_metadata_in_buffer(struct Layer *l, guchar **pp) {
   int item_type = ITEM_COPY_LAYER;
-  GList *ilist;
-  guchar *start;
-  start = *pp;
+  guchar *start = *pp; // dbg
   copy_to_buffer_advance_ptr(pp, &item_type, sizeof(int));
   copy_to_buffer_advance_ptr(pp, &l->nitems, sizeof(int));
   copy_to_buffer_advance_ptr(pp, &l->visible, sizeof(gboolean));
-  printf("LAYER: wrote %d bytes to buffer\n",(int)(*pp - start));
 }
 
 void put_item_in_buffer(struct Item *item, guchar **pp)
 {
   int val;
-  guchar *start = *pp;
+  guchar *start = *pp; // dbg
   copy_to_buffer_advance_ptr(pp, &item->type, sizeof(int));
-  printf("putting an item in location %p\n",*pp);
   switch (item->type) {
   case ITEM_STROKE:
     copy_to_buffer_advance_ptr(pp, &item->brush, sizeof(struct Brush));
@@ -263,7 +249,6 @@ void put_item_in_buffer(struct Item *item, guchar **pp)
   default:
     break;
   }
-  printf("ITEM: wrote %d bytes to buffer\n",(int)(*pp - start));
 }
 
 void get_nitems_update_bufsize(GList* items_list, int* bufsz, int* nitems, int* nimages)
@@ -302,10 +287,8 @@ void put_header_in_buffer(int *bufsz, int *nitems, struct BBox *bbox, guchar **p
 
 void put_image_data_in_buffer(struct ImgSerContext *isc, guchar **pp)
 {
-  guchar *start = *pp;
   copy_to_buffer_advance_ptr(pp, &isc->stream_length, sizeof(gsize));
   copy_to_buffer_advance_ptr(pp, isc->image_data, isc->stream_length);
-  printf("Put image data in buffer: stream length %d, total space in buffer %d\n",(int)isc->stream_length,(int)(*pp - start));
 }
 
 void populate_buffer(GList* items_list, struct ImgSerContext *serialized_images, guchar **pp)
@@ -417,7 +400,6 @@ void get_item_from_buffer(struct Item *item, guchar **pp, double hoffset, double
   struct ImgSerContext isc;
   double *pf;
   GdkPixbuf *tmp_pixbuf_ptr;
-  printf("reading an item from location %p\n",*pp);
   switch (item->type) {
   case ITEM_STROKE:
     copy_from_buffer_advance_ptr(&item->brush, pp, sizeof(struct Brush));
@@ -477,7 +459,6 @@ void get_item_from_buffer(struct Item *item, guchar **pp, double hoffset, double
   default:
     break;
   }
-  printf("read an item w/ bbox (t,l) (%f,%f)\n",item->bbox.top,item->bbox.left);
 }
 
 // if use_provided_offset == FALSE, hoffset and voffset parameters are
@@ -500,6 +481,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
     import_img_as_clipped_item();
 
   ui.cur_item_type = ITEM_PASTE;
+ 
   sel_data = gtk_clipboard_wait_for_contents(
       gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),
       gdk_atom_intern("_XOURNAL", FALSE));
@@ -621,17 +603,12 @@ struct Page* paste_page() {
   p = sel_data->data + sizeof(int);
   copy_from_buffer_advance_ptr(&nitems, &p, sizeof(int));
   while (nitems-- > 0) {
-    printf("looking at buffer location %p\n",p);
     copy_from_buffer_advance_ptr(&itemtype, &p, sizeof(int));
-    printf("got item %d of type %d\n",nitems+1,itemtype);
     if (itemtype == ITEM_COPY_PAGE) {
-      printf("pasting PAGE\n");
       get_page_from_buffer(pg, &p);
       make_page_clipbox(pg);
       update_canvas_bg(pg);
     } else if (itemtype == ITEM_COPY_LAYER) {
-            printf("pasting LAYER\n");
-
       l = g_new(struct Layer, 1);
       get_layer_from_buffer(l, &p);
       l->items = NULL;
@@ -639,7 +616,6 @@ struct Page* paste_page() {
 	gnome_canvas_item_new(pg->group, gnome_canvas_group_get_type(), NULL);
       pg->layers = g_list_append(pg->layers, l);
     } else {
-      printf("pasting ITEM\n");
       item = g_new(struct Item, 1);
       item->type = itemtype;
       l->items = g_list_append(l->items, item);
@@ -651,6 +627,11 @@ struct Page* paste_page() {
   journal.npages++;
   do_switch_page(ui.pageno + 1, TRUE, TRUE);
   gtk_selection_data_free(sel_data);
+  
+  prepare_new_undo();
+  undo->type = ITEM_PASTE_PAGE;
+  undo->val = ui.pageno;
+  undo->page = pg;
   return pg;
 } 
 
@@ -681,5 +662,11 @@ struct Page* duplicate_page() {
   journal.pages = g_list_insert(journal.pages, pg, ui.pageno + 1);
   journal.npages++;
   do_switch_page(ui.pageno + 1, TRUE, TRUE);
+  
+  prepare_new_undo();
+  undo->type = ITEM_PASTE_PAGE;
+  undo->val = ui.pageno;
+  undo->page = pg;
+  
   return pg;
 }

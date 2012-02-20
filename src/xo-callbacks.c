@@ -523,11 +523,12 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
     undo->val_x = tmp_x;
     undo->val_y = tmp_y;
   }
-  else if (undo->type == ITEM_NEW_PAGE) {
+  else if (undo->type == ITEM_NEW_PAGE || undo->type == ITEM_PASTE_PAGE) {
     // unmap the page; keep the page & its empty layer in memory
     if (undo->page->group!=NULL) gtk_object_destroy(GTK_OBJECT(undo->page->group));
       // also destroys the background and layer's canvas items
     undo->page->group = NULL;
+    if (undo->page->bg->canvas_item != NULL) gtk_object_destroy(GTK_OBJECT(undo->page->bg->canvas_item));
     undo->page->bg->canvas_item = NULL;
     journal.pages = g_list_remove(journal.pages, undo->page);
     journal.npages--;
@@ -662,7 +663,7 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   struct UndoItem *u;
-  GList *list, *itemlist, *target;
+  GList *list, *llist, *itemlist, *target;
   struct UndoErasureData *erasure;
   struct Item *it;
   struct Brush tmp_brush;
@@ -737,17 +738,20 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
     redo->val_x = tmp_x;
     redo->val_y = tmp_y;
   }
-  else if (redo->type == ITEM_NEW_PAGE) {
+  else if (redo->type == ITEM_NEW_PAGE || redo->type == ITEM_PASTE_PAGE) {
     // remap the page
     redo->page->bg->canvas_item = NULL;
     redo->page->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
     make_page_clipbox(redo->page);
     update_canvas_bg(redo->page);
-    l = (struct Layer *)redo->page->layers->data;
-    l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
-      redo->page->group, gnome_canvas_group_get_type(), NULL);
-    
+    for (llist = redo->page->layers; llist != NULL; llist = llist->next) {
+      l = (struct Layer *)llist->data;
+      l->group = (GnomeCanvasGroup *) 
+	gnome_canvas_item_new(redo->page->group, gnome_canvas_group_get_type(), NULL);
+      for (itemlist = l->items; itemlist != NULL; itemlist = itemlist->next)
+	make_canvas_item_one(l->group, (struct Item *)itemlist->data);
+    }
     journal.pages = g_list_insert(journal.pages, redo->page, redo->val);
     journal.npages++;
     do_switch_page(redo->val, TRUE, TRUE);

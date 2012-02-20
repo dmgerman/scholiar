@@ -198,7 +198,7 @@ void clear_redo_stack(void)
       }
       g_free(redo->bg);
     }
-    else if (redo->type == ITEM_NEW_PAGE) {
+    else if (redo->type == ITEM_NEW_PAGE || redo->type == ITEM_PASTE_PAGE) {
       redo->page->group = NULL;
       delete_page(redo->page);
     }
@@ -280,6 +280,10 @@ void clear_undo_stack(void)
     else if (undo->type == ITEM_DELETE_LAYER) {
       undo->layer->group = NULL;
       delete_layer(undo->layer);
+    }
+    else if (undo->type == ITEM_NEW_PAGE || undo->type == ITEM_PASTE_PAGE) {
+      undo->page->group = NULL;
+      delete_page(undo->page);
     }
     else if (undo->type == ITEM_DELETE_PAGE) {
       undo->page->group = NULL;

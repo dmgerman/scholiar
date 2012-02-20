@@ -169,6 +169,9 @@ extern guint predef_bgcolors_rgba[COLOR_MAX];
 #define TOOLOPT_ERASER_WHITEOUT     1
 #define TOOLOPT_ERASER_STROKES      2
 
+#define BUFFER_REGULAR 0
+#define BUFFER_PAGE 1
+
 extern double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX];
 
 typedef struct BBox {
@@ -232,6 +235,8 @@ typedef struct Item {
 #define ITEM_SELECTREGION 25
 #define ITEM_COPY_PAGE 26
 #define ITEM_COPY_LAYER 27
+#define ITEM_DUPLICATE_PAGE 28
+#define ITEM_PASTE_PAGE 29
 
 #define ITEM_MOVE_PAGE 90
 

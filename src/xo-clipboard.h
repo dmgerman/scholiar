@@ -10,6 +10,10 @@ typedef struct PageCopyContext {
   guchar *buf;
 } PageCopyContext;
 
+struct Page* duplicate_page();
+struct Page* paste_page();
+void copy_page();
+
 /* clipboard-related functions */
 // Page copy helper functions
 struct PageCopyContext *prepare_page_copy_buffers(struct Page *p);
