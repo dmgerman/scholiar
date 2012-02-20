@@ -13,6 +13,7 @@ void prepare_new_undo(void);
 void delete_journal(struct Journal *j);
 void delete_page(struct Page *pg);
 void delete_layer(struct Layer *l);
+void copy_page_background(struct Page *new, struct Page *orig);
 
 // referenced strings
 
@@ -23,6 +24,7 @@ void refstring_unref(struct Refstring *rs);
 // helper functions
 void init_layer(struct Layer *l);
 struct BBox make_bbox_from_lrtb(double l, double r, double t, double b);
+struct BBox bbox_add_offset_lrtb(struct BBox a, double l, double r, double t, double b);
 void make_bbox_copy(struct BBox *bbfrom, struct BBox *bbto, int padding);
 void get_pointer_coords(GdkEvent *event, double *ret);
 double get_pressure_multiplier(GdkEvent *event);

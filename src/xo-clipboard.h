@@ -1,7 +1,27 @@
 #ifndef XO_CLIPBOARD_H
 #define XO_CLIPBOARD_H
 
+typedef struct PageCopyContext {
+  struct Page *pg;
+  int bufsz;
+  int nitems;
+  int *nimages; // array of nimages, one per layer
+  ImgSerContext **serialized_images; // array of serialized_images[]; one s.i.[] per layer
+  guchar *buf;
+} PageCopyContext;
+
 /* clipboard-related functions */
+// Page copy helper functions
+struct PageCopyContext *prepare_page_copy_buffers(struct Page *p);
+void free_image_ser_buffers_and_pcc(struct PageCopyContext *pcc);
+void put_page_in_buffer(struct PageCopyContext *pcc);
+void put_layer_metadata_in_buffer(struct Layer *l, guchar **pp);
+void put_page_metadata_in_buffer(struct Page *p, guchar **pp);
+
+void get_nitems_update_bufsize(GList* items_list, int* bufsz, int* nitems, int* nimages);
+void update_bufsize_and_ser_images(GList* items_list, int* bufsz, ImgSerContext** serialized_images);
+void populate_buffer(GList* items_list, struct ImgSerContext *serialized_images, guchar **pp);
+
 void copy_to_buffer_advance_ptr(guchar **to, gpointer from, gsize size);
 void copy_from_buffer_advance_ptr(gpointer to, guchar **from, gsize size);
 void put_header_in_buffer(int *bufsz, int *nitems, struct BBox *bbox, guchar **pp);

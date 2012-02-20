@@ -6,7 +6,7 @@
 #include <poppler/glib/poppler.h>
 
 
-#define ERASER_BTN2_FORCE
+//#define ERASER_BTN2_FORCE
 /* uncomment to enable a workaround for broken Wacom drivers on
    Windows 7 x64. (The driver bug creates bogus button 2 release events.)
    This workaround watches the device string of xinput
@@ -19,7 +19,7 @@
 /* uncomment if you'd like to use Dirk Gerrits' cursor fix (described 
    here: http://dirkgerrits.com/2009/10/28/xournal-on-windows/)
    This might not work with the latest Windows GTK */
-#define WIN32_CURSOR_WORKAROUND_2
+//#define WIN32_CURSOR_WORKAROUND_2
 /* uncomment if you'd like to use alternative cursor for the pen; 
    this is a possibly acceptable alternative if the previous workaround 
    doesn't produce desired effect */
@@ -230,12 +230,15 @@ typedef struct Item {
 #define ITEM_RECOGNIZER 23
 #define ITEM_IMAGE 24
 #define ITEM_SELECTREGION 25
+#define ITEM_COPY_PAGE 26
+#define ITEM_COPY_LAYER 27
 
 #define ITEM_MOVE_PAGE 90
 
 typedef struct Layer {
   GList *items; // the items on the layer, from bottom to top
   int nitems;
+  gboolean visible;
   GnomeCanvasGroup *group;
 } Layer;
 

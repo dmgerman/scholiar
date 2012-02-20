@@ -910,6 +910,23 @@ on_editDuplicatePage_activate           (GtkMenuItem     *menuitem,
   duplicate_page();
 }
 
+void
+on_editCopyPage_activate           (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  signal_canvas_changed();
+  end_text();
+  copy_page();
+}
+
+void
+on_editPastePage_activate           (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  signal_canvas_changed();
+  end_text();
+  paste_page();
+}
 
 void
 on_editPaste_activate                  (GtkMenuItem     *menuitem,

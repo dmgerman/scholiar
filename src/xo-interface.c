@@ -69,6 +69,8 @@ create_winMain (void)
   GtkWidget *editCut;
   GtkWidget *editCopy;
   GtkWidget *editDuplicatePage;
+  GtkWidget *editCopyPage;
+  GtkWidget *editPastePage;
   GtkWidget *editPaste;
   GtkWidget *editDelete;
   GtkWidget *editRemember;
@@ -538,14 +540,22 @@ create_winMain (void)
   editCopy = gtk_image_menu_item_new_from_stock ("gtk-copy", accel_group);
   gtk_widget_show (editCopy);
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), editCopy);
-  
+ 
+  editPaste = gtk_image_menu_item_new_from_stock ("gtk-paste", accel_group);
+  gtk_widget_show (editPaste);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editPaste);
+ 
   editDuplicatePage = gtk_image_menu_item_new_with_mnemonic(_("Duplicate P_age"));
   gtk_widget_show (editDuplicatePage);
   gtk_container_add (GTK_CONTAINER (menuEdit_menu), editDuplicatePage);
 
-  editPaste = gtk_image_menu_item_new_from_stock ("gtk-paste", accel_group);
-  gtk_widget_show (editPaste);
-  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editPaste);
+  editCopyPage = gtk_image_menu_item_new_with_mnemonic(_("Copy Pag_e"));
+  gtk_widget_show (editCopyPage);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editCopyPage);
+
+  editPastePage = gtk_image_menu_item_new_with_mnemonic(_("Paste Pa_ge"));
+  gtk_widget_show (editPastePage);
+  gtk_container_add (GTK_CONTAINER (menuEdit_menu), editPastePage);
 
   editDelete = gtk_image_menu_item_new_from_stock ("gtk-delete", accel_group);
   gtk_widget_show (editDelete);
@@ -2134,6 +2144,15 @@ create_winMain (void)
                     NULL);
   g_signal_connect ((gpointer) editCopy, "activate",
                     G_CALLBACK (on_editCopy_activate),
+                    NULL);
+  g_signal_connect ((gpointer) editDuplicatePage, "activate",
+                    G_CALLBACK (on_editDuplicatePage_activate),
+                    NULL);
+  g_signal_connect ((gpointer) editPastePage, "activate",
+                    G_CALLBACK (on_editPastePage_activate),
+                    NULL);
+  g_signal_connect ((gpointer) editCopyPage, "activate",
+                    G_CALLBACK (on_editCopyPage_activate),
                     NULL);
   g_signal_connect ((gpointer) editPaste, "activate",
                     G_CALLBACK (on_editPaste_activate),

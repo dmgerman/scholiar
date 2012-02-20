@@ -52,6 +52,7 @@ void init_layer(struct Layer *l)
   l->items = NULL;
   l->nitems = 0;
   l->group = NULL;
+  l->visible = TRUE;
 }
 
 void init_search_layer(struct Layer *searchLayer)
@@ -59,6 +60,15 @@ void init_search_layer(struct Layer *searchLayer)
   assert(searchLayer != NULL);
   init_layer(searchLayer);
   // We need to add layer to  page
+}
+
+void copy_page_background(struct Page *new, struct Page *orig) {
+  new->bg = (struct Background *)g_memdup(orig->bg, sizeof(struct Background));
+  new->bg->canvas_item = NULL;
+  if (new->bg->type == BG_PIXMAP || new->bg->type == BG_PDF) {
+    gdk_pixbuf_ref(new->bg->pixbuf);
+    refstring_ref(new->bg->filename);
+  }
 }
 
 struct Page *new_page(struct Page *template)
@@ -69,12 +79,7 @@ struct Page *new_page(struct Page *template)
   init_layer(l);
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
-  pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
-  pg->bg->canvas_item = NULL;
-  if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
-    gdk_pixbuf_ref(pg->bg->pixbuf);
-    refstring_ref(pg->bg->filename);
-  }
+  copy_page_background(pg, template);
   pg->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
   make_page_clipbox(pg);
@@ -1017,6 +1022,16 @@ struct BBox bboxadd( struct BBox a, struct BBox b )
   result.top	=( a.top < b.top ) ? a.top : b.top ; 
   result.bottom =( a.bottom>b.bottom)? a.bottom : b.bottom ; 
 
+  return result; 
+}
+
+struct BBox bbox_add_offset_lrtb(struct BBox a, double l, double r, double t, double b)
+{
+  struct BBox result; 
+  result.left = a.left + l;
+  result.right = a.right + r;
+  result.top = a.top + t;
+  result.bottom = a.bottom + b;
   return result; 
 }
 
