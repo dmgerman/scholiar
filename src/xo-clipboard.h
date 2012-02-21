@@ -22,8 +22,12 @@ void put_page_in_buffer(struct PageCopyContext *pcc);
 void put_layer_metadata_in_buffer(struct Layer *l, guchar **pp);
 void put_page_metadata_in_buffer(struct Page *p, guchar **pp);
 
-void get_nitems_update_bufsize(GList* items_list, int* bufsz, int* nitems, int* nimages);
-void update_bufsize_and_ser_images(GList* items_list, int* bufsz, ImgSerContext** serialized_images);
+
+int get_nitems_of_type(const GList *items_list, int item_type);
+int get_nonserialized_data_size(const GList* items_list);
+int get_serialized_data_size(ImgSerContext *serialized_images, int nimages);
+void serialize_images_in_list(const GList *items_list, ImgSerContext *serialized_images);
+
 void populate_buffer(GList* items_list, struct ImgSerContext *serialized_images, guchar **pp);
 
 void copy_to_buffer_advance_ptr(guchar **to, gpointer from, gsize size);

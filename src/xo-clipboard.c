@@ -6,6 +6,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
+#include <assert.h>
 #include "xournal.h"
 #include "xo-callbacks.h"
 #include "xo-interface.h"
@@ -130,7 +131,7 @@ int buffer_size_for_serialized_image(ImgSerContext isc)
 // allocates buffers for data and serialized images
 struct PageCopyContext *prepare_page_copy_buffers(struct Page *p) {
   struct PageCopyContext *pcc = g_new(struct PageCopyContext, 1);
-  GList *llist, *ilist;
+  GList *llist;
   int n_it_tmp, n_im_tmp;
   ImgSerContext **serialized_images;
   int i = 0;
@@ -141,18 +142,16 @@ struct PageCopyContext *prepare_page_copy_buffers(struct Page *p) {
   pcc->bufsz = buffer_size_for_page_header();  
   pcc->bufsz += buffer_size_for_special(ITEM_COPY_PAGE);
   pcc->nitems++; // page itself
-  i = 0;
-  for (llist = p->layers; llist != NULL; llist = llist->next) {
+  for (llist = p->layers, i = 0; llist != NULL; llist = llist->next, i++) {
     pcc->nitems++; // layer is a buffer item
     pcc->bufsz += buffer_size_for_special(ITEM_COPY_LAYER);
-    ilist = ((struct Layer*)llist->data)->items; // this layer's items
-    get_nitems_update_bufsize(ilist, &pcc->bufsz, &n_it_tmp, &n_im_tmp);
-    pcc->serialized_images[i] = g_new(struct ImgSerContext, n_im_tmp);
-    pcc->nimages[i] = n_im_tmp;
-    pcc->nitems += n_it_tmp;
-    if (n_im_tmp > 0)
-      update_bufsize_and_ser_images(ilist, &pcc->bufsz, &(pcc->serialized_images[i]));
-    i++;
+    const GList *ilist = ((struct Layer*)llist->data)->items; 
+    pcc->nimages[i] = get_nitems_of_type(ilist, ITEM_IMAGE);
+    pcc->serialized_images[i] = g_new(struct ImgSerContext, pcc->nimages[i]);
+    serialize_images_in_list(ilist, pcc->serialized_images[i]);
+    pcc->bufsz += get_serialized_data_size(pcc->serialized_images[i], pcc->nimages[i]);
+    pcc->bufsz += get_nonserialized_data_size(ilist);
+    pcc->nitems += get_nitems_of_type(ilist, ITEM_ALL);
   }
   pcc->buf = g_malloc(pcc->bufsz);
   return pcc; 
@@ -173,8 +172,7 @@ void free_image_ser_buffers_and_pcc(struct PageCopyContext *pcc) {
 void put_page_in_buffer(struct PageCopyContext *pcc) {
   guchar **pp = &(pcc->buf);
   ImgSerContext **ser_images = pcc->serialized_images;
-  GList *llist, *ilist;
-  int i = 0;
+  GList *llist;
   //store header:
   copy_to_buffer_advance_ptr(pp, &pcc->bufsz, sizeof(int));
   copy_to_buffer_advance_ptr(pp, &pcc->nitems, sizeof(int)); 
@@ -182,9 +180,7 @@ void put_page_in_buffer(struct PageCopyContext *pcc) {
   put_page_metadata_in_buffer(pcc->pg, pp);
   for (llist = pcc->pg->layers; llist != NULL; llist = llist->next) {
     put_layer_metadata_in_buffer((struct Layer*)llist->data, pp);
-    ilist = ((struct Layer*)llist->data)->items; // this layer's items
-    populate_buffer(ilist, ser_images[i], pp);
-    i++;
+    populate_buffer(((struct Layer*)llist->data)->items, *ser_images++, pp);
   }    
 }
 
@@ -251,33 +247,41 @@ void put_item_in_buffer(struct Item *item, guchar **pp)
   }
 }
 
-void get_nitems_update_bufsize(GList* items_list, int* bufsz, int* nitems, int* nimages)
-{
-  GList *list;
-  struct Item *item;
-  *nitems = 0; *nimages = 0;
-  for (list = items_list; list != NULL; list = list->next) {
-    item = (struct Item *)list->data;
-    (*nitems)++;
-    if (item->type == ITEM_IMAGE) (*nimages)++;
-    (*bufsz) += buffer_size_for_item(item);
-  }
+int get_nitems_of_type(const GList *items_list, int item_type) {
+  const GList *list;
+  int nitems = 0;
+  for (list = items_list; list != NULL; list = list->next) 
+    if (item_type == ITEM_ALL)
+      nitems++;
+    else
+      if (((struct Item *)list->data)->type == item_type)
+	nitems++;
+  return nitems;
 }
 
-void update_bufsize_and_ser_images(GList* items_list, int* bufsz, ImgSerContext** serialized_images)
-{
-  GList *list;
-  struct Item *item;
-  int i = 0;
-  for (list = items_list; list != NULL; list = list->next) {
-    item = (struct Item *)list->data;
-    if (item->type == ITEM_IMAGE) {
-      (*serialized_images)[i] = serialize_image(item->image);
-      (*bufsz) += buffer_size_for_serialized_image((*serialized_images)[i]);
-      i++;
-    }
-  }
+int get_nonserialized_data_size(const GList* items_list) {
+  const GList *list;
+  int size = 0;
+  for (list = items_list; list != NULL; list = list->next) 
+    size += buffer_size_for_item((struct Item *)list->data);
+  return size;
 }
+
+
+int get_serialized_data_size(ImgSerContext *serialized_images, int nimages) {
+  int i, size = 0;
+  for (i = 0; i < nimages; i++)
+    size += buffer_size_for_serialized_image(serialized_images[i]);
+  return size;
+}
+
+void serialize_images_in_list(const GList *items_list, ImgSerContext *serialized_images) {
+  const GList *list;
+  for (list = items_list; list != NULL; list = list->next) 
+    if (((struct Item *)list->data)->type == ITEM_IMAGE) 
+      *serialized_images++ = serialize_image(((struct Item *)list->data)->image);
+}
+
 
 void put_header_in_buffer(int *bufsz, int *nitems, struct BBox *bbox, guchar **pp) {
   copy_to_buffer_advance_ptr(pp, bufsz, sizeof(int));
@@ -294,18 +298,16 @@ void put_image_data_in_buffer(struct ImgSerContext *isc, guchar **pp)
 void populate_buffer(GList* items_list, struct ImgSerContext *serialized_images, guchar **pp)
 {
   GList *list;
-  struct Item *item;
-  int i = 0;
   for (list = items_list; list != NULL; list = list->next) {
-    item = (struct Item *)list->data;
-    put_item_in_buffer(item, pp);
-    if (item->type == ITEM_IMAGE) 
-      put_image_data_in_buffer(&serialized_images[i++], pp);
+    put_item_in_buffer((struct Item *)list->data, pp);
+    if (((struct Item *)list->data)->type == ITEM_IMAGE) 
+      put_image_data_in_buffer(serialized_images++, pp);
   }
 }
 
 void selection_to_clip(void) 
 {
+  assert(ui.selection != NULL);
   int bufsz = 0, nitems = 0, nimages = 0, val, i, len;
   unsigned char *buf, *p;
   GList *list;
@@ -313,13 +315,14 @@ void selection_to_clip(void)
   GtkTargetEntry target;
   ImgSerContext *serialized_images;
   
-  if (ui.selection == NULL) return;
   bufsz = buffer_size_for_header();  
-  get_nitems_update_bufsize(ui.selection->items, &bufsz, &nitems, &nimages);
+  nitems = get_nitems_of_type(ui.selection->items, ITEM_ALL);
+  nimages = get_nitems_of_type(ui.selection->items, ITEM_IMAGE);
   serialized_images = g_new(struct ImgSerContext, nimages);
-  if (nimages > 0)
-    update_bufsize_and_ser_images(ui.selection->items, &bufsz, &serialized_images);
-
+  serialize_images_in_list(ui.selection->items, serialized_images);
+  bufsz += get_serialized_data_size(serialized_images, nimages);
+  bufsz += get_nonserialized_data_size(ui.selection->items);
+  
   p = buf = g_malloc(bufsz);
   put_header_in_buffer(&bufsz, &nitems, &ui.selection->bbox, &p);
   populate_buffer(ui.selection->items, serialized_images, &p);
@@ -588,8 +591,6 @@ void copy_page() {
 
 struct Page* paste_page() {
   struct Page *pg = (struct Page *) g_memdup(&ui.default_page, sizeof(struct Page));
-  struct Layer *l;
-  struct Item *item;
   GtkSelectionData *sel_data;
   unsigned char *p;
   int nitems, itemtype;
@@ -602,25 +603,32 @@ struct Page* paste_page() {
   if (sel_data == NULL) return NULL; // paste failed
   p = sel_data->data + sizeof(int);
   copy_from_buffer_advance_ptr(&nitems, &p, sizeof(int));
+  nitems--;
+  copy_from_buffer_advance_ptr(&itemtype, &p, sizeof(int));
+  assert(ITEM_COPY_PAGE == itemtype);
+  get_page_from_buffer(pg, &p);
+  make_page_clipbox(pg);
+  update_canvas_bg(pg);
+
+  copy_from_buffer_advance_ptr(&itemtype, &p, sizeof(int));
   while (nitems-- > 0) {
+    assert(ITEM_COPY_LAYER == itemtype);
+    struct Layer *l = g_new(struct Layer, 1);
+    get_layer_from_buffer(l, &p);
+    l->items = NULL;
+    l->group = (GnomeCanvasGroup *) 
+      gnome_canvas_item_new(pg->group, gnome_canvas_group_get_type(), NULL);
+    pg->layers = g_list_append(pg->layers, l);
+
     copy_from_buffer_advance_ptr(&itemtype, &p, sizeof(int));
-    if (itemtype == ITEM_COPY_PAGE) {
-      get_page_from_buffer(pg, &p);
-      make_page_clipbox(pg);
-      update_canvas_bg(pg);
-    } else if (itemtype == ITEM_COPY_LAYER) {
-      l = g_new(struct Layer, 1);
-      get_layer_from_buffer(l, &p);
-      l->items = NULL;
-      l->group = (GnomeCanvasGroup *) 
-	gnome_canvas_item_new(pg->group, gnome_canvas_group_get_type(), NULL);
-      pg->layers = g_list_append(pg->layers, l);
-    } else {
-      item = g_new(struct Item, 1);
+    while (nitems > 0 && itemtype != ITEM_COPY_LAYER) {
+      nitems--;
+      struct Item *item = g_new(struct Item, 1);
       item->type = itemtype;
       l->items = g_list_append(l->items, item);
       get_item_from_buffer(item, &p, 0., 0.); // zero h/v offsets
       make_canvas_item_one(l->group, item);
+      copy_from_buffer_advance_ptr(&itemtype, &p, sizeof(int));
     }
   }
   journal.pages = g_list_insert(journal.pages, pg, ui.pageno + 1);
@@ -639,14 +647,14 @@ struct Page* duplicate_page() {
   GList *llist, *itemlist;
   struct Layer *l;
   struct Page *pg = (struct Page *) g_memdup(ui.cur_page, sizeof(struct Page));
-  pg->layers = NULL;
-  pg->nlayers = 0;
   copy_page_background(pg, ui.cur_page);
   pg->group = (GnomeCanvasGroup *) 
     gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
   make_page_clipbox(pg);
   update_canvas_bg(pg);
 
+  pg->layers = NULL;
+  pg->nlayers = 0;
   for (llist = ui.cur_page->layers; llist != NULL; llist = llist->next) {
     //create a duplicate of the layer
     l = create_layer_copy((struct Layer *)llist->data, pg);

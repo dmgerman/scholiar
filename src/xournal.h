@@ -237,8 +237,8 @@ typedef struct Item {
 #define ITEM_COPY_LAYER 27
 #define ITEM_DUPLICATE_PAGE 28
 #define ITEM_PASTE_PAGE 29
-
 #define ITEM_MOVE_PAGE 90
+#define ITEM_ALL 99
 
 typedef struct Layer {
   GList *items; // the items on the layer, from bottom to top
