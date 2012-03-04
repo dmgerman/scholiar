@@ -2881,13 +2881,17 @@ on_canvas_key_press_event              (GtkWidget       *widget,
     }
     else return FALSE;
   }
-  
+  /* in ITEM_TEXT we just return as we don't do anything here */
+  if (ui.cur_item_type == ITEM_TEXT) { 
+    return FALSE;
+  }
   /* In single page mode, switch pages with PgUp/PgDn (or Up/Dn) 
      when there's nowhere else to go. */
   pgheight = GTK_WIDGET(canvas)->allocation.height;
   adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(GET_COMPONENT("scrolledwindowMain")));
 
-  if (event->keyval == GDK_Page_Down || event->keyval == GDK_Down) {
+  if (event->keyval == GDK_Page_Down || event->keyval == GDK_Down || 
+      (event->keyval == GDK_space && event->state == 0)) {
     if (!ui.view_continuous && 
          (0.96 * ui.zoom * ui.cur_page->height < pgheight ||
           adj->value == adj->upper-pgheight)) 
@@ -2900,7 +2904,9 @@ on_canvas_key_press_event              (GtkWidget       *widget,
     if (adj->value == adj->upper-pgheight) return TRUE; // don't send focus away
   }
 
-  if (event->keyval == GDK_Page_Up || event->keyval == GDK_Up) {
+  if (event->keyval == GDK_Page_Up || event->keyval == GDK_Up || 
+      (event->keyval == GDK_space && event->state == GDK_SHIFT_MASK)
+      ) {
     if (!ui.view_continuous && 
          (0.96 * ui.zoom * ui.cur_page->height < pgheight ||
           adj->value == adj->lower))

@@ -1463,7 +1463,7 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsShowInterfaceFullscreen);
 
   gtk_widget_add_accelerator (optionsShowInterfaceFullscreen, "activate", accel_group,
-                              GDK_I, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
+                              GDK_U, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                               GTK_ACCEL_VISIBLE);
 
   optionsTouchAsHandTool = gtk_check_menu_item_new_with_mnemonic (_("Always use _Touch screen as hand tool"));

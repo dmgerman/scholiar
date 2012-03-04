@@ -2147,6 +2147,16 @@ void add_scroll_bindings(void)
   gtk_binding_entry_add_signal(binding_set, GDK_KP_Right, 0,
     "scroll_child", 2, GTK_TYPE_SCROLL_TYPE, GTK_SCROLL_STEP_FORWARD, 
     G_TYPE_BOOLEAN, TRUE);  
+  // make space scroll down
+  gtk_binding_entry_add_signal(binding_set, GDK_space, 0,
+    "scroll_child", 2, GTK_TYPE_SCROLL_TYPE, GTK_SCROLL_PAGE_DOWN, 
+    G_TYPE_BOOLEAN, TRUE);  
+  // and shift space up
+  gtk_binding_entry_add_signal(binding_set, GDK_space, GDK_SHIFT_MASK,
+    "scroll_child", 2, GTK_TYPE_SCROLL_TYPE, GTK_SCROLL_PAGE_UP, 
+    G_TYPE_BOOLEAN, TRUE);  
+
+
 }
 
 gboolean is_event_within_textview(GdkEventButton *event)
