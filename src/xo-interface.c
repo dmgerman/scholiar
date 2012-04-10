@@ -1586,17 +1586,6 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPreviousPage);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonPreviousPage), tooltips, _("Previous Page"), NULL);
 
-  tmp_image = create_pixmap (winMain, "go-jump-rev.png");
-  gtk_widget_show (tmp_image);
-  buttonNotablePrevPage = (GtkWidget*) gtk_tool_button_new (tmp_image, _("JumpBack"));
-  gtk_widget_show (buttonNotablePrevPage);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotablePrevPage);
-  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotablePrevPage), tooltips, _("Previous Notable Page"), NULL);
-
-  buttonNotableNextPage = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-jump-to");
-  gtk_widget_show (buttonNotableNextPage);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotableNextPage);
-  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotableNextPage), tooltips, _("Next Notable Page"), NULL);
 
   buttonNextPage = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-go-forward");
   gtk_widget_show (buttonNextPage);
@@ -1608,21 +1597,19 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonLastPage);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonLastPage), tooltips, _("Last Page"), NULL);
 
-  toolitem222 = (GtkWidget*) gtk_tool_item_new ();
-  gtk_widget_show (toolitem222);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), toolitem222);
+  tmp_image = create_pixmap (winMain, "go-jump-rev.png");
+  gtk_widget_show (tmp_image);
+  buttonNotablePrevPage = (GtkWidget*) gtk_tool_button_new (tmp_image, _("JumpBack"));
+  gtk_widget_show (buttonNotablePrevPage);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotablePrevPage);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotablePrevPage), tooltips, _("Previous Notable Page"), NULL);
 
-  vseparator11 = gtk_vseparator_new ();
-  gtk_widget_show (vseparator11);
-  gtk_container_add (GTK_CONTAINER (toolitem222), vseparator11);
-
-  buttonPrevFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-previous");
-  gtk_widget_show (buttonPrevFile);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPrevFile);
-
-  buttonNextFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-next");
-  gtk_widget_show (buttonNextFile);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNextFile);
+  tmp_image = create_pixmap (winMain, "go-jump-for.png");
+  gtk_widget_show (tmp_image);
+  buttonNotableNextPage = (GtkWidget*) gtk_tool_button_new (tmp_image, _("JumpForw"));
+  gtk_widget_show (buttonNotableNextPage);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotableNextPage);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotableNextPage), tooltips, _("Next Notable Page"), NULL);
 
   toolitem14 = (GtkWidget*) gtk_tool_item_new ();
   gtk_widget_show (toolitem14);
@@ -1666,6 +1653,25 @@ create_winMain (void)
   gtk_widget_show (buttonFullscreen);
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonFullscreen);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonFullscreen), tooltips, _("Toggle Fullscreen"), NULL);
+
+  toolitem222 = (GtkWidget*) gtk_tool_item_new ();
+  gtk_widget_show (toolitem222);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), toolitem222);
+
+  vseparator11 = gtk_vseparator_new ();
+  gtk_widget_show (vseparator11);
+  gtk_container_add (GTK_CONTAINER (toolitem222), vseparator11);
+
+  buttonPrevFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-previous");
+  gtk_widget_show (buttonPrevFile);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPrevFile);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonPrevFile), tooltips, _("Prev File"), NULL);
+
+  buttonNextFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-next");
+  gtk_widget_show (buttonNextFile);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNextFile);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNextFile), tooltips, _("Next File"), NULL);
+
 
   toolbarPen = gtk_toolbar_new ();
   gtk_widget_show (toolbarPen);
