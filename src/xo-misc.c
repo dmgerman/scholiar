@@ -50,6 +50,7 @@ void init_search_layer(Page *pg)
 {
   pg->searchLayer = g_new(struct Layer, 1);
   assert(pg->searchLayer != NULL);
+  assert(pg->group != NULL);
   init_layer(pg->searchLayer);
   pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
   lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
@@ -97,7 +98,7 @@ struct Page *new_page(struct Page *template)
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
-  init_search_layer(pg->searchLayer);
+  init_search_layer(pg);
 
 
   return pg;
