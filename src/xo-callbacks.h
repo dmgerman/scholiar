@@ -675,6 +675,18 @@ egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
 
   
 gboolean
+on_find_bar_reset                      (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data);
+
+gboolean
+on_find_bar_search                     (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data);
+
+
+
+gboolean
 on_find_bar_next                       (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);

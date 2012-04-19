@@ -311,6 +311,9 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     tmpPage->bg->canvas_item = NULL;
     tmpPage->bg->pixbuf = NULL;
     tmpPage->bg->filename = NULL;
+    // initialize the search layer
+    init_search_layer(tmpPage);
+
     tmpJournal.pages = g_list_append(tmpJournal.pages, tmpPage);
     tmpJournal.npages++;
     // scan for height and width attributes
@@ -460,8 +463,10 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       return;
     }
     tmpLayer = (struct Layer *)g_malloc(sizeof(struct Layer));
-    tmpLayer->items = NULL;
-    tmpLayer->nitems = 0;
+
+    init_layer(tmpLayer);
+    //    tmpLayer->items = NULL;
+    //    tmpLayer->nitems = 0;
     tmpLayer->group = NULL;
     tmpPage->layers = g_list_append(tmpPage->layers, tmpLayer);
     tmpPage->nlayers++;
@@ -802,6 +807,9 @@ gboolean open_journal(char *filename)
   gchar *tmpfn, *tmpfn2, *p, *q;
   gboolean maybe_pdf;
   
+
+  // i wished this code would be documented a bit more
+
   tmpfn = g_strdup_printf("%s.xoj", filename);
   if (ui.autoload_pdf_xoj && g_file_test(tmpfn, G_FILE_TEST_EXISTS) &&
       (g_str_has_suffix(filename, ".pdf") || g_str_has_suffix(filename, ".PDF")))
@@ -886,7 +894,7 @@ gboolean open_journal(char *filename)
   ui.saved = TRUE; // force close_journal() to do its job
   close_journal();
   g_memmove(&journal, &tmpJournal, sizeof(struct Journal));
-  
+
   // if we need to initialize a fresh pdf loader
   if (tmpBg_pdf!=NULL) { 
     while (bgpdf.status != STATUS_NOT_INIT) gtk_main_iteration();
@@ -903,7 +911,6 @@ gboolean open_journal(char *filename)
       g_free(p); g_free(q);
       valid = init_bgpdf(tmpfn2, FALSE, tmpBg_pdf->file_domain);
       if (valid) {  // change the file name...
-        printf("substituting %s -> %s\n", tmpfn, tmpfn2);
         g_free(tmpBg_pdf->filename->s);
         tmpBg_pdf->filename->s = tmpfn2;
       }
@@ -939,11 +946,15 @@ gboolean open_journal(char *filename)
   ui.zoom = ui.startup_zoom;
   update_file_name(g_strdup(filename));
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
+
+  reset_find_bar();
+
   make_canvas_items();
   update_page_stuff();
   rescale_bg_pixmaps(); // this requests the PDF pages if need be
   gtk_adjustment_set_value(gtk_layout_get_vadjustment(GTK_LAYOUT(canvas)), 0);
   
+
   return TRUE;
 }
 
@@ -1283,6 +1294,7 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
   // create pages with correct sizes if requested
   n_pages = poppler_document_get_n_pages(bgpdf.document);
   for (i=1; i<=n_pages; i++) {
+    printf("Creating page %d [%d]\n", i, n_pages);
     pdfpage = poppler_document_get_page(bgpdf.document, i-1);
     if (!pdfpage) continue;
     if (journal.npages < i) {
@@ -1398,13 +1410,18 @@ void new_mru_entry(char *name)
   int i, j;
   
   for (i=0;i<MRU_SIZE;i++) 
-    if (ui.mru[i]!=NULL && !strcmp(ui.mru[i], name)) {
+    // check if it is in the list of previously seen
+    if (ui.mru[i]!=NULL && (strcmp(ui.mru[i], name) ==0)) {
+      // if it is, delete, and shift the rest
       g_free(ui.mru[i]);
       for (j=i+1; j<MRU_SIZE; j++) ui.mru[j-1] = ui.mru[j];
       ui.mru[MRU_SIZE-1]=NULL;
     }
+  // if the last one is taken, delete it
   if (ui.mru[MRU_SIZE-1]!=NULL) g_free(ui.mru[MRU_SIZE-1]);
+  // shift them one down
   for (j=MRU_SIZE-1; j>=1; j--) ui.mru[j] = ui.mru[j-1];
+  // make the new one this one
   ui.mru[0] = g_strdup(name);
   update_mru_menu();
 }

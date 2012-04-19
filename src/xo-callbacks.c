@@ -22,6 +22,9 @@
 #include "xo-shapes.h"
 #include "eggfindbar.h"
 
+#define SEARCH_STATUS_STR "%d matches in page (%d matches in document)"
+
+
 void
 on_fileNew_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
@@ -31,6 +34,7 @@ on_fileNew_activate                    (GtkMenuItem     *menuitem,
     new_journal();
     ui.zoom = ui.startup_zoom;
     update_page_stuff();
+    reset_find_bar();
     gtk_adjustment_set_value(gtk_layout_get_vadjustment(GTK_LAYOUT(canvas)), 0);
     gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
   }
@@ -98,6 +102,8 @@ on_fileNewBackground_activate          (GtkMenuItem     *menuitem,
   success = init_bgpdf(filename, TRUE, file_domain);
   set_cursor_busy(FALSE);
   if (success) {
+    // add to list of recent files
+    new_mru_entry(filename);
     g_free(filename);
     return;
   }
@@ -151,7 +157,12 @@ on_fileOpen_activate                   (GtkMenuItem     *menuitem,
   set_cursor_busy(TRUE);
   success = open_journal(filename);
   set_cursor_busy(FALSE);
-  if (success) { g_free(filename); return; }
+  if (success) { 
+    // Add to the list of recently used files
+    new_mru_entry(filename);
+    g_free(filename); 
+    return; 
+  }
   
   /* open failed */
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -942,7 +953,6 @@ on_editRemember_activate                 (GtkMenuItem     *menuitem,
 
   encode_uri(tempFileName, FILENAME_MAX * 3, utf8FileName, bytesWritten);
   sprintf(temp, "emacsclient 'org-protocol://%s://docview:%s::%d'", (char*)user_data, tempFileName,ui.pageno+1);
-  fprintf(stderr, "%s [%s]\n", temp, (char*)user_data);
   if (!g_spawn_command_line_async (temp, &error)) {
     g_printerr ("Cannot start emacsclient: %s\n", error->message);
     g_error_free (error);
@@ -1077,9 +1087,6 @@ on_viewPageWidth_activate              (GtkMenuItem     *menuitem,
   // the next 'zoom' will include a scrollbar, which will oclude a small section of
   // the document. This means that the toggle is really a 3 steps one:
   // Full width (no scrollbar) -> full height (no scrollbar) -> full with (with scrollbar)->...
-
-  printf("Current zoom [%f] byhight [%f] bywidth [%f]\n", 
-         ui.zoom, byHeight, byWidth);
 
   if (ui.zoom != byWidth) {
     ui.zoom = byWidth;
@@ -2703,7 +2710,8 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 
   // process the event
   
-  if (ui.toolno[mapping] == TOOL_HAND || (ui.touch_as_handtool && strstr(event->device->name, "touch")) != NULL) {
+  if (ui.toolno[mapping] == TOOL_HAND || 
+      (ui.touch_as_handtool && strstr(event->device->name, "touch") != NULL)) {
     ui.cur_item_type = ITEM_HAND;
     get_pointer_coords((GdkEvent *)event, ui.hand_refpt);
     ui.hand_refpt[0] += ui.cur_page->hoffset;
@@ -3839,7 +3847,7 @@ on_editFind_activate                   (GtkMenuItem     *menuitem,
   gtk_widget_show(w);
   findBar = EGG_FIND_BAR(w);
   gtk_widget_grab_focus (w);
-  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
+  //egg_find_bar_set_case_sensitive(findBar, TRUE);
 }
 
 
@@ -3863,6 +3871,11 @@ int find_pdf_matches(const char *st)
   int currPage;
   int nMatches = 0 ;
   int nPages = 0;
+  EggFindBar *findBar;
+  GtkWidget *w = GET_COMPONENT("findBar");
+  char temp[100];
+
+  findBar = EGG_FIND_BAR(w);
 
   assert(bgpdf.document != NULL);
 
@@ -3908,14 +3921,6 @@ int find_pdf_matches(const char *st)
         rect->y1 = height - rect->y2;
         rect->y2 = height - tmp;
 
-        /* display_rectangle */
-        printf("Page %d Rectangle location (%8.2f%%,%8.2f%%)(%8.2f%%,%8.2f%%)\n",  
-               currPage,
-               rect->x1/width,
-               rect->y1/height,
-               rect->x2/width,
-               rect->y2/height);
-        
         // we need to save the rectangle in a new list
         page_search_draw_match(page, rect) ;
 
@@ -3927,8 +3932,71 @@ int find_pdf_matches(const char *st)
       // save the results
     }
   } 
-  printf("Document has [%d] matches in %d pages\n", nMatches, nPages);
+
+  
   return nMatches;
+}
+
+gboolean
+on_find_bar_reset                       (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data)
+{
+  journal_reset_search_layer(&journal);
+}
+
+gboolean
+on_find_bar_search                     (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data)
+{
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  const char *st;
+  char temp[100];
+  int iCurrentPage;
+  int i, nPages;
+  int searchedPage;
+  int matches;
+  struct Page *pg;
+
+  gtk_widget_show(w);
+  findBar = EGG_FIND_BAR(w);
+  st = egg_find_bar_get_search_string(findBar);
+  if (strcmp(st, "") != 0) {
+#ifdef DEBUG
+    printf("PDF Searching for %s\n", st);
+#endif
+    
+    iCurrentPage = ui.pageno;
+    if (bgpdf.document != NULL) {
+      nPages = poppler_document_get_n_pages(bgpdf.document);
+      matches = find_pdf_matches(st);
+      ui.searchData.totalMatches = matches;
+
+      // we know need to add the layer to the document
+      if (matches) {
+        // does the current page does have a match, then find it
+        pg = ui.cur_page;
+        if (pg->searchLayer == NULL ||
+            pg->searchLayer->nitems == 0) {
+          // nothing in this page
+          on_find_bar_next(widget, event, user_data);
+        } else {
+          // update status string
+          if (pg->searchLayer != NULL)  {
+            sprintf(temp, SEARCH_STATUS_STR, pg->searchLayer->nitems , ui.searchData.totalMatches);
+            egg_find_bar_set_status_text(findBar, temp);
+          }
+        }
+      } else {
+      egg_find_bar_set_status_text(findBar, "No matches.");        
+      }
+    } else {
+      egg_find_bar_set_status_text(findBar, "Document has no pdf background. Nothing to search.");
+    }
+  }
+  return TRUE;
 }
 
 
@@ -3937,52 +4005,58 @@ on_find_bar_next                       (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data)
 {
-
+  int pgn = 0;
+  int firstPageNo = -1;
+  int firstPageMatches = 0;
+  GList *pagelist;
+  struct Page *pg;
+  char temp[100];
   GtkWidget *w = GET_COMPONENT("findBar");
   EggFindBar *findBar;
-  const char *st;
-  char temp[100];
-  int iCurrentPage;
-  int i, nPages;
-  int nextPage = -1;
-  int searchedPage;
-  int matches;
-
-  gtk_widget_show(w);
   findBar = EGG_FIND_BAR(w);
-  st = egg_find_bar_get_search_string(findBar);
-  if (strcmp(st, "") != 0) {
-    printf("Next Searching for %s\n", st);
 
-    iCurrentPage = ui.pageno;
-    if (bgpdf.document != NULL) {
-      nPages = poppler_document_get_n_pages(bgpdf.document);
-      printf("Doc has  %d (current page %d) pages\n", nPages, iCurrentPage+1);
-      matches = find_pdf_matches(st);
+  prepare_new_undo();
 
-      // we know need to add the layer to the document
-      if (matches) {
-        // we found something... render it
-        //        document_render_pdf_matches();
-      }
+  // we use the same algorithm as next/prev notable page.
+  // We start from page 0, in case we have to wrap around... 
+  // it is a fast check so it does not have a perfomance hit
 
-
-      sprintf(temp, "%d matches", matches);
-      if (nextPage != -1) {
-        // we have a next page.
-        printf("Jumping to page %d\n", nextPage+1);
-        do_switch_page(nextPage, TRUE, FALSE);
+  for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    
+    // if it is not the current page and there is a search layer and
+    // there is at least one item in it...
+    if ( pgn != ui.pageno &&
+         pg->searchLayer != NULL &&
+         pg->searchLayer->nitems > 0) {
+      // we have something in this page
+      // if it is a page after the current one, move there
+      if (pgn > ui.pageno) {
+        do_switch_page(pgn, TRUE, FALSE);
+        sprintf(temp, SEARCH_STATUS_STR, pg->searchLayer->nitems, ui.searchData.totalMatches);
         egg_find_bar_set_status_text(findBar, temp);
-      } else {
-        // Not present
-        egg_find_bar_set_status_text(findBar, "Not found");
+        return TRUE;
+      };
+      // if it is the first match in the document, save it in case we have to
+      // wrap around
+      if (firstPageNo == -1) {
+        // if it is the first one we see, then save it to 
+        // wrap-around if needed
+        firstPageNo = pgn;
+        firstPageMatches = pg->searchLayer->nitems;
       }
-    } else {
-      printf("Document has not pdf backgroun\n");
     }
+    pgn=pgn+1;
+  }
+        
+  // if we reach this point is because we have not found a "notable" page
+  // so we see if there is one before the current one
+  if (firstPageNo >= 0) {
+    do_switch_page(firstPageNo, TRUE, FALSE);
+    sprintf(temp, SEARCH_STATUS_STR, firstPageMatches, ui.searchData.totalMatches);
+    egg_find_bar_set_status_text(findBar, temp);
 
   }
-  //  egg_find_bar_set_case_sensitive(findBar, TRUE);
 
   return TRUE;
 }
@@ -3996,8 +4070,72 @@ on_find_bar_prev                       (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data)
 {
+  int pgn = 0;
+  int lastPageNo = -1;
+  int prevPageNo = -1;
+  int prevPageMatches = 0;
+  int lastPageMatches = 0;
+  char temp[100];
+  struct Page *pg;
+  GList *pagelist;
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  findBar = EGG_FIND_BAR(w);
 
   // this function has to be rewritten
+
+  prepare_new_undo();
+
+  // we use the same algorithm as next/prev notable page.
+  // We start from page 0, in case we have to wrap around... 
+  // it is a fast check so it does not have a perfomance hit
+
+  for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    
+    // if it is not the current page and there is a search layer and
+    // there is at least one item in it...
+    if ( pgn != ui.pageno &&
+         pg->searchLayer != NULL &&
+         pg->searchLayer->nitems > 0) {
+      // we have something in this page
+      // if it is a page after the current one, move there
+      if (pgn > ui.pageno) {
+        // Save this page, it might be the last one with an annotation.
+        lastPageMatches = pg->searchLayer->nitems;
+        lastPageNo = pgn;
+      }
+      if (pgn < ui.pageno) {
+        // Save this page, it might be the next 'previous' page.
+        prevPageMatches = pg->searchLayer->nitems;        
+        prevPageNo = pgn;
+      }
+      if (pgn == ui.pageno &&
+          prevPageNo >=0 ) {
+        // we are at the current page, and we found a page to jump to
+        // so we don't need to continue
+        break;
+      }
+    }
+    pgn=pgn+1;
+  }
+        
+  // if we reach this point is because we have not found a "notable" page
+  // so we see if there is one before the current one
+  if (prevPageNo >= 0)  {
+    do_switch_page(prevPageNo, TRUE, FALSE);
+    sprintf(temp, SEARCH_STATUS_STR, prevPageMatches, ui.searchData.totalMatches);
+  }
+  else if (lastPageNo >= 0) {
+    do_switch_page(lastPageNo, TRUE, FALSE);
+    sprintf(temp, SEARCH_STATUS_STR, lastPageMatches, ui.searchData.totalMatches);
+  }
+  else 
+    ; // don't do anything. there isn't a page to jump to
+
+
+  egg_find_bar_set_status_text(findBar, temp);
+
 
   return TRUE;
 }
