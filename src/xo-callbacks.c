@@ -969,7 +969,6 @@ on_editInPDFViewer_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   char temp[1000];
-  char *fileName;
   GError  *error = NULL;
   GtkWidget *dialog;
 
@@ -983,7 +982,7 @@ on_editInPDFViewer_activate                 (GtkMenuItem     *menuitem,
     gtk_widget_destroy(dialog);
     return; // don't do anything
   } else {
-    fileName = bgpdf.filename->s;
+
   }
   sprintf(temp, ui.pdf_viewer_cmd,  ui.pageno, bgpdf.filename->s);
   //  printf("%s\n", temp);
@@ -3996,13 +3995,18 @@ void
 on_editFind_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  GtkWidget *w = GET_COMPONENT("findBar");
-  EggFindBar *findBar;
+  //  GtkWidget *w = GET_COMPONENT("findBar");
+  //  EggFindBar *findBar;
+  
+  // I don't think this is executed any more
+
+  assert(0);
+  
   
   // Show the find widget...
-  gtk_widget_show(w);
-  findBar = EGG_FIND_BAR(w);
-  gtk_widget_grab_focus (w);
+//  gtk_widget_show(w);
+//  findBar = EGG_FIND_BAR(w);
+//  gtk_widget_grab_focus (w);
   //egg_find_bar_set_case_sensitive(findBar, TRUE);
 }
 
@@ -4027,11 +4031,7 @@ int find_pdf_matches(const char *st)
   int currPage;
   int nMatches = 0 ;
   int nPages = 0;
-  EggFindBar *findBar;
-  GtkWidget *w = GET_COMPONENT("findBar");
-  char temp[100];
 
-  findBar = EGG_FIND_BAR(w);
 
   assert(bgpdf.document != NULL);
 
@@ -4099,6 +4099,7 @@ on_find_bar_reset                       (GtkWidget       *widget,
                                         gpointer         user_data)
 {
   journal_reset_search_layer(&journal);
+  return TRUE;
 }
 
 gboolean
@@ -4110,9 +4111,6 @@ on_find_bar_search                     (GtkWidget       *widget,
   EggFindBar *findBar;
   const char *st;
   char temp[100];
-  int iCurrentPage;
-  int i, nPages;
-  int searchedPage;
   int matches;
   struct Page *pg;
 
@@ -4124,9 +4122,7 @@ on_find_bar_search                     (GtkWidget       *widget,
     printf("PDF Searching for %s\n", st);
 #endif
     
-    iCurrentPage = ui.pageno;
     if (bgpdf.document != NULL) {
-      nPages = poppler_document_get_n_pages(bgpdf.document);
       matches = find_pdf_matches(st);
       ui.searchData.totalMatches = matches;
 
