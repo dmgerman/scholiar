@@ -10,6 +10,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include "xournal.h"
 #include "xo-interface.h"
@@ -19,6 +20,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-shapes.h"
+#include "eggfindbar.h"
 
 // some global constants
 
@@ -40,15 +42,51 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
 
 // some manipulation functions
 
+void init_layer(struct Layer *l)
+{
+  l->items = NULL;
+  l->nitems = 0;
+}
+
+void init_search_layer(Page *pg)
+{
+
+  pg->searchLayer = g_new(struct Layer, 1);
+  assert(pg->searchLayer != NULL);
+  init_layer(pg->searchLayer);
+  if (pg->group != NULL)  {
+    pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
+    lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
+  }
+
+  // We need to add layer to  page
+}
+
+void journal_reset_search_layer(struct Journal *j)
+{
+  struct Page *pg;
+  GList *pagelist;
+
+  for (pagelist =j->pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    // easiest is to delete
+    delete_layer(pg->searchLayer);
+    // then recreate an empty one
+    init_search_layer(pg);
+  }
+}
+
+
 struct Page *new_page(struct Page *template)
 {
   struct Page *pg = (struct Page *) g_memdup(template, sizeof(struct Page));
   struct Layer *l = g_new(struct Layer, 1);
   
-  l->items = NULL;
-  l->nitems = 0;
+  init_layer(l);
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
+
+
   pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
   pg->bg->canvas_item = NULL;
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
@@ -62,6 +100,12 @@ struct Page *new_page(struct Page *template)
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
+  // We will probably not allow to search in non-pdf files...
+  // at least not for the time being
+
+  init_search_layer(pg);
+
+
   return pg;
 }
 
@@ -74,10 +118,14 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
   struct Page *pg = g_new(struct Page, 1);
   struct Layer *l = g_new(struct Layer, 1);
   
-  l->items = NULL;
-  l->nitems = 0;
+
+
+  init_layer(l);
+
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
+
+
   pg->bg = bg;
   pg->bg->canvas_item = NULL;
   pg->height = height;
@@ -86,9 +134,14 @@ struct Page *new_page_with_bg(struct Background *bg, double width, double height
       gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
   make_page_clipbox(pg);
   update_canvas_bg(pg);
+
   l->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       pg->group, gnome_canvas_group_get_type(), NULL);
   
+  init_search_layer(pg);
+
+  update_canvas_bg(pg);
+
   return pg;
 }
 
@@ -284,13 +337,18 @@ void delete_journal(struct Journal *j)
 void delete_page(struct Page *pg)
 {
   struct Layer *l;
-  
+
   while (pg->layers!=NULL) {
     l = (struct Layer *)pg->layers->data;
     l->group = NULL;
     delete_layer(l);
     pg->layers = g_list_delete_link(pg->layers, pg->layers);
   }
+
+  // Delete search layer, this frees the memory too
+  delete_layer(pg->searchLayer);
+  pg->searchLayer = NULL;
+
   if (pg->group!=NULL) gtk_object_destroy(GTK_OBJECT(pg->group));
               // this also destroys the background's canvas items
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
@@ -304,7 +362,8 @@ void delete_page(struct Page *pg)
 void delete_layer(struct Layer *l)
 {
   struct Item *item;
-  
+
+  if (l == NULL) return;
   while (l->items!=NULL) {
     item = (struct Item *)l->items->data;
     if (item->type == ITEM_STROKE && item->path != NULL) 
@@ -607,7 +666,7 @@ void make_canvas_items(void)
   struct Layer *l;
   struct Item *item;
   GList *pagelist, *layerlist, *itemlist;
-  
+
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
     pg = (struct Page *)pagelist->data;
     if (pg->group == NULL) {
@@ -627,6 +686,10 @@ void make_canvas_items(void)
           make_canvas_item_one(l->group, item);
       }
     }
+    // do the search layer
+    assert(pg->searchLayer != NULL);
+    pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
+    lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
   }
 }
 
@@ -2330,15 +2393,11 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     /* the event won't be processed since the hbox1 doesn't know what to do with it,
        so we might as well kill it and avoid confusing ourselves when it gets
        propagated further ... */
-
-  printf("Here I am 1\n");
     return TRUE;
   }
   if (w == GET_COMPONENT("spinPageNo")) {
     /* we let the spin button take care of itself, and don't steal its focus,
        unless the user presses Esc or Tab (in those cases we intervene) */
-  printf("Here I am 2\n");
-
     if (ev->type != GDK_KEY_PRESS) return FALSE;
     if (ev->key.keyval == GDK_Escape) 
        gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), ui.pageno+1); // abort
@@ -2348,7 +2407,6 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
 
   if (gtk_widget_is_ancestor(w, GET_COMPONENT("findBar"))) {
     // are we inside the findbar... then do not still focus
-    printf("Inside the findbar\n");
     return FALSE;
   }
   // otherwise, we want to make sure the canvas or text item gets focus back...
@@ -2357,6 +2415,16 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
   reset_focus();  
   return FALSE;
 }
+
+void reset_find_bar(void)
+{
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  findBar = EGG_FIND_BAR(w);
+  egg_find_bar_set_search_string(findBar, "");
+  egg_find_bar_set_status_text(findBar, NULL);
+}
+
 
 void install_focus_hooks(GtkWidget *w, gpointer data)
 {
@@ -2612,3 +2680,98 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
   wrapper_copy_cairo_surface_to_pixbuf (surface, pixbuf);
   cairo_surface_destroy (surface);
 }
+
+void page_search_draw_match(Page *pg, PopplerRectangle * rect) 
+{
+  //gnome_canvas_item_new(ui.cur_layer->group,
+  Layer *searchLayer = pg->searchLayer;
+
+  struct Item * searchItem = (struct Item *)g_malloc(sizeof(*searchItem));
+
+  assert(searchLayer != NULL);
+
+  searchItem->type = ITEM_SELECTRECT;
+  searchItem->path = NULL;
+
+  searchItem->canvas_item = gnome_canvas_item_new(searchLayer->group,
+      gnome_canvas_rect_get_type(), "width-pixels", 2, 
+      "fill-color-rgba", 0xffff0080,
+      "x1", rect->x1, "x2", rect->x2, "y1", rect->y1, "y2", rect->y2, NULL);
+  searchLayer->items = g_list_append(searchLayer->items, searchItem);
+  searchLayer->nitems++;
+}
+
+
+
+void _search_page_set(int currPage, GList *matches)
+{
+  
+}
+
+void page_search_layer_set(Page *pg, GList *matches)
+{
+  // add the given matches to the current page
+  Layer *searchLayer = pg->searchLayer;
+  GList *l;
+
+  // make sure the current layer is empty
+  if (searchLayer != NULL)
+    delete_layer(searchLayer);
+  
+  searchLayer = g_new(struct Layer, 1);
+  searchLayer->items = NULL;
+  searchLayer->nitems = 0;
+  searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
+
+  // add the layer to the canvas (I don't understand the semantics
+
+  lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(searchLayer->group), pg->bg->canvas_item);      
+
+  for (l = matches; l && l->data; l = g_list_next (l)) {
+    PopplerRectangle *rect = (PopplerRectangle *)l->data;
+    page_search_draw_match(pg, rect);
+  }
+}
+
+
+// Initialize the PDF search  data structures
+void ui_search_term_init(void)
+{
+  ui.searchData.totalMatches = 0;
+  ui.searchData.pagesWithMatches = 0;
+  ui.searchData.term = NULL;
+}
+
+// Free any memory allocated by the searching
+void ui_search_term_release(void)
+{
+  // write code to release searching data
+  if (ui.searchData.term != NULL) {
+    g_free(ui.searchData.term);
+    ui.searchData.term = NULL;
+  }
+  ui.searchData.totalMatches = 0;
+  ui.searchData.pagesWithMatches = 0;
+}
+
+void ui_search_term_set(const char *st)
+{
+  if (ui.searchData.term != NULL) {
+    g_free(ui.searchData.term);
+  }
+  ui.searchData.term = g_strdup(st);
+}
+
+
+//void ui_search_print(void) 
+//{
+//  if (ui.searchData.term == NULL)
+//    return;
+//
+//  printf("Search term [%s]. Found [%d] times in [%d] pages \n", 
+//         ui.searchData.term, 
+//         ui.searchData.totalMatches, 
+//         ui.searchData.pagesWithMatches );
+//  
+//}
+//

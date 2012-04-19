@@ -59,6 +59,18 @@ typedef struct Refstring {
    and a background. Each layer is a list of items, from bottom to top.
 */
 
+// typedef struct pageMatchesType {
+//   int pageNo;
+//   int count;
+//   GList *matches;
+// } pageMatchesType;
+// 
+typedef struct searchDataType {
+  int totalMatches;
+  int pagesWithMatches;
+  gchar *term;
+} searchDataType;
+
 typedef struct Background {
   int type;
   GnomeCanvasItem *canvas_item;
@@ -205,6 +217,7 @@ typedef struct Layer {
 typedef struct Page {
   GList *layers; // the layers on the page
   int nlayers;
+  Layer  *searchLayer;
   double height, width;
   double hoffset, voffset; // offsets of canvas group rel. to canvas root
   struct Background *bg;
@@ -215,6 +228,7 @@ typedef struct Journal {
   GList *pages;  // the pages in the journal
   int npages;
   int last_attach_no; // for naming of attached backgrounds
+  char *searchTerm;
 } Journal;
 
 typedef struct Selection {
@@ -286,6 +300,7 @@ typedef struct UIData {
   int zoom_step_increment; // the increment in the zoom dialog box
   double zoom_step_factor; // the multiplicative factor in zoom in/out
   double startup_zoom;
+
   gboolean autoload_pdf_xoj; // automatically load the xoj if it exists when opining a pdf
   gboolean autoexport_pdf; // automatically export to PDF on save
   gboolean showInterface; // show interface in normal mode
@@ -310,7 +325,9 @@ typedef struct UIData {
 #if GTK_CHECK_VERSION(2,10,0)
   GtkPrintSettings *print_settings;
 #endif
+
   gboolean poppler_force_cairo; // force poppler to use cairo
+  searchDataType searchData;
 } UIData;
 
 #define BRUSH_LINKED 0

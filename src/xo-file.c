@@ -2,6 +2,8 @@
 #  include <config.h>
 #endif
 
+#include <assert.h>
+
 #include <signal.h>
 #include <memory.h>
 #include <string.h>
@@ -29,6 +31,7 @@
 #include "xo-file.h"
 #include "xo-paint.h"
 #include "xo-print.h"
+#include "xo-shapes.h"
 
 const char *tool_names[NUM_TOOLS] = {"pen", "eraser", "highlighter", "text", "", "selectrect", "vertspace", "hand"};
 const char *color_names[COLOR_MAX] = {"black", "blue", "red", "green",
@@ -43,6 +46,8 @@ int PDFTOPPM_PRINTING_DPI, GS_BITMAP_DPI;
 
 #define DEFAULT_PDF_VIEWER "evince -i %d '%s' "
 
+
+
 // creates a new empty journal
 
 void new_journal(void)
@@ -50,6 +55,7 @@ void new_journal(void)
   journal.npages = 1;
   journal.pages = g_list_append(NULL, new_page(&ui.default_page));
   journal.last_attach_no = 0;
+
   ui.pageno = 0;
   ui.layerno = 0;
   ui.cur_page = (struct Page *) journal.pages->data;
@@ -252,6 +258,7 @@ gboolean close_journal(void)
   clear_undo_stack();
 
   shutdown_bgpdf();
+  
   delete_journal(&journal);
   
   return TRUE;
@@ -289,7 +296,6 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   char *ptr, *tmpptr;
   struct Background *tmpbg;
   char *tmpbg_filename;
-  gdouble val;
   GtkWidget *dialog;
   if (!strcmp(element_name, "title") || !strcmp(element_name, "xournal")) {  
     if (tmpPage != NULL) {
@@ -326,6 +332,9 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     tmpPage->bg->canvas_item = NULL;
     tmpPage->bg->pixbuf = NULL;
     tmpPage->bg->filename = NULL;
+    // initialize the search layer
+    init_search_layer(tmpPage);
+
     tmpJournal.pages = g_list_append(tmpJournal.pages, tmpPage);
     tmpJournal.npages++;
     // scan for height and width attributes
@@ -475,8 +484,10 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       return;
     }
     tmpLayer = (struct Layer *)g_malloc(sizeof(struct Layer));
-    tmpLayer->items = NULL;
-    tmpLayer->nitems = 0;
+
+    init_layer(tmpLayer);
+    //    tmpLayer->items = NULL;
+    //    tmpLayer->nitems = 0;
     tmpLayer->group = NULL;
     tmpPage->layers = g_list_append(tmpPage->layers, tmpLayer);
     tmpPage->nlayers++;
@@ -818,6 +829,9 @@ gboolean open_journal(char *filename)
   gboolean maybe_pdf;
   page_to_load = -1; //by NIKO
   
+
+  // i wished this code would be documented a bit more
+
   tmpfn = g_strdup_printf("%s.xoj", filename);
   if (ui.autoload_pdf_xoj && g_file_test(tmpfn, G_FILE_TEST_EXISTS) &&
       (g_str_has_suffix(filename, ".pdf") || g_str_has_suffix(filename, ".PDF")))
@@ -903,7 +917,7 @@ gboolean open_journal(char *filename)
   ui.saved = TRUE; // force close_journal() to do its job
   close_journal();
   g_memmove(&journal, &tmpJournal, sizeof(struct Journal));
-  
+
   // if we need to initialize a fresh pdf loader
   if (tmpBg_pdf!=NULL) { 
     while (bgpdf.status != STATUS_NOT_INIT) gtk_main_iteration();
@@ -920,7 +934,6 @@ gboolean open_journal(char *filename)
       g_free(p); g_free(q);
       valid = init_bgpdf(tmpfn2, FALSE, tmpBg_pdf->file_domain);
       if (valid) {  // change the file name...
-        printf("substituting %s -> %s\n", tmpfn, tmpfn2);
         g_free(tmpBg_pdf->filename->s);
         tmpBg_pdf->filename->s = tmpfn2;
       }
@@ -956,6 +969,9 @@ gboolean open_journal(char *filename)
   ui.zoom = ui.startup_zoom;
   update_file_name(g_strdup(filename));
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
+
+  reset_find_bar();
+
   make_canvas_items();
   update_page_stuff();
   rescale_bg_pixmaps(); // this requests the PDF pages if need be
@@ -965,6 +981,7 @@ gboolean open_journal(char *filename)
   	do_switch_page(page_to_load, TRUE, FALSE);
   }
   
+
   return TRUE;
 }
 
@@ -1207,6 +1224,10 @@ gboolean bgpdf_scheduler_callback(gpointer data)
   return FALSE; // we're done
 }
 
+
+
+
+
 /* make a request */
 
 gboolean add_bgpdf_request(int pageno, double zoom)
@@ -1322,6 +1343,7 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
   // create pages with correct sizes if requested
   n_pages = poppler_document_get_n_pages(bgpdf.document);
   for (i=1; i<=n_pages; i++) {
+    printf("Creating page %d [%d]\n", i, n_pages);
     pdfpage = poppler_document_get_page(bgpdf.document, i-1);
     if (!pdfpage) continue;
     if (journal.npages < i) {
@@ -1351,6 +1373,7 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
       update_canvas_bg(pg);
     }
   }
+
   update_page_stuff();
   rescale_bg_pixmaps(); // this actually requests the pages !!
   return TRUE;
@@ -1436,13 +1459,18 @@ void new_mru_entry(char *name)
   int i, j;
   
   for (i=0;i<MRU_SIZE;i++) 
-    if (ui.mru[i]!=NULL && !strcmp(ui.mru[i], name)) {
+    // check if it is in the list of previously seen
+    if (ui.mru[i]!=NULL && (strcmp(ui.mru[i], name) ==0)) {
+      // if it is, delete, and shift the rest
       g_free(ui.mru[i]);
       for (j=i+1; j<MRU_SIZE; j++) ui.mru[j-1] = ui.mru[j];
       ui.mru[MRU_SIZE-1]=NULL;
     }
+  // if the last one is taken, delete it
   if (ui.mru[MRU_SIZE-1]!=NULL) g_free(ui.mru[MRU_SIZE-1]);
+  // shift them one down
   for (j=MRU_SIZE-1; j>=1; j--) ui.mru[j] = ui.mru[j-1];
+  // make the new one this one
   ui.mru[0] = g_strdup(name);
   update_mru_menu();
 }
@@ -1558,6 +1586,7 @@ void init_config_default(void)
 #if GTK_CHECK_VERSION(2,10,0)
   ui.print_settings = NULL;
 #endif
+  ui_search_term_init();
   
 }
 
@@ -1683,7 +1712,6 @@ void save_config_to_file(void)
   update_keyval("general", "show_interface_fullscreen",
     _(" show interface in full screen mode (true/false)"),
     g_strdup(ui.showInterfaceFullscreen?"true":"false"));
-
   update_keyval("general", "touch_screen_as_hand_tool",
     _(" always use the touch screen as the hand tool (true/false) requires stylus tool to draw"),
     g_strdup(ui.touch_as_handtool?"true":"false"));
@@ -2070,7 +2098,6 @@ void load_config_from_file(void)
   parse_keyval_vorderlist("general", "interface_fullscreen", ui.vertical_order[1]);
   parse_keyval_boolean("general", "show_interface", &ui.showInterface);
   parse_keyval_boolean("general", "show_interface_fullscreen", &ui.showInterfaceFullscreen);
-
   parse_keyval_boolean("general", "touch_screen_as_hand_tool", &ui.touch_as_handtool);
   parse_keyval_boolean("general", "interface_lefthanded", &ui.left_handed);
 

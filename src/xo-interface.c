@@ -19,6 +19,9 @@
 #include "xo-interface.h"
 #include "xo-support.h"
 
+#define __FIND_BAR_ITSELF__
+
+
 #define GLADE_HOOKUP_OBJECT(component,widget,name) \
   g_object_set_data_full (G_OBJECT (component), name, \
     gtk_widget_ref (widget), (GDestroyNotify) gtk_widget_unref)
@@ -2037,10 +2040,12 @@ create_winMain (void)
   gtk_widget_show (scrolledwindowMain);
   gtk_box_pack_start (GTK_BOX (vboxMain), scrolledwindowMain, TRUE, TRUE, 0);
 
+#ifdef __FIND_BAR_ITSELF__
   findBar = egg_find_bar_new1 ("findBar", "", "", 0, 0);
   gtk_box_pack_start (GTK_BOX (vboxMain), findBar, FALSE, TRUE, 0);
   GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_DEFAULT);
+#endif
 
   hbox1 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox1);
@@ -2073,6 +2078,13 @@ create_winMain (void)
   comboLayer = gtk_combo_box_new_text ();
   gtk_widget_show (comboLayer);
   gtk_box_pack_start (GTK_BOX (hbox1), comboLayer, FALSE, TRUE, 4);
+
+#ifndef __FIND_BAR_ITSELF__
+  findBar = egg_find_bar_new1 ("findBar", "", "", 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox1), findBar, TRUE, TRUE, 0);
+  GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_FOCUS);
+  GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_DEFAULT);
+#endif
 
   statusbar = gtk_statusbar_new ();
   gtk_widget_show (statusbar);
@@ -2676,6 +2688,12 @@ create_winMain (void)
                     NULL);
   g_signal_connect ((gpointer) fontButton, "font_set",
                     G_CALLBACK (on_fontButton_font_set),
+                    NULL);
+  g_signal_connect ((gpointer) findBar, "reset",
+                    G_CALLBACK (on_find_bar_reset),
+                    NULL);
+  g_signal_connect ((gpointer) findBar, "search",
+                    G_CALLBACK (on_find_bar_search),
                     NULL);
   g_signal_connect ((gpointer) findBar, "next",
                     G_CALLBACK (on_find_bar_next),

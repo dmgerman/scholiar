@@ -36,3 +36,6 @@ void save_mru_list(void);
 void init_config_default(void);
 void load_config_from_file(void);
 void save_config_to_file(void);
+
+
+

@@ -103,6 +103,7 @@ gboolean filter_extended_events(GtkWidget *widget, GdkEvent *event, gpointer use
 
 // help with focus
 gboolean handle_activate_signal(GtkWidget *widget, gpointer user_data);
+
 void unset_flags(GtkWidget *w, gpointer flag);
 void set_flags(GtkWidget *w, gpointer flag);
 
@@ -139,3 +140,16 @@ static void       draw_rubberband                            (GtkWidget         
 
 void encode_uri(gchar *encoded_uri, gint bufsize, const gchar *uri,int len);
 
+void unset_flags(GtkWidget *w, gpointer flag);
+void set_flags(GtkWidget *w, gpointer flag);
+
+
+void ui_search_term_init(void);
+void ui_search_term_release(void);
+void ui_search_term_set(const char *st);
+void ui_search_print(void) ;
+
+
+void page_search_draw_match(Page *pg, PopplerRectangle * rect) ;
+void journal_reset_search_layer(struct Journal *j);
+void reset_find_bar(void);

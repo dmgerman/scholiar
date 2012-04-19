@@ -46,6 +46,8 @@ struct _EggFindBarClass
 {
   GtkToolbarClass parent_class;
 
+  void (* search)   (EggFindBar *find_bar);
+  void (* reset)    (EggFindBar *find_bar);
   void (* next)	    (EggFindBar *find_bar);
   void (* previous) (EggFindBar *find_bar);
   void (* close)    (EggFindBar *find_bar);
