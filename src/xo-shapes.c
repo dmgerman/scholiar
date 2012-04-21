@@ -310,7 +310,7 @@ struct Item *insert_recognized_curpath(void)
   struct UndoErasureData *erasure;
 
   erasure = (struct UndoErasureData *)(undo->erasurelist->data);
-  item = g_new(struct Item, 1);
+  item = g_new0(struct Item, 1);
   item->type = ITEM_STROKE;
   g_memmove(&(item->brush), &(erasure->item->brush), sizeof(struct Brush));
   item->brush.variable_width = FALSE;

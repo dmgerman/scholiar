@@ -3,8 +3,8 @@
 
 #define IMG_INDEX_MAX_SIZE 11
 
-gchar* encode_embedded_image(GdkPixbuf* image);
-GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len);
+gchar* encode_embedded_image(GdkPixbuf* image, gchar **);
+GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len, gchar **);
 struct ImgSerContext serialize_image(GdkPixbuf *image);
 GdkPixbuf* deserialize_image(struct ImgSerContext buffer_ctxt);
 GdkPixbuf* get_image_scaled_maybe(struct Item *item, double scale);

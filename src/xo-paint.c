@@ -264,7 +264,7 @@ void subdivide_cur_path()
 void create_new_stroke(GdkEvent *event)
 {
   ui.cur_item_type = ITEM_STROKE;
-  ui.cur_item = g_new(struct Item, 1);
+  ui.cur_item = g_new0(struct Item, 1);
   ui.cur_item->type = ITEM_STROKE;
   g_memmove(&(ui.cur_item->brush), ui.cur_brush, sizeof(struct Brush));
   ui.cur_item->path = &ui.cur_path;
@@ -689,7 +689,7 @@ void start_text(GdkEvent *event, struct Item *item)
   ui.cur_item_type = ITEM_TEXT;
 
   if (item==NULL) {
-    item = g_new(struct Item, 1);
+    item = g_new0(struct Item, 1);
     item->text = NULL;
     item->canvas_item = NULL;
     item->bbox.left = pt[0];

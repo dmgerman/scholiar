@@ -6,6 +6,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
+#include <openssl/sha.h>
 #include "xournal.h"
 #include "xo-callbacks.h"
 #include "xo-interface.h"
@@ -16,26 +17,35 @@
 #include "xo-clipboard.h"
 #include "xo-selection.h"
 
-gchar* encode_embedded_image(GdkPixbuf* image)
+gchar* encode_embedded_image(GdkPixbuf* image, gchar **sha)
 {
   char *base64_data;
+  char buffer[20];
+
   struct ImgSerContext isc;
   if (!image) return g_strndup("",0); // returns empty string on invalid input
   isc = serialize_image(image);
   base64_data = g_base64_encode(isc.image_data, isc.stream_length);
+
+  SHA1(isc.image_data, isc.stream_length, buffer);
+  *sha = g_base64_encode(buffer, 20);
+
 #ifdef IMAGE_DEBUG
   printf("Converted stream of length %d to base64 str of length %d\n",(int)isc.stream_length,(int)strlen(base64_data));
+  printf("Sha [%s]\n", *sha);
 #endif
   g_free(isc.image_data);
   return base64_data;
 }
 
-GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len)
+GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len, gchar **sha)
 {
   struct ImgSerContext isc;
   gsize png_buflen;
   GdkPixbuf *image;
   gchar* base64_str = g_malloc(text_len + 1);
+  char buffer[20];
+
   g_memmove(base64_str, text, text_len);
   base64_str[text_len] = '\0';
   isc.image_data = g_base64_decode(base64_str, &png_buflen);
@@ -45,6 +55,9 @@ GdkPixbuf* decode_embedded_image(const gchar *text, gsize text_len)
 #endif
   image = deserialize_image(isc);
   g_free(base64_str);
+  SHA1(isc.image_data, isc.stream_length, buffer);
+  *sha = g_base64_encode(buffer, 20);
+
   g_free(isc.image_data);
   return image;
 }
@@ -129,10 +142,11 @@ void import_img_as_clipped_item()
     ui.cur_item_type = ITEM_NONE;
     return;
   }
-  item = g_new(struct Item, 1);
+  item = g_new0(struct Item, 1);
   item->type = ITEM_IMAGE;
   item->image_pasted = TRUE;
   item->image_path = NULL;
+  item->imageSha = NULL;
   item->image_id = journal.image_id_counter++;
   set_image_path_name(item, paste_fname_base, item->image_id);
   item->canvas_item = NULL;
@@ -174,6 +188,7 @@ void import_img_as_clipped_item()
   put_image_data_in_buffer(&isc, &p);
 
   g_object_unref(item->image); // image_scaled is null, so no need to unref
+  g_free(item->imageSha);
   g_free(item->image_path);
   g_free(item);
    
@@ -249,10 +264,11 @@ void insert_image(GdkEvent *event, struct Item *item)
   }
 	  
   if (item==NULL) {
-    item = g_new(struct Item, 1);
+    item = g_new0(struct Item, 1);
     item->type = ITEM_IMAGE;
     item->image_id = journal.image_id_counter++;
     item->image_path = NULL;
+    item->imageSha = NULL;
     set_image_path_name(item, insert_fname_base, item->image_id);
     item->canvas_item = NULL;
     item->bbox.left = pt[0];

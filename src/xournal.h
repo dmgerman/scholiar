@@ -203,6 +203,7 @@ typedef struct Item {
   guint stream_len;
   GdkPixbuf* image;  // original image for print and resizing quality
   GdkPixbuf* image_scaled; // scaled pixbuf for display
+  gchar *imageSha; // currently used only during reading of the file, but could be further extended to save memory
 } Item;
 
 // item type values for Item.type, UndoItem.type, ui.cur_item_type ...

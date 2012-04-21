@@ -146,6 +146,34 @@ void prepare_new_undo(void)
   clear_redo_stack();
 }
 
+void item_free_contents(struct Item *item) 
+{
+  if (item->type == ITEM_STROKE) {
+    if (item->path != NULL) {
+      gnome_canvas_points_free(item->path);
+    }
+    if (item->brush.variable_width) 
+      g_free(item->widths);
+  } else if (item->type == ITEM_TEXT) {
+    if (item->text != NULL) 
+      g_free(item->text);
+    if (item->font_name != NULL)
+      g_free(item->font_name);
+  } else if (item->type == ITEM_IMAGE) {
+    if (item->image_path != NULL)
+      g_free(item->image_path);
+    if (item->image != NULL)
+      g_object_unref(item->image);
+    if (item->image_scaled)
+      g_object_unref(item->image_scaled);
+    if (item->image_scaled)
+      g_free(item->imageSha);
+  } else {
+    fprintf(stderr, "Not implemented yet [item_free_contents");
+    assert(0);
+  }
+}
+
 void clear_redo_stack(void)
 {
   struct UndoItem *u;  
@@ -159,21 +187,10 @@ void clear_redo_stack(void)
      it's unsafe to refer to any data from previous history steps */
   
   while (redo!=NULL) {
-    if (redo->type == ITEM_STROKE) {
-      gnome_canvas_points_free(redo->item->path);
-      if (redo->item->brush.variable_width) g_free(redo->item->widths);
-      g_free(redo->item);
-      /* the strokes are unmapped, so there are no associated canvas items */
-    }
-    else if (redo->type == ITEM_TEXT) {
-      g_free(redo->item->text);
-      g_free(redo->item->font_name);
-      g_free(redo->item);
-    }
-    else if (redo->type == ITEM_IMAGE) {
-      g_free(redo->item->image_path);
-      g_object_unref(redo->item->image);
-      g_object_unref(redo->item->image_scaled);
+    if (redo->type == ITEM_STROKE ||
+        redo->type == ITEM_TEXT ||
+        redo->type == ITEM_IMAGE ) {
+      item_free_contents(redo->item);
       g_free(redo->item);
     }
     else if (redo->type == ITEM_ERASURE || redo->type == ITEM_RECOGNIZER) {
@@ -246,15 +263,10 @@ void clear_undo_stack(void)
     if (undo->type == ITEM_ERASURE || undo->type == ITEM_RECOGNIZER) {
       for (list = undo->erasurelist; list!=NULL; list=list->next) {
         erasure = (struct UndoErasureData *)list->data;
-        if (erasure->item->type == ITEM_STROKE) {
-          gnome_canvas_points_free(erasure->item->path);
-          if (erasure->item->brush.variable_width) g_free(erasure->item->widths);
-        }
-        if (erasure->item->type == ITEM_TEXT)
-          { g_free(erasure->item->text); g_free(erasure->item->font_name); }
-	if (erasure->item->type == ITEM_IMAGE)
-          { g_free(erasure->item->image_path); g_free(erasure->item->image); g_free(erasure->item->image_scaled);}
+
+        item_free_contents(erasure->item);
         g_free(erasure->item);
+
         g_list_free(erasure->replacement_items);
         g_free(erasure);
       }
@@ -338,16 +350,7 @@ void delete_layer(struct Layer *l)
 
   while (l->items!=NULL) {
     item = (struct Item *)l->items->data;
-    if (item->type == ITEM_STROKE && item->path != NULL) 
-      gnome_canvas_points_free(item->path);
-    if (item->type == ITEM_TEXT) {
-      g_free(item->font_name); g_free(item->text);
-    }
-    if (item->type == ITEM_IMAGE) {
-      g_free(item->image_path);
-      if(item->image!=item->image_scaled) g_object_unref(item->image);
-      g_object_unref(item->image_scaled);
-    }
+    item_free_contents(item);
     // don't need to delete the canvas_item, as it's part of the group destroyed below
     g_free(item);
     l->items = g_list_delete_link(l->items, l->items);

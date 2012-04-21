@@ -53,6 +53,8 @@ int PDFTOPPM_PRINTING_DPI, GS_BITMAP_DPI;
 
 #define DEFAULT_PDF_VIEWER "evince -i %d '%s' "
 
+GList* listImagesShas = NULL; // used to keep a list of shas written/read
+gboolean isImageRefId  = 0;
 
 
 // creates a new empty journal
@@ -88,6 +90,11 @@ void chk_attach_names(void)
   }
 }
 
+int image_match_sha(struct Item *a, struct Item *b)
+{
+  return strcmp(a->imageSha, b->imageSha);
+}
+
 // saves the journal to a file: returns true on success, false on error
 
 gboolean save_journal(const char *filename)
@@ -109,12 +116,18 @@ gboolean save_journal(const char *filename)
   GList *pagelist, *layerlist, *itemlist, *list;
   GtkWidget *dialog;
   GError *error = NULL;
+  gchar *shaImage = NULL;
   
+  GList *writenListImagesShas = NULL; // used to keep a list of shas written
+
   f = gzopen(filename, "wb");
   if (f==NULL) return FALSE;
   chk_attach_names();
 
   setlocale(LC_NUMERIC, "C");
+
+
+
   
   gzprintf(f, "<?xml version=\"1.0\" standalone=\"no\"?>\n"
      "<xournal version=\"" VERSION "\">\n"
@@ -269,14 +282,36 @@ gboolean save_journal(const char *filename)
 	    g_free(tmpfn_full_path);
 	    g_free(tmpfn_full_path2);
 	  } else { // image embedding
-	    tmpstr = encode_embedded_image(item->image);
+	    tmpstr = encode_embedded_image(item->image, &shaImage);
+            // we have to free shaImage
 	  }
+
+
 	  gzprintf(f, "<image left=\"%.2f\" top=\"%.2f\" right=\"%.2f\" bottom=\"%.2f\"", item->bbox.left, item->bbox.top, item->bbox.right, item->bbox.bottom);
-	  if (ui.embed_images) 
-	    gzprintf(f, " embedded=\"TRUE\"");
-	  gzprintf(f, ">"); 
-	  gzputs(f, tmpstr);
-	  gzprintf(f, "</image>\n");
+	  if (ui.embed_images)  {
+            // is is already output?
+            GList *foundSha = g_list_find_custom (writenListImagesShas, shaImage, (GCompareFunc)strcmp);
+            if (foundSha) {
+#ifdef IMAGE_DEBUG
+              printf("Foundndddd previously written image [%s]\n", (char*) foundSha->data);
+#endif
+              gzprintf(f, " embedded=\"TRUE\" refid=\"%s\"/>n", shaImage);
+              // we must release the memory of shaImage
+              // release the memory of the 
+              free(shaImage);
+            } else {
+              // the memory of the sha goes into the list... it should be released later
+              writenListImagesShas = g_list_append(writenListImagesShas, shaImage);
+              gzprintf(f, " embedded=\"TRUE\" id=\"%s\">", shaImage);
+              // we must output the data in this case
+              gzputs(f, tmpstr);
+              gzprintf(f, "</image>\n");
+            }
+          } else {
+            gzprintf(f, ">"); 
+            gzputs(f, tmpstr);
+            gzprintf(f, "</image>\n");
+          }
           g_free(tmpstr);
         }
       }
@@ -287,6 +322,8 @@ gboolean save_journal(const char *filename)
   gzprintf(f, "</xournal>\n");
   gzclose(f);
   setlocale(LC_NUMERIC, "");
+
+  g_list_free_full(writenListImagesShas, g_free);
 
   // if we want to autoexport, this is the place to do it
   if (ui.autoexport_pdf && !ui.this_is_autosave) {
@@ -547,7 +584,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       *error = xoj_invalid();
       return;
     }
-    tmpItem = (struct Item *)g_malloc(sizeof(struct Item));
+    tmpItem = g_new0(struct Item, 1);
     tmpItem->type = ITEM_STROKE;
     tmpItem->path = NULL;
     tmpItem->canvas_item = NULL;
@@ -686,17 +723,22 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       *error = xoj_invalid();
       return;
     }
-    tmpItem = (struct Item *)g_malloc0(sizeof(struct Item));
+    tmpItem = g_new0(struct Item, 1);
     tmpItem->type = ITEM_IMAGE;
     tmpItem->canvas_item = NULL;
     tmpItem->image=NULL;
     tmpItem->image_scaled=NULL;
     tmpItem->image_embedded = FALSE;
+    tmpItem->imageSha = NULL;
     tmpLayer->items = g_list_append(tmpLayer->items, tmpItem);
     tmpLayer->nitems++;
+    isImageRefId = 0;
     // scan for x, y
     has_attr = 0;
     while (*attribute_names!=NULL) {
+#ifdef IMAGE_DEBUG
+      printf("attributes image [%s]\n", attribute_names[0]);
+#endif
       if (!strcmp(*attribute_names, "left")) {
         if (has_attr & 1) *error = xoj_invalid();
         cleanup_numeric((gchar *)*attribute_values);
@@ -732,12 +774,43 @@ void xoj_parser_start_element(GMarkupParseContext *context,
 #endif
 	  tmpItem->image_embedded = TRUE;
 	}
+      } else if (!strcmp(*attribute_names, "refid")) {
+        // refids refer to images that have been previously read
+        // our writting algorithm guarantees that redifs are always referrring to 
+        // previously written images
+
+        // check that we have not seen it
+        if (has_attr & 16) *error = xoj_invalid();
+        isImageRefId = 1;
+#ifdef IMAGE_DEBUG
+        printf("REFID Attribute value [%s]\n", attribute_values[0]);
+#endif
+        tmpItem->imageSha = g_strdup(attribute_values[0]);
+        has_attr |= 16;
+        ;
+      } else if (!strcmp(*attribute_names, "id")) {
+        if (has_attr & 16) *error = xoj_invalid();
+#ifdef IMAGE_DEBUG
+        printf("ID: Attribute value [%s]\n", attribute_values[0]);
+#endif
+        tmpItem->imageSha = g_strdup(attribute_values[0]);
+        has_attr |= 16;
       }
       else *error = xoj_invalid();
       attribute_names++;
       attribute_values++;
     }
-    if (has_attr!=15) *error = xoj_invalid();
+    // if it is refid it has to have all parms
+    // but for backwards compatibility we allow not having the id
+    if (isImageRefId && has_attr!=31) {
+      fprintf(stderr, "Image element did not have all the expected parameters\n");
+      *error = xoj_invalid();
+    }
+    if (!isImageRefId && (has_attr & 15 != 15)) {
+      fprintf(stderr, "Image element did not have all the expected parameters\n");
+      *error = xoj_invalid();
+    }
+
   }
 }
 
@@ -775,13 +848,47 @@ void xoj_parser_end_element(GMarkupParseContext *context,
     tmpItem = NULL;
   }
   if (!strcmp(element_name, "image")) {
-    if (tmpItem == NULL) {
+
+#ifdef IMAGE_DEBUG
+    printf("Scanning the end of the image tag [%s]\n",  tmpItem->imageSha);
+#endif
+    // find the sha in the list of 
+
+    if (tmpItem == NULL || tmpItem->imageSha == NULL) {
       *error = xoj_invalid();
       return;
     }
-    #ifdef IMAGE_DEBUG
-	  printf("finished loading image tag\n");
-	  #endif
+
+
+    // this is an image with id
+    //put in the list
+    if (isImageRefId) {
+      
+      GList *foundSha = g_list_find_custom (listImagesShas, tmpItem, (GCompareFunc)image_match_sha);
+      if (foundSha == NULL) {
+        fprintf(stderr, "Reference to image id [%s] cannot be resolved\n", tmpItem->imageSha);
+        *error = xoj_invalid();
+        return;
+      } 
+      struct Item *foundItem = (struct Item*) foundSha->data;
+#ifdef IMAGE_DEBUG
+      printf("Found image %s", foundItem->imageSha);
+#endif
+      // now allocate the iamge
+      assert(tmpItem->image_path == NULL);
+      tmpItem->image_path = g_strndup("",0);
+      assert(tmpItem->image == NULL);
+      tmpItem->image = gdk_pixbuf_copy(foundItem->image);
+#ifdef IMAGE_DEBUG
+      printf("Allocated\n");
+#endif
+    } else {
+      listImagesShas = g_list_append(listImagesShas, tmpItem);
+    }
+    
+#ifdef IMAGE_DEBUG
+    printf("finished loading image tag\n");
+#endif
     tmpItem = NULL;
   }
 }
@@ -793,6 +900,7 @@ void xoj_parser_text(GMarkupParseContext *context,
   const gchar *element_name, *ptr;
   int n;
   char *buf; int i;
+  gchar *sha;
 
   element_name = g_markup_parse_context_get_element(context);
   if (element_name == NULL) return;
@@ -831,9 +939,25 @@ void xoj_parser_text(GMarkupParseContext *context,
     tmpItem->text[text_len]=0;
   }
   if (!strcmp(element_name, "image")) {
+#ifdef IMAGE_DEBUG
+    printf("Scanning image body\n");
+#endif
     if (tmpItem->image_embedded) {
       tmpItem->image_path = g_strndup("",0); // make image_path a valid string
-      tmpItem->image = decode_embedded_image(text, text_len);
+      tmpItem->image = decode_embedded_image(text, text_len, &sha);
+      if (tmpItem->imageSha == NULL) {
+        // older versions of parser, do not include sha, so compute it
+        tmpItem->imageSha = g_strdup(sha);
+#ifdef IMAGE_DEBUG
+        printf("Image does not contain id, generating it [%s]\n", tmpItem->imageSha);
+#endif
+      } else if (strcmp(tmpItem->imageSha, sha) != 0) {
+        fprintf(stderr, "Sha of image id [%s] does not match its contents sha [%s]\n", tmpItem->imageSha, sha);
+        *error = xoj_invalid(); 
+        return;
+      }
+      g_free(sha);
+      listImagesShas = g_list_append(listImagesShas, tmpItem);
     } else {
       tmpItem->image_path = g_malloc(text_len+1);
       g_memmove(tmpItem->image_path, text, text_len);
@@ -925,6 +1049,8 @@ gboolean open_journal(char *filename)
   }
   
   context = g_markup_parse_context_new(&parser, 0, NULL, NULL);
+
+
   valid = TRUE;
   tmpJournal.npages = 0;
   tmpJournal.pages = NULL;
@@ -947,6 +1073,7 @@ gboolean open_journal(char *filename)
     else maybe_pdf = FALSE;
     if (len<=0) break;
     valid = g_markup_parse_context_parse(context, buffer, len, &error);
+    // release the list of shas
 	      
 #ifdef IMAGE_DEBUG
     if(!valid) printf("parsing failed\n");
@@ -968,6 +1095,8 @@ gboolean open_journal(char *filename)
 	  valid = FALSE;
   }
   g_markup_parse_context_free(context);
+  g_list_free(listImagesShas);
+  listImagesShas = NULL;
   
   if (!valid) {
     delete_journal(&tmpJournal);
@@ -1044,6 +1173,8 @@ gboolean open_journal(char *filename)
   rescale_bg_pixmaps(); // this requests the PDF pages if need be
   gtk_adjustment_set_value(gtk_layout_get_vadjustment(GTK_LAYOUT(canvas)), 0);
   
+
+
   return TRUE;
 }
 

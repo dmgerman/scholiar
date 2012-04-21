@@ -160,7 +160,7 @@ struct PageCopyContext *prepare_page_copy_buffers(struct Page *p) {
 void free_image_ser_buffers_and_pcc(struct PageCopyContext *pcc) {
   int i, j;
   for (i = 0; i < pcc->pg->nlayers; i++) {
-    for (j = 0; j < pcc->nimages[i]; j++)
+    for (j = 0; j < pcc->nimages[i]; j++) 
       g_free(pcc->serialized_images[i][j].image_data);
     g_free(pcc->serialized_images[i]);
   }
@@ -457,6 +457,7 @@ void get_item_from_buffer(struct Item *item, guchar **pp, double hoffset, double
 
     item->image = deserialize_image(isc);
     item->image_scaled = NULL;
+    item->imageSha = NULL;
     g_free(isc.image_data);
     break;
   default:
@@ -506,7 +507,7 @@ void clipboard_paste_with_offset(gboolean use_provided_offset, double hoffset, d
   make_dashed(ui.selection->canvas_item);
 
   while (nitems-- > 0) {
-    item = g_new(struct Item, 1);
+    item = g_new0(struct Item, 1);
     ui.selection->items = g_list_append(ui.selection->items, item);
     ui.cur_layer->items = g_list_append(ui.cur_layer->items, item);
     ui.cur_layer->nitems++;
@@ -536,7 +537,7 @@ struct Item* create_item_copy(struct Item *orig) {
   int bufsz = 0, nitems = 1, nimages = 0;
   unsigned char *buf, *p;
   ImgSerContext serialized_image;
-  struct Item *item = g_new(struct Item, 1);
+  struct Item *item = g_new0(struct Item, 1);
   
   bufsz += buffer_size_for_item(orig);
   if (orig->type == ITEM_IMAGE) {
@@ -623,7 +624,7 @@ struct Page* paste_page() {
     copy_from_buffer_advance_ptr(&itemtype, &p, sizeof(int));
     while (nitems > 0 && itemtype != ITEM_COPY_LAYER) {
       nitems--;
-      struct Item *item = g_new(struct Item, 1);
+      struct Item *item = g_new0(struct Item, 1);
       item->type = itemtype;
       l->items = g_list_append(l->items, item);
       get_item_from_buffer(item, &p, 0., 0.); // zero h/v offsets
