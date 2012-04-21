@@ -21,7 +21,7 @@
 | Last page seen       | Jump to the last page seen (info stored in the .xoj file)          |
 | Next-prev file       | Quickly go from one file to the next/prev in the current directory |
 | Poor man's bookmarks | Jump quickly to the previous/next annotation                       |
-| Partial search       | Search: finds occurrence, but no  UI (yet)                         |
+| Partial search       | Search is almost there...                                          |
 |----------------------+--------------------------------------------------------------------|
 
 * Features Implemented

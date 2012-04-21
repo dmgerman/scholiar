@@ -258,6 +258,7 @@ gboolean close_journal(void)
   clear_undo_stack();
 
   shutdown_bgpdf();
+  reset_find_bar();
   
   delete_journal(&journal);
   
@@ -832,10 +833,14 @@ gboolean open_journal(char *filename)
 
   // i wished this code would be documented a bit more
 
+  // check if the file is a ".pdf" and there exists a file with same name + .xoj
+  // if that is the case, open the xoj, but only if the option ui.autoload_pdf_xoj
+  // is true
   tmpfn = g_strdup_printf("%s.xoj", filename);
   if (ui.autoload_pdf_xoj && g_file_test(tmpfn, G_FILE_TEST_EXISTS) &&
       (g_str_has_suffix(filename, ".pdf") || g_str_has_suffix(filename, ".PDF")))
   {
+    // reenter with new filename
     valid = open_journal(tmpfn);
     g_free(tmpfn);
     return valid;
@@ -970,7 +975,6 @@ gboolean open_journal(char *filename)
   update_file_name(g_strdup(filename));
   gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
 
-  reset_find_bar();
 
   make_canvas_items();
   update_page_stuff();
