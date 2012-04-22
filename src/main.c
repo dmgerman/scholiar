@@ -43,6 +43,13 @@ static GOptionEntry entries[] =
 GtkWidget *winMain;
 GnomeCanvas *canvas;
 
+/*--- bookmark viewer interface ---start---*/
+GtkWidget *index_win;
+  GtkWidget *vbox;
+  GtkWidget *tophbox;
+  GtkWidget *scrollwin;
+/*--- bookmark viewer interface ---end---*/
+
 struct Journal journal; // the journal
 struct BgPdf bgpdf;  // the PDF loader stuff
 struct UIData ui;   // the user interface data
@@ -64,6 +71,8 @@ void init_stuff (int argc, char *argv[])
   gchar *tmppath, *tmpfn;
   GError  *error = NULL;
   GOptionContext *context;
+
+  bkViewer_init();	  // initialize the bookmark viewer
 
   // create some data structures needed to populate the preferences
   ui.default_page.bg = g_new(struct Background, 1);
@@ -415,6 +424,10 @@ main (int argc, char *argv[])
 {
   gchar *path, *path1, *path2;
   
+  /*--- for bookmark viewer ---*/
+  bk_flag = 0;		// bookmark viewer is by default off
+  bkData_flag = 0;	// bookmark Data Tree is empty
+
 #ifdef ENABLE_NLS
   bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");

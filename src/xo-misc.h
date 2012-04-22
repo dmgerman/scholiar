@@ -97,6 +97,10 @@ void hide_unimplemented(void);
 
 void do_fullscreen(gboolean active);
 
+/*--- bookmark viewer ---start---*/
+void show_Bookmark(GtkWidget *index_win);
+/*--- bookmark viewer ---end---*/
+
 // fix GTK+ 2.16/2.17 issues with XInput events
 gboolean filter_extended_events(GtkWidget *widget, GdkEvent *event, gpointer user_data);
 // gboolean fix_extended_events(GtkWidget *widget, GdkEvent *event, gpointer user_data);

@@ -224,6 +224,15 @@ gboolean save_journal(const char *filename)
     }
     gzprintf(f, "</page>\n");
   }
+
+  /* ---write bookmarks to xoj file---start-- */
+  GtkTreeModel *model;
+
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(bkTree_view));
+  gtk_tree_model_foreach(model, (GtkTreeModelForeachFunc)
+                         save_bookmark2file_foreach, f);
+  /* ---write bookmarks to xoj file---end-- */
+
   gzprintf(f, "</xournal>\n");
   gzclose(f);
   setlocale(LC_NUMERIC, "");
@@ -668,8 +677,36 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       attribute_values++;
     }
     if (has_attr!=15) *error = xoj_invalid();
+  } else if (!strcmp(element_name, "Bookmark")) { 
+  /*-------------- bookmark viewer ---------------start---
+   * when read label Bookmark get correspond attributes
+   * for initialization of the bookmarks	  
+   *-------------- bookmark viewer -----------------------*/
+    //printf("NofBK:%d\n", NofBK);
+    while (*attribute_names!=NULL) {
+      if (!strcmp(*attribute_names, "Category")) {
+        bk[NofBK].category = g_strdup(*attribute_values);
+        //printf("Category:%s\n", *attribute_values);
+      }
+      else if (!strcmp(*attribute_names, "Page")) {
+        //bk[NofBK].page = g_strdup(*attribute_values);
+        bk[NofBK].page = g_ascii_strtod(*attribute_values, NULL);
+        //printf("Page:%s\n", *attribute_values);
+      }
+      else if (!strcmp(*attribute_names, "Path")) {
+        bk[NofBK].path = g_strdup(*attribute_values);
+        //printf("Path:%s\n", *attribute_values);
+      }
+      attribute_names++;
+      attribute_values++;
+    }
+    NofBK++;
   }
+  /*-------------- bookmark viewer ---------------end---*/
+
 }
+
+
 
 void xoj_parser_end_element(GMarkupParseContext *context,
    const gchar *element_name, gpointer user_data, GError **error)

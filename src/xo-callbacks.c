@@ -4250,3 +4250,430 @@ gboolean on_text_keypress_event(GtkWidget   *widget,
   return stop_processing;
 }
 
+//------------functions of bookmark viewer-----------start-------//
+static GtkTreeModel *
+create_and_fill_model (void)
+{
+  GtkTreeStore  *treestore;
+
+  treestore = gtk_tree_store_new(NUM_COLS, G_TYPE_STRING, G_TYPE_INT); 
+
+  return GTK_TREE_MODEL(treestore);
+}
+
+static void
+onSelectionChanged (GtkTreeSelection *sel, GtkTreeModel *model)
+{
+  //GtkTreePath *path;
+  //gchar *str; 
+  
+  if( gtk_tree_selection_get_selected(sel, &model, &iter_selected) ){ 
+    selected_flag = 1;
+    //path = gtk_tree_model_get_path(model, &iter_selected);
+    //str = gtk_tree_path_to_string(path);
+    //printf("selected: %s\n", str);
+
+	gtk_tree_model_get(model, &iter_selected, COL_PAGE, &selected_page, -1);
+    printf("Goto page: %d\n", selected_page);
+    do_switch_page(selected_page-1, TRUE, FALSE);
+	gtk_widget_set_sensitive(delbutton, TRUE);
+  }else{
+	gtk_widget_set_sensitive(delbutton, FALSE);
+  }
+}
+
+/* Apply the changed text to the cell. */
+static void 
+cell_edited (GtkCellRendererText *renderer, 
+             gchar *path, 
+             gchar *new_text, 
+             GtkTreeView *treeview)
+{
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  
+  if (g_ascii_strcasecmp (new_text, "") != 0)
+  {
+    model = gtk_tree_view_get_model (treeview);
+    if (gtk_tree_model_get_iter_from_string (model, &iter, path))
+      gtk_tree_store_set (GTK_TREE_STORE (model), &iter, COL_CATEGORY, new_text, -1);
+  }
+}
+
+
+GtkWidget *
+create_view_and_model (void)
+{
+  GtkTreeViewColumn   *col;
+  GtkCellRenderer     *renderer;
+
+  GtkWidget           *view;
+  GtkTreeModel        *model;
+  GtkTreeSelection *selection;
+
+  view = gtk_tree_view_new();
+
+  /* --- Column #1 --- */
+  renderer = gtk_cell_renderer_text_new();
+    /* Setup the column in the tree view to be editable. */
+    g_object_set (renderer, "editable", TRUE, "editable-set", TRUE, NULL);
+    g_signal_connect (G_OBJECT (renderer), "edited",
+                      G_CALLBACK (cell_edited),
+                      (gpointer) view);
+  col = gtk_tree_view_column_new_with_attributes
+                         ("Category", renderer, "text", COL_CATEGORY, NULL);
+  gtk_tree_view_append_column (GTK_TREE_VIEW (view), col);
+
+  /* --- Column #2 --- */
+  renderer = gtk_cell_renderer_text_new();
+  col = gtk_tree_view_column_new_with_attributes
+                         ("Page", renderer, "text", COL_PAGE, NULL);
+  gtk_tree_view_append_column (GTK_TREE_VIEW (view), col);
+
+  // initialize the data
+  model = create_and_fill_model(); 
+
+  gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
+
+  /* Allow only single row to be selected one at a time. */
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (view));
+  gtk_tree_selection_set_mode (selection, GTK_SELECTION_SINGLE);
+  g_signal_connect(selection, "changed", G_CALLBACK(onSelectionChanged), model);
+
+  g_object_unref(model); /* destroy model automatically with view */
+
+  return view;
+}
+
+static void
+onUpButtonPress (GtkWidget *button, gpointer data)
+{
+  GtkTreePath *path;
+  GtkTreePath *current_path;
+  gchar *path_str;
+  char last_char;
+  int length;
+
+  GtkTreeModel *model;
+  GtkTreeIter target;
+
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(bkTree_view));
+  current_path = gtk_tree_model_get_path(model, &iter_selected);
+  
+  path_str = gtk_tree_path_to_string(current_path);
+  //printf("current path: %s\n", path_str);
+  length = strlen(path_str); 
+  last_char = *(path_str+length-1);
+  //printf("!%c\n", last_char);
+
+  /*  the way I implement this function is only valid for number 
+   *  range between 0~9(ascii char), 
+   *  eg. int 0 <-> char 48, int 1 <-> char 49
+   */
+  if(last_char-1 >= 48){
+    *(path_str+length-1) = last_char-1;
+    printf("new path: %s\n", path_str);
+    path = gtk_tree_path_new_from_string(path_str);
+    gtk_tree_model_get_iter(model, &target, path);
+    gtk_tree_store_move_before(GTK_TREE_STORE(model), &iter_selected, &target);
+  }else{
+    *(path_str+length-1) = 48;
+    printf("new path: %s\n", path_str);
+    path = gtk_tree_path_new_from_string(path_str);
+    gtk_tree_model_get_iter(model, &target, path);
+    gtk_tree_store_move_before(GTK_TREE_STORE(model), &iter_selected, &target);
+  }
+}
+
+static void
+onDownButtonPress (GtkWidget *button, gpointer data)
+{
+  GtkTreePath *path;
+  GtkTreePath *current_path;
+  gchar *path_str;
+  char last_char;
+  int length;
+
+  GtkTreeModel *model;
+  GtkTreeIter target;
+
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(bkTree_view));
+  current_path = gtk_tree_model_get_path(model, &iter_selected);
+  
+  path_str = gtk_tree_path_to_string(current_path);
+  //printf("current path: %s\n", path_str);
+  length = strlen(path_str); 
+  last_char = *(path_str+length-1);
+  //printf("!%c\n", last_char);
+
+  *(path_str+length-1) = last_char+1;
+  printf("new path: %s\n", path_str);
+  path = gtk_tree_path_new_from_string(path_str);
+  if(gtk_tree_model_get_iter(model, &target, path))
+    gtk_tree_store_move_after(GTK_TREE_STORE(model), &iter_selected, &target);
+}
+
+/**************************************************************************
+ *
+ *  onAddButtonPress
+ *
+ *  Button has been clicked, or <enter> has been hit in entry
+ *
+ **************************************************************************/
+static void
+onAddButtonPress (GtkWidget *entry, gpointer data)
+{
+  const gchar *txt;
+  
+  g_assert(GTK_IS_ENTRY(entry));
+  
+  txt = gtk_entry_get_text(GTK_ENTRY(entry));
+  
+  /* ignore if entry is empty */
+  if (txt && *txt)
+  {
+	GtkTreeModel *model;
+	GtkTreeIter   newrow;
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(bkTree_view));
+    if (selected_flag == 1) {
+   	  gtk_tree_store_append(GTK_TREE_STORE(model), &newrow, &iter_selected);
+  	  printf("Add %s after Page %d, as sub directory\n", txt, selected_page);
+    }else{
+   	  gtk_tree_store_append(GTK_TREE_STORE(model), &newrow, NULL);
+    }
+	
+    gtk_tree_store_set(GTK_TREE_STORE(model), &newrow,
+                       COL_CATEGORY, txt,
+                       COL_PAGE, ui.pageno+1,
+                       -1);
+  	gtk_entry_set_text(GTK_ENTRY(entry), ""); /* clear entry */
+  }
+}
+
+static void
+onDelButtonPress (GtkWidget *button, gpointer data)
+{
+	GtkTreeSelection *sel;
+	GtkTreeModel     *model;
+	GtkTreeIter       selected_row;
+
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(bkTree_view));
+
+	g_assert(gtk_tree_selection_get_mode(sel) == GTK_SELECTION_SINGLE);
+
+	if (gtk_tree_selection_get_selected(sel, &model, &selected_row))
+	{
+	  gtk_tree_store_remove(GTK_TREE_STORE(model), &selected_row);
+      selected_flag = 0;
+	  printf("Selected category removed\n");
+	}
+	else
+	{
+		/* If no row is selected, the button should
+		 *  not be clickable in the first place */
+		g_assert_not_reached();
+	}
+}
+
+/* Go through each row*/ 
+gboolean save_bookmark2file_foreach(GtkTreeModel *model, 
+							           GtkTreePath *path, 
+									   GtkTreeIter *iter,
+									   gpointer data) 
+{ 
+  gchar *col1, *pathstr; 
+  guint col2;
+
+  /* get the data stored in the model... */ 
+  gtk_tree_model_get(model, iter, COL_PAGE, &col2, -1);
+  gtk_tree_model_get(model, iter, COL_CATEGORY, &col1, -1);
+  /* ...and get the path of the current row */ 
+  pathstr = gtk_tree_path_to_string(path); 
+  //g_print("<item Category=\"%s\" Page=\"%d\" Path=\"%s\"/>\n", col1, col2, pathstr);
+  gzprintf(data, "<Bookmark Category=\"%s\" Page=\"%d\" Path=\"%s\"/>\n", 
+           col1, col2, pathstr);
+
+  /* return FALSE to keep iterating */ 
+  return FALSE; 
+} 
+
+void save_bookmark2file(void)
+{
+  GtkTreeModel *model;
+
+  //printf("Current bookmarks:\n");
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(bkTree_view));
+  gtk_tree_model_foreach(model, (GtkTreeModelForeachFunc)
+                         save_bookmark2file_foreach, NULL);
+
+}
+
+static void
+onHideButtonPress (GtkWidget *window,
+			    gpointer *data)
+{
+  gtk_widget_hide_all(GTK_WIDGET(data));
+  bk_flag = 0;
+  //save_bookmark2file(); 
+}
+
+static GtkWidget *
+create_entry_hbox (void)
+{
+  GtkWidget *hbox;
+  GtkWidget *entry;
+  GtkWidget *addbutton;
+  GtkWidget *upbutton;
+  GtkWidget *downbutton;
+  GtkWidget *hidebutton;
+  
+  hbox = gtk_hbox_new(FALSE, 2);
+  entry = gtk_entry_new();
+  addbutton = gtk_button_new_from_stock(GTK_STOCK_ADD);
+    gtk_button_set_label(GTK_BUTTON(addbutton), "+");
+  delbutton = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
+    gtk_button_set_label(GTK_BUTTON(delbutton), "-");
+  upbutton = gtk_button_new_with_label(">");
+  downbutton = gtk_button_new_with_label("<");
+  hidebutton = gtk_button_new_with_label("XD");
+  
+  // Callbacks
+  g_signal_connect(entry, "activate", G_CALLBACK(onAddButtonPress), NULL);
+  g_signal_connect_swapped(addbutton, "clicked", G_CALLBACK(onAddButtonPress), entry);
+  g_signal_connect(delbutton, "clicked", G_CALLBACK(onDelButtonPress), NULL);
+  g_signal_connect(upbutton, "clicked", G_CALLBACK(onUpButtonPress), NULL);
+  g_signal_connect(downbutton, "clicked", G_CALLBACK(onDownButtonPress), NULL);
+  g_signal_connect(hidebutton, "clicked", G_CALLBACK(onHideButtonPress), index_win);
+  
+  // Widget Placement
+  gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), addbutton, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), delbutton, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), upbutton, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), downbutton, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), hidebutton, FALSE, FALSE, 0);
+  
+  /* at beginning no rows, so nothing to delete */
+  gtk_widget_set_sensitive(delbutton, FALSE);
+  
+  return hbox;
+}
+
+
+void
+bkViewer_init(void)
+{
+  selected_flag = 0;
+  NofBK = 0;
+
+  // Interface
+  index_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(index_win), 300, 600);
+    gtk_window_set_position(GTK_WINDOW(index_win), GTK_WIN_POS_CENTER);
+
+  vbox = gtk_vbox_new(FALSE, 2);
+  bkTree_view = create_view_and_model();
+
+  tophbox = create_entry_hbox();
+  gtk_box_pack_start(GTK_BOX(vbox), tophbox, FALSE, FALSE, 0);
+
+  scrollwin = gtk_scrolled_window_new(NULL,NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
+                                 GTK_POLICY_AUTOMATIC,
+                                 GTK_POLICY_AUTOMATIC);
+
+  // Widget Placement
+  gtk_container_add(GTK_CONTAINER(scrollwin), bkTree_view);
+  gtk_box_pack_start(GTK_BOX(vbox), scrollwin, TRUE, TRUE, 0);
+  gtk_container_add(GTK_CONTAINER(index_win), vbox);
+
+
+}
+
+/* Gets the parent of a path string. 
+ * passing "0:1:2" would return "0:1", 
+ * passing "0:1" would return "0", 
+ * passing "0" would return NULL */ 
+gchar *gtk_tree_path_string_get_parent(gchar *path) 
+{ 
+    gchar *colon; 
+
+    g_return_val_if_fail(path != NULL, NULL); 
+
+    colon = g_strrstr(path, ":"); 
+    if(colon == NULL) 
+        return NULL; 
+
+    return g_strndup(path, colon - path); 
+} 
+
+
+/* Make sure that path exists within model */ 
+void gtk_tree_model_generate_path(GtkTreeModel *model, gchar *path) 
+{ 
+    GtkTreeIter iter, parent; 
+    gchar *temp; 
+
+    while(TRUE) 
+    {   
+        /* if this returns TRUE, then this path exists and we're fine */ 
+        if(gtk_tree_model_get_iter_from_string(model, &iter, path)) 
+            break; 
+
+        temp = path; 
+        path = gtk_tree_path_string_get_parent(path); 
+        /* if there's no parent, then it's toplevel */ 
+        if(path == NULL) 
+        {   
+            if(GTK_IS_TREE_STORE(model)) 
+                gtk_tree_store_append(GTK_TREE_STORE(model), &parent, NULL); 
+            else 
+                gtk_list_store_append(GTK_LIST_STORE(model), &parent); 
+            gtk_tree_model_generate_path(model, temp); 
+            break; 
+        }   
+        if(GTK_IS_TREE_STORE(model)) 
+        {   
+            gtk_tree_model_generate_path(model, path); 
+            gtk_tree_model_get_iter_from_string(model, &parent, path); 
+            gtk_tree_store_append(GTK_TREE_STORE(model), &iter, &parent); 
+        }   
+    }   
+} 
+
+
+// toggle bookmark mode
+void
+on_viewBookmark_activate             (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  int i;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(bkTree_view));
+
+  //printf("%d\n", bk_flag);
+  //printf("*NofBK:%d\n", NofBK);
+
+  // show the existed bookmarks
+  for(i=0; i<NofBK; i++){
+    gtk_tree_model_generate_path(model, bk[i].path);
+    gtk_tree_model_get_iter_from_string(model, &iter, bk[i].path);
+    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 
+                       COL_CATEGORY, bk[i].category, 
+                       COL_PAGE, (gint) bk[i].page, -1);
+    //printf("Category:%s, Page:%s, Path:%s\n",  
+    //       bk[i].category, bk[i].page, bk[i].path); 
+    printf("Category:%s, Page:%d, Path:%s\n",  
+           bk[i].category, (gint) bk[i].page, bk[i].path); 
+  }
+
+  if(bk_flag == 0){
+    bk_flag = 1;
+    gtk_widget_show_all(index_win);
+  }else{
+    printf("Bookmark Viewer already opened\n");
+  }
+}
+//------------functions of bookmark viewer-----------end-------//

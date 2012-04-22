@@ -391,6 +391,12 @@ typedef struct BgPdf {
 
 extern GtkWidget *winMain;
 extern GnomeCanvas *canvas;
+/*--- bookmark viewer interface ---start---*/
+extern GtkWidget *index_win;
+ extern GtkWidget *vbox;
+ extern GtkWidget *tophbox;
+ extern GtkWidget *scrollwin;
+/*--- bookmark viewer interface ---end---*/
 
 // the data
 

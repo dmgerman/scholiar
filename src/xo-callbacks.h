@@ -1,6 +1,55 @@
 #include <gtk/gtk.h>
 
+//------------global variables of bookmark viewer-----------start-------//
+enum
+{
+  COL_CATEGORY = 0,
+  COL_PAGE,
+  NUM_COLS
+} ;
+GtkTreeIter iter_selected;
+gint selected_page;
+GtkWidget *delbutton;
+GtkWidget *bkTree_view;
+int selected_flag;
+int bk_flag;	   // determine whether bookmark viewer is open or not
+int bkData_flag;   // determine whether bookmark Data tree is empty or not 
+
+//------------global variables of bookmark viewer-----------end-------//
+
+
+//------------functions of bookmark viewer-----------start-------//
+GtkWidget *create_view_and_model (void);
+static void gtk_index_quit (GtkWidget *window,
+		   		            gpointer data);
+static GtkWidget *
+    create_entry_hbox (void);
+static void
+    onDelButtonPress (GtkWidget *button, gpointer data);
+static void
+    onAddButtonPress (GtkWidget *entry, gpointer data);
+static void
+    onDownButtonPress (GtkWidget *button, gpointer data);
+static void
+    onUpButtonPress (GtkWidget *button, gpointer data);
+static void 
+    cell_edited (GtkCellRendererText *renderer, 
+                 gchar *path, 
+                 gchar *new_text, 
+                 GtkTreeView *treeview);
+static void
+    onSelectionChanged (GtkTreeSelection *sel, GtkTreeModel *model);
+static GtkTreeModel *
+    create_and_fill_model (void);
+gboolean save_bookmark2file_foreach(GtkTreeModel *model, 
+							           GtkTreePath *path, 
+									   GtkTreeIter *iter,
+									   gpointer data);
+//------------functions of bookmark viewer-----------end-------//
+
+
 void
+
 on_fileNew_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
@@ -494,6 +543,12 @@ on_comboUnit_changed                   (GtkComboBox     *combobox,
 void
 on_viewFullscreen_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
+
+/*--- bookmark viewer ---start---*/
+void
+on_viewBookmark_activate               (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+/*--- bookmark viewer ---end---*/
 
 void
 on_optionsButtonMappings_activate      (GtkMenuItem     *menuitem,

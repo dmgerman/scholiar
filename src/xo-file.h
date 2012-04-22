@@ -9,6 +9,17 @@ extern int GS_BITMAP_DPI, PDFTOPPM_PRINTING_DPI;
 
 #define TMPDIR_TEMPLATE "/tmp/xournalpdf.XXXXXX"
 
+/*--- for bookmark viewer ---start---*/
+typedef struct Bookmark {
+  gchar *category;
+  //gchar *page;
+  gdouble page;
+  gchar *path;
+} Bookmark;
+Bookmark bk[1000];
+int NofBK;
+/*--- for bookmark viewer ---end---*/
+
 void new_journal(void);
 gboolean save_journal(const char *filename);
 gboolean close_journal(void);
