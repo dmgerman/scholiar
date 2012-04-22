@@ -1,0 +1,124 @@
+* Branches
+
+- master: the main branch with my code and many extra features (should
+  be stable)
+- upstream:  denis code, reflecting his CVS repository
+- debian:    ubuntu xournal packages
+
+- search:    implements search, basically completed (needs testing)
+- bookmarks: implements basic bookmarks (needs work)
+- leo:       implements improved image handling (needs testing, needs
+             to be rebased)
+- multipage: implements dual page view (buggy, needs work)
+
+* Summary of features
+
+|------------------------+--------------------------------------------------------------------------------|
+| Feature                | Brief Description                                                              |
+|------------------------+--------------------------------------------------------------------------------|
+| Auto save pdf          | Every time the xoj file is saved, a pdf is exported                            |
+| Command line options   | Several options:                                                               |
+|                        | jump to page--page=N                                                           |
+|                        | export to pdf without starting GUI --pdf                                       |
+|                        | start in fullscreen mode --fullscreen                                          |
+|                        | Hide the interface (except menu) --no-interface                                |
+|                        | Hide the interface in full screen mode --no-interface-fullscreen               |
+| Hide Interface         | Hide the interface in normal and fullscreen mode                               |
+| Add empty pages to pdf | When the background is a PDF, the new pages will be blank, using default paper |
+| Use SPACE to scroll    | SPACE bar can be used to scroll the document                                   |
+| Text font sizing       | Use ctrl >/</B to change the font of the text being edited                     |
+| Last page seen         | Jump to the last page seen (info stored in the .xoj file)                      |
+| Next-prev file         | Quickly go from one file to the next/prev in the current directory             |
+| Poor man's bookmarks   | Jump quickly to the previous/next annotation                                   |
+| Partial search         | Search: finds occurrence, but no  UI (see branch search for full features)     |
+|------------------------+--------------------------------------------------------------------------------|
+
+* Features Implemented
+
+** See patches aplied below
+
+** Autosave to PDF
+
+ Any time that a .XOJ file is saved, a PDF is exported. This is
+ controlled by an option: "Auto export PDF"
+
+** Enable/disable interface menus in full screen mode and default mode
+
+I have added the ability to remove the interface in normal mode and
+full screen. In fullscreen no interface is shown.  In normal mode the
+menubar is shown (you can remove it too, using the .config file, but
+that is sort of undocumented feature).
+
+There are now two config options that control it:
+
+  # show interface in normal mode (true/false)
+  show_interface=true
+  # show interface in full screen mode (true/false)
+  show_interface_fullscreen=false
+
+Remember, in fullscreen mode you can always exit it with F11.
+
+I have also added a command line option to start xournal in fullscreen mode, and with or without interface in
+either mode.
+
+  --no-interface                Do not show interface
+  --no-interface-fullscreen     Do not show interface in fullscreen 
+  --fullscreen                  Run xournal in full screen mode
+
+The contents of the interface and their order is controlled by the config variables:
+
+   # interface components from top to bottom
+   # valid values: drawarea menu main_toolbar pen_toolbar statusbar
+  interface_order=menu main_toolbar pen_toolbar drawarea statusbar
+   # interface components in fullscreen mode, from top to bottom
+   interface_fullscreen=main_toolbar pen_toolbar drawarea
+
+** Add empty pages to pdf
+
+In the original xournal, during annotation of a PDF, a new page will
+duplicate the current page. With this patch the new page is
+empty. 
+
+*** TODO This should be an option, not hardcoded, just in case somebody really wants to do it.
+
+** Use SPACE bar to scroll document
+
+Scroll the document using SPACE bar, as if it was page down.
+
+* Patches applied:
+
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+| Name                        | URL                                                                                           |
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+| Last page seen              | https://sourceforge.net/tracker/index.php?func=detail&aid=3203323&group_id=163434&atid=827735 |
+| Add next-prev file          | https://sourceforge.net/tracker/index.php?func=detail&aid=2730174&group_id=163434&atid=827735 |
+| Cmd Line: Open a given page | https://sourceforge.net/tracker/index.php?func=detail&aid=2924825&group_id=163434&atid=827735 |
+| Text font sizing            | https://sourceforge.net/tracker/index.php?func=detail&aid=3030878&group_id=163434&atid=827735 |
+| Poor man's bookmarks        | https://sourceforge.net/tracker/index.php?func=detail&aid=2838282&group_id=163434&atid=827735 |
+|-----------------------------+-----------------------------------------------------------------------------------------------|
+
+** Load page seen
+
+ Saves the current page number in the xoj file. When you open it
+ again, jumps there
+
+** Add next-prev file
+
+Opens the next/pref .xoj file  in the current directory
+
+** Text font sizing
+
+Use Ctrl-B to bold, Ctrl > and Ctr < to increase size or reduce size
+of annotation
+
+* Patches I'd like to apply
+
+|-------------------------------------+-----------------------------------------------------------------------------------------------|
+| Name                                | URL                                                                                           |
+|-------------------------------------+-----------------------------------------------------------------------------------------------|
+| ortho and snap                      | https://sourceforge.net/tracker/index.php?func=detail&aid=2758895&group_id=163434&atid=827735 |
+| Preserve aspect ratio when resizing | https://sourceforge.net/tracker/index.php?func=detail&aid=3082301&group_id=163434&atid=827735 |
+| Insert images                       | https://sourceforge.net/tracker/index.php?func=detail&aid=2890925&group_id=163434&atid=827735 |
+| Check this out                      | https://sourceforge.net/tracker/index.php?func=detail&aid=3073179&group_id=163434&atid=827735 |
+| Multi-page view and Lasso           | https://sourceforge.net/tracker/index.php?func=detail&aid=2679096&group_id=163434&atid=827735 |
+|-------------------------------------+-----------------------------------------------------------------------------------------------|
