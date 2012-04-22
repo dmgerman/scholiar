@@ -568,10 +568,6 @@ egg_find_bar_show (GtkWidget *widget)
 
   GTK_WIDGET_CLASS (egg_find_bar_parent_class)->show (widget);
   
-  printf("find bar show\n");
-
-  
-
   egg_find_bar_grab_focus(widget);
   
 
@@ -614,8 +610,6 @@ egg_find_bar_grab_focus (GtkWidget *widget)
   EggFindBarPrivate *priv = find_bar->priv;
 
   gtk_widget_grab_focus (priv->find_entry);
-
-  printf("focus should be here\n") ;
 
 }
 
