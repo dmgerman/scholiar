@@ -1,15 +1,8 @@
-* Branches
+* My branch of xournal
 
-- master: the main branch with my code and many extra features (should
-  be stable)
-- upstream:  denis code, reflecting his CVS repository
-- debian:    ubuntu xournal packages
-
-- search:    implements search, basically completed (needs testing)
-- bookmarks: implements basic bookmarks (needs work)
-- leo:       implements improved image handling (needs testing, needs
-             to be rebased)
-- multipage: implements dual page view (buggy, needs work)
+This is my branch of [[http://xournal.sourceforge.net][xournal]]. It contains several additions to
+it. They are mainly intended for people who use a tablet, and
+regularly annotate pdfs.
 
 * Summary of features
 
@@ -122,3 +115,19 @@ of annotation
 | Check this out                      | https://sourceforge.net/tracker/index.php?func=detail&aid=3073179&group_id=163434&atid=827735 |
 | Multi-page view and Lasso           | https://sourceforge.net/tracker/index.php?func=detail&aid=2679096&group_id=163434&atid=827735 |
 |-------------------------------------+-----------------------------------------------------------------------------------------------|
+* Branches
+
+The following are current branches with different experimental features:
+
+
+- master: the main branch with my code and many extra features (should
+  be stable)
+- upstream:  denis code, reflecting his CVS repository
+- debian:    ubuntu xournal packages
+
+- search:    implements search, basically completed (needs testing)
+- bookmarks: implements basic bookmarks (needs work)
+- leo:       implements improved image handling (needs testing, needs
+             to be rebased)
+- multipage: implements dual page view (buggy, needs work)
+
