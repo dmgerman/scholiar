@@ -4024,12 +4024,13 @@ on_editFind_activate                   (GtkMenuItem     *menuitem,
 int find_pdf_matches(const char *st)
 {
   GList *list = NULL;
+  GList *listPages = NULL;
   GList *l = NULL;
   PopplerPage *pdfPage = NULL;
   int currPage;
   int nMatches = 0 ;
   int nPages = 0;
-
+  Page *page;
 
   assert(bgpdf.document != NULL);
 
@@ -4040,54 +4041,49 @@ int find_pdf_matches(const char *st)
 
   nPages = poppler_document_get_n_pages(bgpdf.document);
 
-  for (currPage=0;  currPage< nPages; currPage++) {
-    // find matches in currPage
-    pdfPage = poppler_document_get_page(bgpdf.document, currPage);
-    if (pdfPage != NULL && 
-        (list = poppler_page_find_text(pdfPage, st)) != NULL) {
+  // iterate over pages, searching for those that have a PDF background
+  for (listPages = journal.pages; listPages!=NULL; listPages = listPages->next) {
+    page = (struct Page *)listPages->data;
+    
+    if (page->bg->type == BG_PDF) {
+      // then search
+      currPage = page->bg->file_page_seq - 1;
+      pdfPage = poppler_document_get_page(bgpdf.document, currPage);
+      if (pdfPage != NULL && 
+          (list = poppler_page_find_text(pdfPage, st)) != NULL) {
+        // we found something
 
-      // The page exists, and we have match
+        double height;
+        double width;
 
-      double height;
-      double width;
-      Page *page;
+        // we have a page, get its size, well use it later
+        poppler_page_get_size (pdfPage, &width, &height);
 
-      // find page
-      page = g_list_nth_data(journal.pages, currPage);
-      assert(page != NULL);
-
-
-      // we have a page, get its size, well use it later
-      poppler_page_get_size (pdfPage, &width, &height);
-
-      // Fix the coordinates of each match
+        // Fix the coordinates of each match
       
-      for (l = list; l && l->data; l = g_list_next (l)) {
-        PopplerRectangle *rect = (PopplerRectangle *)l->data;
-        gdouble           tmp;
+        for (l = list; l && l->data; l = g_list_next (l)) {
+          PopplerRectangle *rect = (PopplerRectangle *)l->data;
+          gdouble           tmp;
         
-        // Count matches
-        nMatches++;
-        // PDF coordinates are bottom up, so swap.
-        // but the locations are backwards...
+          // Count matches
+          nMatches++;
+          // PDF coordinates are bottom up, so swap.
+          // but the locations are backwards...
 
-        tmp = rect->y1;
-        rect->y1 = height - rect->y2;
-        rect->y2 = height - tmp;
+          tmp = rect->y1;
+          rect->y1 = height - rect->y2;
+          rect->y2 = height - tmp;
 
-        // we need to save the rectangle in a new list
-        page_search_draw_match(page, rect) ;
+          // we need to save the rectangle in a new list
+          page_search_draw_match(page, rect) ;
 
+        }
+        gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
 
-
-      } // for loop
-      // Force redraw
-      gnome_canvas_set_pixels_per_unit(canvas, ui.zoom);
-      // save the results
+      }
     }
-  } 
+  }
 
-  
   return nMatches;
 }
 

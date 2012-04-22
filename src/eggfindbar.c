@@ -403,7 +403,7 @@ egg_find_bar_init (EggFindBar *find_bar)
   alignment = gtk_alignment_new (0.0, 0.5, 1.0, 0.0);
   gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 0, 0, 2, 2);
 
-  labelFind = gtk_label_new_with_mnemonic (_("Find:"));
+  labelFind = gtk_label_new_with_mnemonic (_("_Find:"));
 
   priv->find_entry = gtk_entry_new ();
   gtk_entry_set_width_chars (GTK_ENTRY (priv->find_entry), 32);

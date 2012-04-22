@@ -2420,13 +2420,13 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
     return FALSE;
   }
 
-  if (ev != NULL)  {
-    printf("This widget got the event %s\n", gtk_widget_get_name(gtk_get_event_widget(ev)));
-    printf("Stealing focus [%s] type [%d] key [%d] modifier [%d] \n", 
-           gtk_widget_get_name(w), ev->type, ev->key.keyval, ev->key.is_modifier
-           );
 
-  }
+  //  if (ev != NULL)  {
+  //    printf("This widget got the event %s\n", gtk_widget_get_name(gtk_get_event_widget(ev)));
+  //  printf("Stealing focus [%s] type [%d] key [%d] modifier [%d] \n", 
+  //         gtk_widget_get_name(w), ev->type, ev->key.keyval, ev->key.is_modifier
+  //         );
+  //}
 
   // otherwise, we want to make sure the canvas or text item gets focus back...
 
