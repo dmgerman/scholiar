@@ -1,28 +1,37 @@
 * Branches
 
-- master: the main branch with my code and many extra features
-- upstream: denis code, reflecting his CVS repository
-- debian:   ubuntu xournal packages
+- master: the main branch with my code and many extra features (should
+  be stable)
+- upstream:  denis code, reflecting his CVS repository
+- debian:    ubuntu xournal packages
+
+- search:    implements search, basically completed (needs testing)
+- bookmarks: implements basic bookmarks (needs work)
+- leo:       implements improved image handling (needs testing, needs
+             to be rebased)
+- multipage: implements dual page view (buggy, needs work)
 
 * Summary of features
 
-|----------------------+--------------------------------------------------------------------|
-| Feature              | Brief Description                                                  |
-|----------------------+--------------------------------------------------------------------|
-| Auto save pdf        | Every time the xoj file is saved, a pdf is exported                |
-| Command line options | Several options:                                                   |
-|                      | jump to page--page=N                                               |
-|                      | export to pdf without starting GUI --pdf                           |
-|                      | start in fullscreen mode --fullscreen                              |
-|                      | Hide the interface (except menu) --no-interface                    |
-|                      | Hide the interface in full screen mode --no-interface-fullscreen   |
-| Hide Interface       | Hide the interface in normal and fullscreen mode                   |
-| Text font sizing     | Use ctrl >/</B to change the font of the text being edited         |
-| Last page seen       | Jump to the last page seen (info stored in the .xoj file)          |
-| Next-prev file       | Quickly go from one file to the next/prev in the current directory |
-| Poor man's bookmarks | Jump quickly to the previous/next annotation                       |
-| Partial search       | Search: finds occurrence, but no  UI (yet)                         |
-|----------------------+--------------------------------------------------------------------|
+|------------------------+--------------------------------------------------------------------------------|
+| Feature                | Brief Description                                                              |
+|------------------------+--------------------------------------------------------------------------------|
+| Auto save pdf          | Every time the xoj file is saved, a pdf is exported                            |
+| Command line options   | Several options:                                                               |
+|                        | jump to page--page=N                                                           |
+|                        | export to pdf without starting GUI --pdf                                       |
+|                        | start in fullscreen mode --fullscreen                                          |
+|                        | Hide the interface (except menu) --no-interface                                |
+|                        | Hide the interface in full screen mode --no-interface-fullscreen               |
+| Hide Interface         | Hide the interface in normal and fullscreen mode                               |
+| Add empty pages to pdf | When the background is a PDF, the new pages will be blank, using default paper |
+| Use SPACE to scroll    | SPACE bar can be used to scroll the document                                   |
+| Text font sizing       | Use ctrl >/</B to change the font of the text being edited                     |
+| Last page seen         | Jump to the last page seen (info stored in the .xoj file)                      |
+| Next-prev file         | Quickly go from one file to the next/prev in the current directory             |
+| Poor man's bookmarks   | Jump quickly to the previous/next annotation                                   |
+| Partial search         | Search: finds occurrence, but no  UI (see branch search for full features)     |
+|------------------------+--------------------------------------------------------------------------------|
 
 * Features Implemented
 
@@ -30,7 +39,8 @@
 
 ** Autosave to PDF
 
- Any time that a .XOJ file is saved, a PDF is exported
+ Any time that a .XOJ file is saved, a PDF is exported. This is
+ controlled by an option: "Auto export PDF"
 
 ** Enable/disable interface menus in full screen mode and default mode
 
@@ -62,6 +72,18 @@ The contents of the interface and their order is controlled by the config variab
   interface_order=menu main_toolbar pen_toolbar drawarea statusbar
    # interface components in fullscreen mode, from top to bottom
    interface_fullscreen=main_toolbar pen_toolbar drawarea
+
+** Add empty pages to pdf
+
+In the original xournal, during annotation of a PDF, a new page will
+duplicate the current page. With this patch the new page is
+empty. 
+
+*** TODO This should be an option, not hardcoded, just in case somebody really wants to do it.
+
+** Use SPACE bar to scroll document
+
+Scroll the document using SPACE bar, as if it was page down.
 
 * Patches applied:
 
