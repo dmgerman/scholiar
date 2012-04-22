@@ -2405,12 +2405,31 @@ gboolean intercept_activate_events(GtkWidget *w, GdkEvent *ev, gpointer data)
        return FALSE; // let the spin button process it
   }
 
-  if (gtk_widget_is_ancestor(w, GET_COMPONENT("findBar"))) {
-    // are we inside the findbar... then do not still focus
+  if (gtk_widget_is_ancestor(w, GET_COMPONENT("findBar")) ||
+      w == GET_COMPONENT("findBar")
+      ) {
+    // are we inside the findbar... then do not steal focus
     return FALSE;
   }
+
+  if (GET_COMPONENT("findBar") != NULL &&
+      egg_find_bar_has_focus(GET_COMPONENT("findBar")))  {
+    // don't ask me why, but SHIFT is being received by 
+    // the container window, and not by the findbar, so
+    // we have to check if it has the focus
+    return FALSE;
+  }
+
+  if (ev != NULL)  {
+    printf("This widget got the event %s\n", gtk_widget_get_name(gtk_get_event_widget(ev)));
+    printf("Stealing focus [%s] type [%d] key [%d] modifier [%d] \n", 
+           gtk_widget_get_name(w), ev->type, ev->key.keyval, ev->key.is_modifier
+           );
+
+  }
+
   // otherwise, we want to make sure the canvas or text item gets focus back...
-  //  printf("Stealing focus\n");
+
 
   reset_focus();  
   return FALSE;
@@ -2421,8 +2440,7 @@ void reset_find_bar(void)
   GtkWidget *w = GET_COMPONENT("findBar");
   EggFindBar *findBar;
   findBar = EGG_FIND_BAR(w);
-  egg_find_bar_set_search_string(findBar, "");
-  egg_find_bar_set_status_text(findBar, NULL);
+  egg_find_bar_reset(findBar);
 }
 
 

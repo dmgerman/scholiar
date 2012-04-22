@@ -46,6 +46,7 @@ struct _EggFindBarClass
 {
   GtkToolbarClass parent_class;
 
+  void (* hide_bar)   (EggFindBar *find_bar);
   void (* search)   (EggFindBar *find_bar);
   void (* reset)    (EggFindBar *find_bar);
   void (* next)	    (EggFindBar *find_bar);
@@ -75,6 +76,12 @@ void        egg_find_bar_get_current_match_color (EggFindBar *find_bar,
                                                   GdkColor   *color);
 void        egg_find_bar_set_status_text         (EggFindBar *find_bar,
                                                   const char *text);
+
+void egg_find_bar_reset(EggFindBar *find_bar);
+
+gboolean
+egg_find_bar_has_focus (GtkWidget *widget);
+
 
 G_END_DECLS
 

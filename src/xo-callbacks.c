@@ -3995,31 +3995,29 @@ void
 on_editFind_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  //  GtkWidget *w = GET_COMPONENT("findBar");
-  //  EggFindBar *findBar;
-  
-  // I don't think this is executed any more
-
-  assert(0);
-  
+  GtkWidget *w = GET_COMPONENT("findBar");
+  EggFindBar *findBar;
+  GtkWidget *dialog;
   
   // Show the find widget...
-//  gtk_widget_show(w);
-//  findBar = EGG_FIND_BAR(w);
-//  gtk_widget_grab_focus (w);
+
+  if (bgpdf.document == NULL) { 
+    dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("Search only works on PDFs"));
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return;
+  }
+
+
+  gtk_widget_show(w);
+  findBar = EGG_FIND_BAR(w);
+  gtk_widget_grab_focus (w);
   //egg_find_bar_set_case_sensitive(findBar, TRUE);
 }
 
 
 
-
-GtkWidget*
-egg_find_bar_new1 (gchar *widget_name, gchar *string1, gchar *string2,
-                gint int1, gint int2)
-{
-  // glade wants to have a function with 4 parms... which we don't need
-  return egg_find_bar_new();
-}
 
 // Display the pdf matches. Shoudl probably be moved to xo-misc.c 
 
@@ -4272,21 +4270,21 @@ on_find_bar_prev                       (GtkWidget       *widget,
     pgn=pgn+1;
   }
         
-  // if we reach this point is because we have not found a "notable" page
+  // if we reach this point is because we have not found a page
   // so we see if there is one before the current one
   if (prevPageNo >= 0)  {
     do_switch_page(prevPageNo, TRUE, FALSE);
     sprintf(temp, SEARCH_STATUS_STR, prevPageMatches, ui.searchData.totalMatches);
+    egg_find_bar_set_status_text(findBar, temp);
   }
   else if (lastPageNo >= 0) {
     do_switch_page(lastPageNo, TRUE, FALSE);
     sprintf(temp, SEARCH_STATUS_STR, lastPageMatches, ui.searchData.totalMatches);
+    egg_find_bar_set_status_text(findBar, temp);
+
   }
   else 
     ; // don't do anything. there isn't a page to jump to
-
-
-  egg_find_bar_set_status_text(findBar, temp);
 
 
   return TRUE;

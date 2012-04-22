@@ -15,6 +15,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
+#include "eggfindbar.h"
 #include "xo-callbacks.h"
 #include "xo-interface.h"
 #include "xo-support.h"
@@ -2041,7 +2042,7 @@ create_winMain (void)
   gtk_box_pack_start (GTK_BOX (vboxMain), scrolledwindowMain, TRUE, TRUE, 0);
 
 #ifdef __FIND_BAR_ITSELF__
-  findBar = egg_find_bar_new1 ("findBar", "", "", 0, 0);
+  findBar = egg_find_bar_new();
   gtk_box_pack_start (GTK_BOX (vboxMain), findBar, FALSE, TRUE, 0);
   GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_DEFAULT);
@@ -2080,7 +2081,7 @@ create_winMain (void)
   gtk_box_pack_start (GTK_BOX (hbox1), comboLayer, FALSE, TRUE, 4);
 
 #ifndef __FIND_BAR_ITSELF__
-  findBar = egg_find_bar_new1 ("findBar", "", "", 0, 0);
+  findBar = egg_find_bar_new();
   gtk_box_pack_start (GTK_BOX (hbox1), findBar, TRUE, TRUE, 0);
   GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_FOCUS);
   GTK_WIDGET_UNSET_FLAGS (findBar, GTK_CAN_DEFAULT);
