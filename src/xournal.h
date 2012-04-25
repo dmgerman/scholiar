@@ -279,6 +279,7 @@ typedef struct UIData {
   char *mru[MRU_SIZE]; // MRU data
   GtkWidget *mrumenu[MRU_SIZE];
   gboolean bg_apply_all_pages;
+  gboolean bg_new_background_from_pdf;
   int window_default_width, window_default_height, scrollbar_step_increment;
   gboolean print_ruling; // print the paper ruling ?
   int default_unit; // the default unit for paper sizes

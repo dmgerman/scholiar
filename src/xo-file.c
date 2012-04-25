@@ -1499,6 +1499,7 @@ void init_config_default(void)
   ui.shorten_menu_items = g_strdup(DEFAULT_SHORTEN_MENUS);
   ui.auto_save_prefs = FALSE;
   ui.bg_apply_all_pages = FALSE;
+  ui.bg_new_background_from_pdf = FALSE;
   ui.use_erasertip = FALSE;
   ui.window_default_width = 720;
   ui.window_default_height = 480;
@@ -1734,6 +1735,10 @@ void save_config_to_file(void)
   update_keyval("paper", "apply_all",
     _(" apply paper style changes to all pages (true/false)"),
     g_strdup(ui.bg_apply_all_pages?"true":"false"));
+  update_keyval("paper", "new_background_from_pdf", 
+                _("If a pdf is loaded, if true new pages are created by copying current PDF page, otherwise it creates new page with default paper"),
+                g_strdup(ui.bg_new_background_from_pdf?"true":"false"));
+
   update_keyval("paper", "default_unit",
     _(" preferred unit (cm, in, px, pt)"),
     g_strdup(unit_names[ui.default_unit]));
@@ -2175,6 +2180,8 @@ void load_config_from_file(void)
      bgcolor_names, predef_bgcolors_rgba, COLOR_MAX);
   parse_keyval_enum("paper", "style", &(ui.default_page.bg->ruling), bgstyle_names, 4);
   parse_keyval_boolean("paper", "apply_all", &ui.bg_apply_all_pages);
+  parse_keyval_boolean("paper", "new_background_from_pdf", &ui.bg_new_background_from_pdf);
+
   parse_keyval_enum("paper", "default_unit", &ui.default_unit, unit_names, 4);
   parse_keyval_boolean("paper", "progressive_bg", &ui.progressive_bg);
   parse_keyval_boolean("paper", "print_ruling", &ui.print_ruling);
