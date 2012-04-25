@@ -1777,7 +1777,6 @@ on_journalScreenshot_activate          (GtkMenuItem     *menuitem,
   if (ui.cursor!=NULL)
     gdk_cursor_unref(ui.cursor);
   ui.cursor = gdk_cursor_new(GDK_TCROSS);
-
   bg = attempt_screenshot_bg();
     
   gtk_window_deiconify(GTK_WINDOW(winMain));

@@ -40,6 +40,19 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
     { 2.83, 2.83, 8.50, 19.84, 19.84 }, // highlighter thicknesses = 1, 3, 7 mm
   };
 
+// defaults for paper
+guint RULING_COLOR       = 0xff0080ff;
+guint RULING_MARGIN_COLOR = 0xff0080ff;
+guint RULING_MARGIN_INTERSECT_COLOR = 0xff0080ff;
+double RULING_THICKNESS = 0.5;
+double RULING_LEFTMARGIN = 72.0;
+double RULING_TOPMARGIN =80.0;
+double RULING_SPACING = 24.0;
+double RULING_BOTTOMMARGIN =  24.0;
+
+
+double RULING_GRAPHSPACING= 14.17;
+
 // some manipulation functions
 
 void init_layer(struct Layer *l)
@@ -86,8 +99,12 @@ struct Page *new_page(struct Page *template)
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
 
-
-  pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
+  if (pg->bg->type == BG_PDF) {
+    // for pdfs load trhe default background
+    pg->bg = (struct Background *)g_memdup(ui.default_page.bg, sizeof(struct Background));
+  } else {
+    pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
+  }
   pg->bg->canvas_item = NULL;
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
     gdk_pixbuf_ref(pg->bg->pixbuf);
@@ -2456,121 +2473,6 @@ void install_focus_hooks(GtkWidget *w, gpointer data)
   if(GTK_IS_CONTAINER(w))
     gtk_container_forall(GTK_CONTAINER(w), install_focus_hooks, data);
 }
-
-#ifdef adfasdf
-/* Code cloned from needs to be implemented but my gtk knowledge is to little */
-
-static void
-draw_rubberband (GtkWidget *widget, GdkWindow *window,
-		 const GdkRectangle *rect, guchar alpha)
-{
-	GdkGC *gc;
-	GdkPixbuf *pixbuf;
-	GdkColor *fill_color_gdk;
-	guint fill_color;
-
-	fill_color_gdk = gdk_color_copy (&GTK_WIDGET (widget)->style->base[GTK_STATE_SELECTED]);
-	fill_color = ev_gdk_color_to_rgb (fill_color_gdk) << 8 | alpha;
-
-	pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8,
-				 rect->width, rect->height);
-	gdk_pixbuf_fill (pixbuf, fill_color);
-
-	gdk_draw_pixbuf (window, NULL, pixbuf,
-			 0, 0,
-			 rect->x /*- EV_VIEW (widget)->scroll_x*/, 
-                         rect->y /*- EV_VIEW (widget)->scroll_y*/,
-			 rect->width, rect->height,
-			 GDK_RGB_DITHER_NONE,
-			 0, 0);
-
-	g_object_unref (pixbuf);
-
-	gc = gdk_gc_new (window);
-	gdk_gc_set_rgb_fg_color (gc, fill_color_gdk);
-	gdk_draw_rectangle (window, gc, FALSE,
-			    rect->x /* Should take into account scroll - EV_VIEW (widget)->scroll_x*/,
-                            rect->y /* scroll? EV_VIEW (widget)->scroll_y */,
-			    rect->width - 1,
-			    rect->height - 1);
-	g_object_unref (gc);
-
-	gdk_color_free (fill_color_gdk);
-}
-
-void
-highlight_find_results (GtkWidget *widget, int page)
-{
-	gint i, n_results = 0;
-
-	n_results = ev_view_find_get_n_results (view, page);
-
-	for (i = 0; i < n_results; i++) {
-		EvRectangle *rectangle;
-		GdkRectangle view_rectangle;
-		guchar alpha;
-
-		if (i == view->find_result && page == view->current_page) {
-			alpha = 0x90;
-		} else {
-			alpha = 0x20;
-		}
-
-		rectangle = ev_view_find_get_result (view, page, i);
-		doc_rect_to_view_rect (view, page, rectangle, &view_rectangle);
-		draw_rubberband (GTK_WIDGET (view), view->layout.bin_window,
-				 &view_rectangle, alpha);
-        }
-}
-
-static void
-doc_rect_to_view_rect (EvView       *view,
-                       int           page,
-		       EvRectangle  *doc_rect,
-		       GdkRectangle *view_rect)
-{
-	GdkRectangle page_area;
-	GtkBorder border;
-	double x, y, w, h;
-	gdouble width, height;
-
-	get_doc_page_size (view, page, &width, &height);
-
-	if (view->rotation == 0) {
-		x = doc_rect->x1;
-		y = doc_rect->y1;
-		w = doc_rect->x2 - doc_rect->x1;
-		h = doc_rect->y2 - doc_rect->y1;
-	} else if (view->rotation == 90) {
-		x = width - doc_rect->y2;
-		y = doc_rect->x1;
-		w = doc_rect->y2 - doc_rect->y1;
-		h = doc_rect->x2 - doc_rect->x1;
-	} else if (view->rotation == 180) {
-		x = width - doc_rect->x2;
-		y = height - doc_rect->y2;
-		w = doc_rect->x2 - doc_rect->x1;
-		h = doc_rect->y2 - doc_rect->y1;
-	} else if (view->rotation == 270) {
-		x = doc_rect->y1;
-		y = height - doc_rect->x2;
-		w = doc_rect->y2 - doc_rect->y1;
-		h = doc_rect->x2 - doc_rect->x1;
-	} else {
-		g_assert_not_reached ();
-	}
-
-	get_page_extents (view, page, &page_area, &border);
-
-	view_rect->x = x * view->scale + page_area.x;
-	view_rect->y = y * view->scale + page_area.y;
-	view_rect->width = w * view->scale;
-	view_rect->height = h * view->scale;
-}
-
-
-#endif 
-
 
 static gint is_unchanged_uri_char(char c)
 {

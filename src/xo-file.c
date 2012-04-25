@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <error.h>
+
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <zlib.h>
@@ -17,6 +20,8 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <poppler/glib/poppler.h>
+#include <limits.h>
+
 
 #ifndef WIN32
  #include <gdk/gdkx.h>
@@ -1095,6 +1100,7 @@ struct Background *attempt_screenshot_bg(void)
 
   x_root = gdk_x11_get_default_root_xwindow();
   
+  // This code does not do work for me
   if (!XGrabButton(GDK_DISPLAY(), AnyButton, AnyModifier, x_root, 
       False, ButtonReleaseMask, GrabModeAsync, GrabModeSync, None, None))
     return NULL;
@@ -1103,9 +1109,12 @@ struct Background *attempt_screenshot_bg(void)
   XUngrabButton(GDK_DISPLAY(), AnyButton, AnyModifier, x_root);
 
   x_win = x_event.xbutton.subwindow;
-  if (x_win == None) x_win = x_root;
 
-  window = gdk_window_foreign_new_for_display(gdk_display_get_default(), x_win);
+  if (x_win == None) x_win = x_root;
+  //fixes code above
+  x_win = x_root;
+
+  window = gdk_x11_window_foreign_new_for_display(gdk_display_get_default(), x_win);
     
   gdk_window_get_geometry(window, &x, &y, &w, &h, NULL);
   
@@ -1772,6 +1781,33 @@ void save_config_to_file(void)
   update_keyval("paper", "pdftoppm_printing_dpi",
     _(" bitmap resolution of PDF backgrounds when printing with libgnomeprint (dpi)"),
     g_strdup_printf("%d", PDFTOPPM_PRINTING_DPI));
+  
+  // parameters for backgrunds
+
+  update_keyval("paper", "ruling_color", 
+    _(" color for lines or ruled and graph papers (RGBA format)"),
+    g_strdup_printf("0x%X", RULING_COLOR));
+  update_keyval("paper", "ruling_margin_color", 
+    _(" color for margin line in lined paper (RGBA format)"),
+    g_strdup_printf("0x%X", RULING_MARGIN_COLOR));
+  update_keyval("paper", "ruling_graph_spacing", 
+    _(" grid spacing distance for graph paper (in picas)"),
+    g_strdup_printf("%10.3f", RULING_GRAPHSPACING));
+  update_keyval("paper", "ruling_lined_spacing", 
+    _(" distances between lines in lined paper (in picas)"),
+    g_strdup_printf("%10.3f", RULING_SPACING));
+  update_keyval("paper", "ruling_top_margin", 
+    _(" top margin for lined paper (in picas)"),
+    g_strdup_printf("%10.3f", RULING_TOPMARGIN));
+  update_keyval("paper", "ruling_bottom_margin", 
+    _(" bottom margin for lined paper (in picas)"),
+    g_strdup_printf("%10.3f", RULING_BOTTOMMARGIN));
+  update_keyval("paper", "ruling_left_margin", 
+    _(" left margin for lined paper (in picas)"),
+    g_strdup_printf("%10.3f", RULING_TOPMARGIN));
+  update_keyval("paper", "ruling_thickness", 
+    _(" width of lines (in picas)"),
+    g_strdup_printf("%10.3f", RULING_THICKNESS));
 
   update_keyval("tools", "startup_tool",
     _(" selected tool at startup (pen, eraser, highlighter, selectrect, vertspace, hand)"),
@@ -1901,7 +1937,53 @@ void save_config_to_file(void)
 }
 
 #if GLIB_CHECK_VERSION(2,6,0)
-gboolean parse_keyval_float(const gchar *group, const gchar *key, double *val, double inf, double sup)
+gboolean parse_keyval_color(const gchar *group, const gchar *key, guint *val_rgba)                            
+{
+  //
+  char *endptr;
+  unsigned long val;
+  gchar *str = NULL;
+  gboolean  withAlpha  = FALSE;
+  // Let us make it simple to us... if it is not hex, and it is not lenght 10 (0x12345678) then 
+  // we reject it
+
+  str = g_key_file_get_string(ui.config_data, group, key, NULL);
+  if (str==NULL) return FALSE;
+
+  if (toupper(str[1]) != 'X'  ||
+      (strlen(str) < 9 && strlen(str) > 10)) {
+    fprintf(stderr, "Invalid color [%s] value in config file. It must be in the format 0xRRGGBBAA (hex, and include alpha channel value)\n", str);
+
+    fprintf(stderr, "[%d], [%c]\n", strlen(str), toupper(str[1]));
+
+
+    g_free(str);
+    return FALSE;
+  }
+
+
+  errno = 0;    /* To distinguish success/failure after call */
+  // we must convert as an unsigned long integer
+  // base 0 parses base 10 and base 16
+  val = strtoul(str, &endptr, 0);
+  
+  /* Check for various possible errors */
+  if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+      || (errno != 0 && val == 0)) {
+    perror("reading color from config file");;
+    g_free(str);
+    return FALSE;
+  }
+  
+  printf("Read color [%lx]\n", val);
+
+  *val_rgba = val;
+  g_free(str);
+  return TRUE;
+}
+
+
+gboolean parse_keyval_double(const gchar *group, const gchar *key, double *val, double inf, double sup)
 {
   gchar *ret, *end;
   double conv;
@@ -1941,9 +2023,14 @@ gboolean parse_keyval_int(const gchar *group, const gchar *key, int *val, int in
 {
   gchar *ret, *end;
   int conv;
-  
+  // lets decode it... it seems to return tru or false depending on result..
+
   ret = g_key_file_get_value(ui.config_data, group, key, NULL);
+
   if (ret==NULL) return FALSE;
+  // and... 
+  // converts to integer... checkif it the value is within range
+  
   conv = strtol(ret, &end, 10);
   if (*end!=0) { g_free(ret); return FALSE; }
   g_free(ret);
@@ -2072,9 +2159,9 @@ void load_config_from_file(void)
   }
 
   // parse keys from the keyfile to set defaults
-  if (parse_keyval_float("general", "display_dpi", &f, 10., 500.))
+  if (parse_keyval_double("general", "display_dpi", &f, 10., 500.))
     DEFAULT_ZOOM = f/72.0;
-  if (parse_keyval_float("general", "initial_zoom", &f, 
+  if (parse_keyval_double("general", "initial_zoom", &f, 
               MIN_ZOOM*100/DEFAULT_ZOOM, MAX_ZOOM*100/DEFAULT_ZOOM))
     ui.zoom = ui.startup_zoom = DEFAULT_ZOOM*f/100.0;
   parse_keyval_boolean("general", "window_maximize", &ui.maximize_at_start);
@@ -2083,7 +2170,7 @@ void load_config_from_file(void)
   parse_keyval_int("general", "window_height", &ui.window_default_height, 10, 5000);
   parse_keyval_int("general", "scrollbar_speed", &ui.scrollbar_step_increment, 1, 5000);
   parse_keyval_int("general", "zoom_dialog_increment", &ui.zoom_step_increment, 1, 500);
-  parse_keyval_float("general", "zoom_step_factor", &ui.zoom_step_factor, 1., 5.);
+  parse_keyval_double("general", "zoom_step_factor", &ui.zoom_step_factor, 1., 5.);
   parse_keyval_boolean("general", "view_continuous", &ui.view_continuous);
   parse_keyval_boolean("general", "use_xinput", &ui.allow_xinput);
   parse_keyval_boolean("general", "discard_corepointer", &ui.discard_corepointer);
@@ -2095,8 +2182,8 @@ void load_config_from_file(void)
 
   parse_keyval_string("general", "default_path", &ui.default_path);
   parse_keyval_boolean("general", "pressure_sensitivity", &ui.pressure_sensitivity);
-  parse_keyval_float("general", "width_minimum_multiplier", &ui.width_minimum_multiplier, 0., 10.);
-  parse_keyval_float("general", "width_maximum_multiplier", &ui.width_maximum_multiplier, 0., 10.);
+  parse_keyval_double("general", "width_minimum_multiplier", &ui.width_minimum_multiplier, 0., 10.);
+  parse_keyval_double("general", "width_maximum_multiplier", &ui.width_maximum_multiplier, 0., 10.);
 
   parse_keyval_vorderlist("general", "interface_order", ui.vertical_order[0]);
   parse_keyval_vorderlist("general", "interface_fullscreen", ui.vertical_order[1]);
@@ -2108,12 +2195,12 @@ void load_config_from_file(void)
   parse_keyval_boolean("general", "shorten_menus", &ui.shorten_menus);
   if (parse_keyval_string("general", "shorten_menu_items", &str))
     if (str!=NULL) { g_free(ui.shorten_menu_items); ui.shorten_menu_items = str; }
-  parse_keyval_float("general", "highlighter_opacity", &ui.hiliter_opacity, 0., 1.);
+  parse_keyval_double("general", "highlighter_opacity", &ui.hiliter_opacity, 0., 1.);
   parse_keyval_boolean("general", "autosave_prefs", &ui.auto_save_prefs);
   parse_keyval_boolean("general", "poppler_force_cairo", &ui.poppler_force_cairo);
   
-  parse_keyval_float("paper", "width", &ui.default_page.width, 1., 5000.);
-  parse_keyval_float("paper", "height", &ui.default_page.height, 1., 5000.);
+  parse_keyval_double("paper", "width", &ui.default_page.width, 1., 5000.);
+  parse_keyval_double("paper", "height", &ui.default_page.height, 1., 5000.);
   parse_keyval_enum_color("paper", "color", 
      &(ui.default_page.bg->color_no), &(ui.default_page.bg->color_rgba), 
      bgcolor_names, predef_bgcolors_rgba, COLOR_MAX);
@@ -2124,6 +2211,16 @@ void load_config_from_file(void)
   parse_keyval_boolean("paper", "print_ruling", &ui.print_ruling);
   parse_keyval_int("paper", "gs_bitmap_dpi", &GS_BITMAP_DPI, 1, 1200);
   parse_keyval_int("paper", "pdftoppm_printing_dpi", &PDFTOPPM_PRINTING_DPI, 1, 1200);
+
+  // paper backgrounds
+  parse_keyval_color("paper", "ruling_color", &RULING_COLOR);  
+  parse_keyval_color("paper", "ruling_margin_color", &RULING_MARGIN_COLOR);
+  parse_keyval_double("paper", "ruling_thickness", &RULING_THICKNESS, 0.1, 10.0);
+  parse_keyval_double("paper", "ruling_left_margin", &RULING_LEFTMARGIN, 0, 1000.0);
+  parse_keyval_double("paper", "ruling_top_margin", &RULING_TOPMARGIN, 0, 1000.0);
+  parse_keyval_double("paper", "ruling_bottom_margin", &RULING_BOTTOMMARGIN, 0, 1000.0);
+  parse_keyval_double("paper", "ruling_spacing", &RULING_SPACING, 1, 1000.0);
+  parse_keyval_double("paper", "ruling_graph_spacing", &RULING_GRAPHSPACING, 0.1, 1200.0);
 
   parse_keyval_enum("tools", "startup_tool", &ui.startuptool, tool_names, NUM_TOOLS);
   ui.toolno[0] = ui.startuptool;
@@ -2183,6 +2280,6 @@ void load_config_from_file(void)
   parse_keyval_floatlist("tools", "highlighter_thicknesses", predef_thickness[TOOL_HIGHLIGHTER]+1, 3, 0.01, 1000.0);
   if (parse_keyval_string("tools", "default_font", &str))
     if (str!=NULL) { g_free(ui.default_font_name); ui.default_font_name = str; }
-  parse_keyval_float("tools", "default_font_size", &ui.default_font_size, 1., 200.);
+  parse_keyval_double("tools", "default_font_size", &ui.default_font_size, 1., 200.);
 #endif
 }

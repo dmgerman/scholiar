@@ -119,16 +119,16 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
 			       int rotation,
 			       GdkPixbuf *pixbuf);
 
-// defines for paper rulings
+// paper rulings
 
-#define RULING_MARGIN_COLOR 0xff0080ff
-#define RULING_COLOR 0x40a0ffff
-#define RULING_THICKNESS 0.5
-#define RULING_LEFTMARGIN 72.0
-#define RULING_TOPMARGIN 80.0
-#define RULING_SPACING 24.0
-#define RULING_BOTTOMMARGIN RULING_SPACING
-#define RULING_GRAPHSPACING 14.17
+extern double RULING_GRAPHSPACING;
+extern guint  RULING_COLOR;
+extern guint RULING_MARGIN_COLOR;
+extern double RULING_THICKNESS;
+extern double RULING_LEFTMARGIN;
+extern double RULING_TOPMARGIN;
+extern double RULING_SPACING;
+extern double RULING_BOTTOMMARGIN;
 
 
 /*
