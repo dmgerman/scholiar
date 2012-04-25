@@ -38,6 +38,19 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
     { 2.83, 2.83, 8.50, 19.84, 19.84 }, // highlighter thicknesses = 1, 3, 7 mm
   };
 
+// defaults for paper
+guint RULING_COLOR       = 0xff0080ff;
+guint RULING_MARGIN_COLOR = 0xff0080ff;
+guint RULING_MARGIN_INTERSECT_COLOR = 0xff0080ff;
+double RULING_THICKNESS = 0.5;
+double RULING_LEFTMARGIN = 72.0;
+double RULING_TOPMARGIN =80.0;
+double RULING_SPACING = 24.0;
+double RULING_BOTTOMMARGIN =  24.0;
+
+
+double RULING_GRAPHSPACING= 14.17;
+
 // some manipulation functions
 
 struct Page *new_page(struct Page *template)
