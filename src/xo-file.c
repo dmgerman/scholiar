@@ -1356,7 +1356,6 @@ gboolean init_bgpdf(char *pdfname, gboolean create_pages, int file_domain)
   // create pages with correct sizes if requested
   n_pages = poppler_document_get_n_pages(bgpdf.document);
   for (i=1; i<=n_pages; i++) {
-    printf("Creating page %d [%d]\n", i, n_pages);
     pdfpage = poppler_document_get_page(bgpdf.document, i-1);
     if (!pdfpage) continue;
     if (journal.npages < i) {
