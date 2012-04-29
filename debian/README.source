@@ -1,0 +1,5 @@
+This package uses quilt to apply changes to the original source and
+consequently the build depends include quilt.  Please see 
+/usr/share/doc/quilt/README.source for details on how to work with the quilt patch system.
+
+October 3, 2009 - Carlo Segre <segre@debian.org>

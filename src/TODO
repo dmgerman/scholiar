@@ -1,56 +1,13 @@
 List of features to be implemented (not in any particular order)
 ----------------------------------------------------------------
+   
+DMG:
 
-THINGS DONE IN THIS RELEASE:
+- disable next file/prev file buttons where file not loaded
 
-DONE: fix GTK+ 2.16/2.17 XInput issues with scrollbars and menus
-DONE: fix bug 2826845 (shape recognizer accel doesn't work in fullscreen mode)
-DONE: bug affecting resize zone in statusbar
-DONE: page spinbutton wide enough for 3 digits; avoid "deprecated" warning
-DONE: edit->paste command should refresh toolbar to unselect color/thickness
-      (so can repaint sel)
-DONE: cursor doesn't reset properly after selection operation if primary
-      tool is select mode (stays with arrow cursor instead of pointer)
-DONE: device with "eraser" at the end of its name is of type ERASER
-      (Edward Yang)
-DONE: fix_xinput_coords() replaces buggy xinput events by core pointer 
-      coordinates
-DONE: use poppler to render PDF backgrounds (after patches contributed
-      by Mike Ter Louw and Bob McElrath)
-DONE: gettext internationalization (contributed by David Planella)
-DONE: Catalan translation (by David Planella); French translation
-DONE: fix unresponsiveness to button events in text edition box (GTK+ 2.17)
-      and segfaults when dragging text or using Layers combobox (GTK+ 2.17)
-DONE: Esc leaves text box if editing; and leaves fullscreen mode
-DONE: package our own copy of the ttsubset library (to remove a dependency
-      on libgnomeprint), and create TT subfonts in memory
-DONE: use gtk-print instead of libgnomeprint
-DONE: remove deprecated "antialias bg" option
-DONE: fix fix_xinput_coords so it works ok without ENABLE_XINPUT_BUGFIX ?
-DONE: disable ctrl-left/right accelerators during text edition
-DONE: custom color chooser button (after a patch contributed by Alex Ray)
-DONE: remember last used directory (after a patch contributed by Lu Zhihe)
-DONE: discard Alt-click and Control-click events
-DONE: option to have buttons *toggle* the tool rather than act as tool
-       (ie button 2 causes button 1 to map to tool 2) [Dylan Thurston]
-DONE: patch to fix focus + allow up/dn in single page mode (Bob McElrath)
-DONE: patch to fix underscores in MRU filename display (Bob McElrath)
-DONE: patch to avoid tiny file dialogs (Bob McElrath)
-DONE: further fixes for focus; can Esc out of page selection box
-DONE: further fixes for xinput under GTK+ 2.17
-DONE: option to auto-load *.pdf.xoj instead of *.pdf (Bob McElrath)
-DONE: look for PDF backgrounds in path of xoj file before prompting user
-DONE: paper color chooser (after a patch by ojb)
-DONE: remove "Discard core events" from options menu
-DONE: get_pressure_multiplier() accesses correct members of event union
-DONE: address recognizer bug on single-segment strokes (division by 0)
-DONE: remove binary installer (poppler is binary incompatible across versions)
-      but provide configure script
-
-REMAINING THINGS TO DO:
 
 - collaborative editing (see discussion with Erik Demaine)
-- porting to Win32 and MacOS; merge Nokia port
+- porting to MacOS; merge Nokia port
 - multiple-scenario undo history
 
 - collaborative: allow non-x86 endianness (for ints, for floats?)
@@ -64,7 +21,37 @@ REMAINING THINGS TO DO:
   (e.g. if xinput events are far away from core events, re-query geometry?)
    or see if removing the GTK bugfix would help? -- e.g. by recalling an
    internal gtk init function?
+  Also allow for SIGUSR1 to recalibrate (so rotate scripts could pkill
+  xournal). (cf #2944459). Recalibration probably requires talking directly 
+  to X server to query input device geometry and compensate for GTK.
 
+BUGS:
+** lingering issues with synaptics touchpads? (#2872667)
+ (todo) - set device to Absolute mode at startup? (GDK doesn't expose API,
+          cf XSetDeviceMode() in /usr/include/X11/extensions/XInput.h)
+** color picker into canvas doesn't work in GTK+ 2.16 (should disable
+   xinput first?)
+** export to PDF should see cropbox size if smaller, and map the
+   cropbox -- not the entire page -- to the page area! (2009-11-18 forum)
+
+*** filter out very large coords when loading, not just infinity
+
+WIN32:
+- test further
+- write an installer
+- bug: opening files with accents in name?
+- bug: cairo-scaled-font in printing? (2009-11-18 bug tracker)
+- bug: printf() sometimes generates stroke coordinates 1.#J -1.#J  (???)
+
+PATCHES TO INCORPORATE:
+
+* filter out very large coords when loading, not just infinity; also filter
+  out 1.#J's
+
+- patch: add Alt-Up/Dn accelerators for show/hide layer. See
+  show_hide_layer.patch
+
+***** my own patch noresize_background_v1.patch  (also in xournal-working/)
 
 ** patch: ortho/snap (revised Apr 13 2009)
    xournal_ortho_snap_patch_4 (by Josef Pavlicek)
@@ -72,10 +59,64 @@ REMAINING THINGS TO DO:
 ** patch (Ian-Woo Kim): multicolumn mode + LASSO SELECTION
    xournal_lasso_multipage_zoom_button_20090620.patch
 
-** autosave patch (Edward Yang) (fix: optional only, w/ menu + cfgfile
+** autosave patch (Edward Yang) (should fix: optional only, w/ menu + cfgfile
    entries; fix: should clean up autosave.xoj.bg* files too; config interval)
    0001-Implement-autosave-for-documents-revised.patch (2 seconds after
    modification, vs original 5 seconds)
+   *** NEW VERSION: #2881919 (autosave for 0.4.5, w/ some changes)
+   NB: last modif should be triggered by prepare_new_undo() and undo/redo?
+   *** NEW VERSION: with threading, by Man, e-mail 12/10/2009 10:51pm
+
+** insert images patch (Victor Saase) #2890925
+** as improved by Simon Guest April 14 2010
+** modified rev2 May 14, 2010: xournal-0.4.5-sjg-image-rev2.patch.gz 
+** rev6 by now...
+
+** customize paper ruling (Gautam Iyer e-mail Nov 30 2009 / SF tracker)
+
+** cairo export to PNG (Man = Paulo Neves, e-mail Feb 3 '10, saved as
+  cairo-png-rendering.diff.txt (refactor printing of page to cairo surface
+  with the gtk-print code).
+
+- patch by S. Guest
+  shortcut to increase/decrease text font size by 1 point (?) - acts just
+  as if one had clicked font sel box and resized (affects sel text + cur font)
+
+- make default in ok_to_close() box "cancel" rather than "no".
+
+- make line spacing in text objects customizable: to a fixed scaling factor,
+  a fixed number of units, or the paper ruling (esp. the latter!!)
+
+- page size dialog box should have a check button to keep background size
+  the same (so rescaling creates margin around bitmap or PDF background).
+  This will need an extension to the file format, to allow a page background
+  to have a different size from the page itself.
+
+- option to map device named "touch" to hand tool? (like "Eraser tip")
+
+
+- roadmap towards SVG support: see 1/25/2010 Mark Edgington email & reply
+  (1) export to SVG (using pages and groups for pages and layers; 
+  use comment tags to make export nonlossy;
+  (2) import from this subset of SVG;
+  (3) add SVG to the file-open and save formats
+
+- roadmap towards PDF encapsulation: see 1/29/2010 forum posts
+  When exporting to PDF, don't just append our annotations as PDF code but
+  also include the .xoj file within the pdf, and ensure the initial pdf is
+  well-delimited from the rest. When opening a PDF that includes such
+  markings, discard the annotation part of the PDF and open the embedded xoj
+  instead. Later, offer such PDF as a file-open and save format (even when
+  there's no PDF background being annotated!!).
+
+*** should have Open, Save, Save As manipulate at least 3 formats:
+  - XOJ
+  - PDF with embedded xoj file in an object (opens with annot. in PDF viewer,
+    with background only + separate xoj in xournal)
+  - SVG (subset only)
+  additionally, should have "print to": printer, PDF, SVG, bitmap.
+
+- allow djvu and other backgrounds (but then can't export to PDF)
 
 - PDF bg memory usage throttling / delete oldest pdf backgrounds
 - replace ttsubset by something more modern? (eg. from cairo ?)
@@ -88,9 +129,16 @@ REMAINING THINGS TO DO:
 - horizontal mode instead of dual-view / multicolumn ?
 ** "new page before/after" on a PDF bg page should ask: same page, other page of
   PDF file, default paper
+** should also have in Journal -> Paper style the option "Pdf page ..."
+  which then lets us change the page number.
 - new recognizer icon (andruk on patches tracker)
 - recognizer: if variable-width, associate average width
 - recognizer should snap to existing recognized geometric shapes
+- patch to find text in PDF (dmg = Daniel German, Nov 13 2009)
+
+- search through text (xoj and PDF background) (with highlight? forwd/backwd)
+  (see evince). Also: ability to select rectangle on PDF bg and copy-paste
+  as bitmap or as text.
 
 - improve recognizer: two passes for polygons (low tolerance, then higher)
   to better detect elongated rectangles? (if low tolerance recognizer
@@ -106,26 +154,30 @@ REMAINING THINGS TO DO:
 - proximity detection: eraser proximity switches mapping? 
   proximity out removes cursor until next motionnotify?
 
+
 - render page to bitmap: for export, preview, and copy-paste
     (render using libart, see how gnomecanvas does it?)
     NO: render using Cairo !!! then can switch to GtkPrint as well.
     (copy-paste: config option to render only current layer or all below?)
 - cut-and-paste of selection into other apps (as bitmap; as SVG?)
+
 - navigation sidebar with bitmap page previews
 - bitmap preview for document icon in desktop environments?
 - "organizer" side panel (hierarchy of notes), cf. gjots
+- maintain e-library: table of md5sums of pdfs with associations
+  to the corresponding xoj's absolute paths (cf. forum topic
+  "Use MD5..." of Dec 2009)
+
 - see iRex code for generic viewer + PDF plugin including caching,
   throttling etc. (Marcel Hendrickx email of Sep 11 '09) 
 
 - allow toolbar to go vertical
 - toolbar buttons should react to button 2/3 click to modify settings
-  for that tool?
+  for that tool!!
 
 - paste text directly into xournal, from xournal?
     (instead of starting a text item and pasting into/from it)
 - insert links (to URLs; within document/to other xoj? hand mode navigates)
-- increase width of spinPageNo to fit 3 digits
-- should escape '_' to '__' in MRU menu entries (else become mnemonics)
 - a command + keyboard shortcut to switch mappings (1<->2, 1<->3, 2<->3)
      (A. Rechnitzer Sept 11, 2007)
 - modify encoding of TrueType font subsets or provide cmap so pdf text
@@ -138,15 +190,16 @@ REMAINING THINGS TO DO:
 - copy/paste of an entire page (beware if PDF bg is not compatible!)
 - rewrite printing using GtkPrint + Cairo as GnomePrint replacement
    (keep GnomePrint option for compatibility with GTK+ <2.10)
-- insert images by screen capture or from clipboard
+- insert images (screen capture or from file or from clipboard), 
+  not as full-page backgrounds (new ITEM type)
 
 - convert to/from Jarnal format; to/from MS Journal format???
 - export as SVG, as bitmap (use Cairo for this)
 - improved PDF viewer features (search text, hyperlink, page borders...)
    (using full poppler api ?)
+- search text: among PDF background (using poppler); among text annotations
 
 - use system paper size as default (/etc/papersize)
-- autoload *.pdf.xoj if present when opening *.pdf ???
 - sticky notes (anchor visually text box to a bg location)
 - use relative paths for bg documents (e.g. annotated PDF)
 - flush display queue when drawing over a slow X server?
@@ -163,8 +216,8 @@ REMAINING THINGS TO DO:
 - lasso selection tool (see shoffsta patch)
      (http://shoffsta.afraid.org/Projects/Xournal/)
 - flatten (incl undo/redo...) - enabled only if nlayers>1
-- color chooser (papercolor, pen color); maybe more default colors
-  cf. ojb patch #2083103 adds paper color chooser
+- color chooser (papercolor, pen color); have default colors and a history
+  appear as palette in there!
 - printing: print-options, save printer settings (throughout a session,
    and on disk) (maybe a separate config file .xournal/gnome-print-settings)
 - help index
@@ -225,3 +278,4 @@ REMAINING THINGS TO DO:
   to bind Ctrl-B to draw a \beta" for class notes). (shape, binding) sets are
   local to one session (different for different classes; but save them into
   the xoj file maybe ?) [Felix Giannelia 09/29/2009]
+

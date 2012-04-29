@@ -5,7 +5,6 @@
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <poppler/glib/poppler.h>
 
-
 //#define ERASER_BTN2_FORCE
 /* uncomment to enable a workaround for broken Wacom drivers on
    Windows 7 x64. (The driver bug creates bogus button 2 release events.)
@@ -25,13 +24,16 @@
    doesn't produce desired effect */
 
 //#define INPUT_DEBUG
+
 /* uncomment this line if you experience event-processing problems
    and want to list the input events received by xournal. Caution, lots
    of output (redirect to a file). */
 
+
 #define ENABLE_IMAGE_EMBEDDING
 
 //#define ENABLE_XINPUT_BUGFIX
+
 /* comment out this line if you are experiencing calibration problems with
    XInput and want to try things differently. This will probably break
    on-the-fly display rotation after application startup, though. */
@@ -54,9 +56,9 @@
 // version string for about box
 
 #ifdef WIN32
-#define VERSION_STRING VERSION BRANCH_ID "-win32"
+#define VERSION_STRING VERSION "-win32"
 #else
-#define VERSION_STRING VERSION BRANCH_ID
+#define VERSION_STRING VERSION
 #endif
 
 // DATA STRUCTURES AND CONSTANTS
@@ -345,6 +347,7 @@ typedef struct UIData {
   char *mru[MRU_SIZE]; // MRU data
   GtkWidget *mrumenu[MRU_SIZE];
   gboolean bg_apply_all_pages;
+  gboolean bg_new_background_from_pdf;
   int window_default_width, window_default_height, scrollbar_step_increment;
   gboolean print_ruling; // print the paper ruling ?
   int default_unit; // the default unit for paper sizes
@@ -352,10 +355,14 @@ typedef struct UIData {
   int zoom_step_increment; // the increment in the zoom dialog box
   double zoom_step_factor; // the multiplicative factor in zoom in/out
   double startup_zoom;
+
   double image_one_to_one_zoom; // zoom factor at which inserted images will
   //appear at native resolution.  Logical values are DEFAULT_ZOOM and 1.0
-  gboolean autoload_pdf_xoj;
-  gboolean autoexport_pdf;
+
+  gboolean autoload_pdf_xoj; // automatically load the xoj if it exists when opining a pdf
+  gboolean autoexport_pdf; // automatically export to PDF on save
+  gboolean showInterface; // show interface in normal mode
+  gboolean showInterfaceFullscreen; // show interface in full screen mode
 
 #if GLIB_CHECK_VERSION(2,6,0)
   GKeyFile *config_data;
@@ -372,17 +379,21 @@ typedef struct UIData {
   gboolean shorten_menus; // shorten menus ?
   gchar *shorten_menu_items; // which items to hide
   gboolean is_sel_cursor; // displaying a selection-related cursor
+
   gboolean enable_autosave; // whether or not autosave is allowed
   guint autosave_defers; // number of stacked deferrals
   gboolean block_autosave; // block autosave from occurring when true
   gint pre_fullscreen_width, pre_fullscreen_height; // for win32 fullscreen
   gboolean embed_images;
+
 #if GTK_CHECK_VERSION(2,10,0)
   GtkPrintSettings *print_settings;
 #endif
   gboolean poppler_force_cairo; // force poppler to use cairo
+
   char *xournal_exe_cmd; // command line w/ which xournal was invoked (argv[0])
   gboolean this_is_autosave; // use to preclude auto-pdf export on autosave
+
 } UIData;
 
 #define BRUSH_LINKED 0

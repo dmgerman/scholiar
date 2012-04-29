@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <libart_lgpl/art_svp_point.h>
@@ -45,6 +46,19 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
     { 2.83, 2.83, 8.50, 19.84, 19.84 }, // highlighter thicknesses = 1, 3, 7 mm
   };
 
+// defaults for paper
+guint RULING_COLOR       = 0xff0080ff;
+guint RULING_MARGIN_COLOR = 0xff0080ff;
+guint RULING_MARGIN_INTERSECT_COLOR = 0xff0080ff;
+double RULING_THICKNESS = 0.5;
+double RULING_LEFTMARGIN = 72.0;
+double RULING_TOPMARGIN =80.0;
+double RULING_SPACING = 24.0;
+double RULING_BOTTOMMARGIN =  24.0;
+
+
+double RULING_GRAPHSPACING= 14.17;
+
 // some manipulation functions
 
 void init_layer(struct Layer *l)
@@ -79,7 +93,22 @@ struct Page *new_page(struct Page *template)
   init_layer(l);
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
+
   copy_page_background(pg, template);
+
+  if (pg->bg->type == BG_PDF && !ui.bg_new_background_from_pdf) {
+    // for pdfs load trhe default background
+    pg->bg = (struct Background *)g_memdup(ui.default_page.bg, sizeof(struct Background));
+  } else {
+    pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
+  }
+
+  pg->bg->canvas_item = NULL;
+  if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
+    gdk_pixbuf_ref(pg->bg->pixbuf);
+    refstring_ref(pg->bg->filename);
+  }
+
   pg->group = (GnomeCanvasGroup *) gnome_canvas_item_new(
       gnome_canvas_root(canvas), gnome_canvas_clipgroup_get_type(), NULL);
   make_page_clipbox(pg);
@@ -464,7 +493,8 @@ gboolean items_overlap(struct Item *i1, struct Item *i2)
 
 void fix_xinput_coords(GdkEvent *event)
 {
-  double *axes, *px, *py, axis_width;
+  double *axes, *px, *py;
+  //  double axis_width;
   GdkDevice *device;
   int wx, wy, sx, sy, ix, iy;
 
@@ -776,8 +806,11 @@ void update_canvas_bg(struct Page *pg)
 {
   GnomeCanvasGroup *group;
   GnomeCanvasPoints *seg;
+
+  //  GdkPixbuf *scaled_pix;
   double *pt;
   double x, y;
+  //  int w, h;
   gboolean is_well_scaled;
   
   if (pg->bg->canvas_item != NULL)
@@ -2185,24 +2218,52 @@ void process_mapping_activate(GtkMenuItem *menuitem, int m, int tool)
 const char *vbox_component_names[VBOX_MAIN_NITEMS]=
  {"scrolledwindowMain", "menubar", "toolbarMain", "toolbarPen", "hbox1"};
 
-void update_vbox_order(int *order)
+void update_vbox_order(int *order, gboolean show)
 {
+  // first is the flags indicating the order of the elements,
+  // but they are shown only is show is true
   int i, j;
   GtkWidget *child;
   GtkBox *vboxMain = GTK_BOX(GET_COMPONENT("vboxMain"));
   gboolean present[VBOX_MAIN_NITEMS];
-  
+
+  // start by setting values to non-shown
   for (i=0; i<VBOX_MAIN_NITEMS; i++) present[i] = FALSE;
-  j=0;
-  for (i=0; i<VBOX_MAIN_NITEMS; i++) {
-    if (order[i]<0 || order[i]>=VBOX_MAIN_NITEMS) continue;
-    present[order[i]] = TRUE;
-    child = GET_COMPONENT(vbox_component_names[order[i]]);
-    gtk_box_reorder_child(vboxMain, child, j++);
-    gtk_widget_show(child);
+
+  if (show) {
+    // only if we want to show...
+    // then scan them to determine the order
+
+    j=0;
+    for (i=0; i<VBOX_MAIN_NITEMS; i++) {
+      if (order[i]<0 || order[i]>=VBOX_MAIN_NITEMS) continue;
+      present[order[i]] = TRUE;
+      child = GET_COMPONENT(vbox_component_names[order[i]]);
+      gtk_box_reorder_child(vboxMain, child, j++);
+      gtk_widget_show(child);
+    }
+    for (i=1; i<VBOX_MAIN_NITEMS; i++) // hide others, but not the drawing area!
+      if (!present[i]) gtk_widget_hide(GET_COMPONENT(vbox_component_names[i]));
+  } else {
+    int showMenu = 0;
+    if (!ui.fullscreen) {
+      child = GET_COMPONENT("menubar");
+      gtk_box_reorder_child(vboxMain, child, 0);
+      gtk_widget_show(child);
+      showMenu = 1;
+    }
+    // hide them
+    for (i=1; i<VBOX_MAIN_NITEMS; i++) { // hide components, but not the drawing area nor menubar
+      if (strcmp(vbox_component_names[i], "menubar") != 0) {
+        gtk_widget_hide(GET_COMPONENT(vbox_component_names[i]));
+      }
+      else {
+        if (!showMenu)
+          gtk_widget_hide(GET_COMPONENT("menubar"));
+      }
+    }
   }
-  for (i=1; i<VBOX_MAIN_NITEMS; i++) // hide others, but not the drawing area!
-    if (!present[i]) gtk_widget_hide(GET_COMPONENT(vbox_component_names[i]));
+
 }
 
 gchar *make_cur_font_name(void)
@@ -2342,6 +2403,16 @@ void add_scroll_bindings(void)
   gtk_binding_entry_add_signal(binding_set, GDK_KP_Right, 0,
     "scroll_child", 2, GTK_TYPE_SCROLL_TYPE, GTK_SCROLL_STEP_FORWARD, 
     G_TYPE_BOOLEAN, TRUE);  
+  // make space scroll down
+  gtk_binding_entry_add_signal(binding_set, GDK_space, 0,
+    "scroll_child", 2, GTK_TYPE_SCROLL_TYPE, GTK_SCROLL_PAGE_DOWN, 
+    G_TYPE_BOOLEAN, TRUE);  
+  // and shift space up
+  gtk_binding_entry_add_signal(binding_set, GDK_space, GDK_SHIFT_MASK,
+    "scroll_child", 2, GTK_TYPE_SCROLL_TYPE, GTK_SCROLL_PAGE_UP, 
+    G_TYPE_BOOLEAN, TRUE);  
+
+
 }
 
 gboolean is_event_within_textview(GdkEventButton *event)
@@ -2377,6 +2448,11 @@ void hide_unimplemented(void)
 #endif
 }  
 
+void update_interface(void)
+{
+  update_vbox_order(ui.vertical_order[ui.fullscreen?1:0], ui.fullscreen?ui.showInterfaceFullscreen:ui.showInterface);
+}
+
 // toggle fullscreen mode
 void do_fullscreen(gboolean active)
 {
@@ -2404,7 +2480,7 @@ void do_fullscreen(gboolean active)
     gtk_window_unfullscreen(GTK_WINDOW(winMain));
   }
 
-  update_vbox_order(ui.vertical_order[ui.fullscreen?1:0]);
+  update_interface();
 }
 
 /* attempt to work around GTK+ 2.16/2.17 bugs where random interface
@@ -2686,7 +2762,6 @@ doc_rect_to_view_rect (EvView       *view,
 
 #endif 
 
-
 static gint is_unchanged_uri_char(char c)
 {
   return isalnum(c);
@@ -2813,8 +2888,6 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
   wrapper_copy_cairo_surface_to_pixbuf (surface, pixbuf);
   cairo_surface_destroy (surface);
 }
-
-
 
 // Work around GTK path bugs
 // see https://bugzilla.gnome.org/show_bug.cgi?id=667077 and

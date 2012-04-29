@@ -39,5 +39,10 @@ struct Item *click_is_in_text(struct Layer *layer, double x, double y);
 void refont_text_item(struct Item *item, gchar *font_name, double font_size);
 void process_font_sel(gchar *str);
 
+void insert_image(GdkEvent *event, struct Item *item);
+
 
 #endif  /* XO_PAINT_H */
+/* image functions */
+
+

@@ -259,6 +259,8 @@ create_winMain (void)
   GtkWidget *optionsPrintRuling;
   GtkWidget *optionsAutoloadPdfXoj;
   GtkWidget *optionsAutoExportPdf;
+  GtkWidget *optionsShowInterface;
+  GtkWidget *optionsShowInterfaceFullscreen;
   GtkWidget *optionsTouchAsHandTool;
   GtkWidget *optionsLeftHanded;
   GtkWidget *optionsShortenMenus;
@@ -1463,6 +1465,22 @@ create_winMain (void)
   gtk_widget_show (optionsAutoExportPdf);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsAutoExportPdf);
 
+  optionsShowInterface = gtk_check_menu_item_new_with_mnemonic (_("Show _interface"));
+  gtk_widget_show (optionsShowInterface);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsShowInterface);
+
+  gtk_widget_add_accelerator (optionsShowInterface, "activate", accel_group,
+                              GDK_I, (GdkModifierType) GDK_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
+
+  optionsShowInterfaceFullscreen = gtk_check_menu_item_new_with_mnemonic (_("Show interface f_ullscreen"));
+  gtk_widget_show (optionsShowInterfaceFullscreen);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsShowInterfaceFullscreen);
+
+  gtk_widget_add_accelerator (optionsShowInterfaceFullscreen, "activate", accel_group,
+                              GDK_U, (GdkModifierType) GDK_CONTROL_MASK | GDK_SHIFT_MASK,
+                              GTK_ACCEL_VISIBLE);
+
   optionsTouchAsHandTool = gtk_check_menu_item_new_with_mnemonic (_("Always use _Touch screen as hand tool"));
   gtk_widget_show (optionsTouchAsHandTool);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsTouchAsHandTool);
@@ -1583,17 +1601,6 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPreviousPage);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonPreviousPage), tooltips, _("Previous Page"), NULL);
 
-  tmp_image = create_pixmap (winMain, "go-jump-rev.png");
-  gtk_widget_show (tmp_image);
-  buttonNotablePrevPage = (GtkWidget*) gtk_tool_button_new (tmp_image, _("JumpBack"));
-  gtk_widget_show (buttonNotablePrevPage);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotablePrevPage);
-  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotablePrevPage), tooltips, _("Previous Notable Page"), NULL);
-
-  buttonNotableNextPage = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-jump-to");
-  gtk_widget_show (buttonNotableNextPage);
-  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotableNextPage);
-  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotableNextPage), tooltips, _("Next Notable Page"), NULL);
 
   buttonNextPage = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-go-forward");
   gtk_widget_show (buttonNextPage);
@@ -1620,6 +1627,20 @@ create_winMain (void)
   buttonNextFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-next");
   gtk_widget_show (buttonNextFile);
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNextFile);
+
+  tmp_image = create_pixmap (winMain, "go-jump-rev.png");
+  gtk_widget_show (tmp_image);
+  buttonNotablePrevPage = (GtkWidget*) gtk_tool_button_new (tmp_image, _("JumpBack"));
+  gtk_widget_show (buttonNotablePrevPage);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotablePrevPage);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotablePrevPage), tooltips, _("Previous Notable Page"), NULL);
+
+  tmp_image = create_pixmap (winMain, "go-jump-for.png");
+  gtk_widget_show (tmp_image);
+  buttonNotableNextPage = (GtkWidget*) gtk_tool_button_new (tmp_image, _("JumpForw"));
+  gtk_widget_show (buttonNotableNextPage);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNotableNextPage);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNotableNextPage), tooltips, _("Next Notable Page"), NULL);
 
   toolitem14 = (GtkWidget*) gtk_tool_item_new ();
   gtk_widget_show (toolitem14);
@@ -1663,6 +1684,25 @@ create_winMain (void)
   gtk_widget_show (buttonFullscreen);
   gtk_container_add (GTK_CONTAINER (toolbarMain), buttonFullscreen);
   gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonFullscreen), tooltips, _("Toggle Fullscreen"), NULL);
+
+  toolitem222 = (GtkWidget*) gtk_tool_item_new ();
+  gtk_widget_show (toolitem222);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), toolitem222);
+
+  vseparator11 = gtk_vseparator_new ();
+  gtk_widget_show (vseparator11);
+  gtk_container_add (GTK_CONTAINER (toolitem222), vseparator11);
+
+  buttonPrevFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-previous");
+  gtk_widget_show (buttonPrevFile);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonPrevFile);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonPrevFile), tooltips, _("Prev File"), NULL);
+
+  buttonNextFile = (GtkWidget*) gtk_tool_button_new_from_stock ("gtk-media-next");
+  gtk_widget_show (buttonNextFile);
+  gtk_container_add (GTK_CONTAINER (toolbarMain), buttonNextFile);
+  gtk_tool_item_set_tooltip (GTK_TOOL_ITEM (buttonNextFile), tooltips, _("Next File"), NULL);
+
 
   toolbarPen = gtk_toolbar_new ();
   gtk_widget_show (toolbarPen);
@@ -2506,6 +2546,14 @@ create_winMain (void)
                     G_CALLBACK (on_optionsAutoExportPdf_activate),
                     NULL);
 
+  g_signal_connect ((gpointer) optionsShowInterface, "activate",
+                    G_CALLBACK (on_optionsShowInterface_activate),
+                    NULL);
+
+  g_signal_connect ((gpointer) optionsShowInterfaceFullscreen, "activate",
+                    G_CALLBACK (on_optionsShowInterfaceFullscreen_activate),
+                    NULL);
+
   g_signal_connect ((gpointer) optionsTouchAsHandTool, "activate",
                     G_CALLBACK (on_optionsTouchAsHandTool_activate),
                     NULL);
@@ -2904,6 +2952,8 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, separator21, "separator21");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoSavePrefs, "optionsAutoSavePrefs");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoExportPdf, "optionsAutoExportPdf");
+  GLADE_HOOKUP_OBJECT (winMain, optionsShowInterface, "optionsShowInterface");
+  GLADE_HOOKUP_OBJECT (winMain, optionsShowInterfaceFullscreen, "optionsShowInterfaceFullscreen");
   GLADE_HOOKUP_OBJECT (winMain, optionsTouchAsHandTool, "optionsTouchAsHandTool");
   GLADE_HOOKUP_OBJECT (winMain, optionsSavePreferences, "optionsSavePreferences");
   GLADE_HOOKUP_OBJECT (winMain, menuHelp, "menuHelp");

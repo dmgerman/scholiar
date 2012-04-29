@@ -1140,6 +1140,7 @@ on_viewFirstPage_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   end_text();
+
   prepare_new_undo();
   undo->type = ITEM_MOVE_PAGE;
   undo->val = ui.pageno;
@@ -1832,7 +1833,6 @@ on_journalScreenshot_activate          (GtkMenuItem     *menuitem,
   if (ui.cursor!=NULL)
     gdk_cursor_unref(ui.cursor);
   ui.cursor = gdk_cursor_new(GDK_TCROSS);
-
   bg = attempt_screenshot_bg();
     
   gtk_window_deiconify(GTK_WINDOW(winMain));
@@ -2659,6 +2659,7 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 #endif
 
 
+
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonPress (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
     event->device->name, event->x, event->y, event->button, event->state);
@@ -2793,7 +2794,9 @@ on_canvas_button_press_event           (GtkWidget       *widget,
     reset_selection();
   }
   // process the event
-  if (ui.toolno[mapping] == TOOL_HAND || (ui.touch_as_handtool && strstr(event->device->name, "touch") != NULL)) {
+  
+  if (ui.toolno[mapping] == TOOL_HAND || 
+      (ui.touch_as_handtool && strstr(event->device->name, "touch") != NULL)) {
     ui.cur_item_type = ITEM_HAND;
     get_pointer_coords((GdkEvent *)event, ui.hand_refpt);
     ui.hand_refpt[0] += ui.cur_page->hoffset;
@@ -2982,13 +2985,17 @@ on_canvas_key_press_event              (GtkWidget       *widget,
     }
     else return FALSE;
   }
-  
+  /* in ITEM_TEXT we just return as we don't do anything here */
+  if (ui.cur_item_type == ITEM_TEXT) { 
+    return FALSE;
+  }
   /* In single page mode, switch pages with PgUp/PgDn (or Up/Dn) 
      when there's nowhere else to go. */
   pgheight = GTK_WIDGET(canvas)->allocation.height;
   adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(GET_COMPONENT("scrolledwindowMain")));
 
-  if (event->keyval == GDK_Page_Down || event->keyval == GDK_Down) {
+  if (event->keyval == GDK_Page_Down || event->keyval == GDK_Down || 
+      (event->keyval == GDK_space && event->state == 0)) {
     if (!ui.view_continuous && 
          (0.96 * ui.zoom * ui.cur_page->height < pgheight ||
           adj->value == adj->upper-pgheight)) 
@@ -3001,7 +3008,9 @@ on_canvas_key_press_event              (GtkWidget       *widget,
     if (adj->value == adj->upper-pgheight) return TRUE; // don't send focus away
   }
 
-  if (event->keyval == GDK_Page_Up || event->keyval == GDK_Up) {
+  if (event->keyval == GDK_Page_Up || event->keyval == GDK_Up || 
+      (event->keyval == GDK_space && event->state == GDK_SHIFT_MASK)
+      ) {
     if (!ui.view_continuous && 
          (0.96 * ui.zoom * ui.cur_page->height < pgheight ||
           adj->value == adj->lower))
@@ -3034,6 +3043,7 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
      or if there's a selection (then we might want to change the mouse
      cursor to indicate the possibility of resizing) */  
   if (ui.cur_item_type == ITEM_NONE && ui.selection==NULL) return FALSE;
+
   if (ui.cur_item_type == ITEM_TEXT || ui.cur_item_type == ITEM_IMAGE) return FALSE;
 
   is_core = (event->device == gdk_device_get_core_pointer());
@@ -3875,10 +3885,29 @@ on_optionsAutoloadPdfXoj_activate      (GtkMenuItem     *menuitem,
 
 void
 on_optionsAutoExportPdf_activate      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
+                                       gpointer         user_data)
 {
   end_text();
   ui.autoexport_pdf = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+}
+
+void
+on_optionsShowInterface_activate      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  end_text();
+  ui.showInterface = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+  update_interface();
+
+}
+
+void
+on_optionsShowInterfaceFullscreen_activate      (GtkMenuItem     *menuitem,
+                                                 gpointer         user_data)
+{
+  end_text();
+  ui.showInterfaceFullscreen = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+  update_interface();
 }
 
 
@@ -4124,8 +4153,6 @@ on_optionsButtonsSwitchMappings_activate(GtkMenuItem    *menuitem,
   ui.button_switch_mapping = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
-
-
 void
 on_editFind_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
@@ -4253,7 +4280,7 @@ on_find_bar_next                       (GtkWidget       *widget,
         egg_find_bar_set_status_text(findBar, "Not found");
       }
     } else {
-      printf("Document has not pdf backgroun\n");
+      printf("Document does not have a pdf backgroun\n");
     }
 
   }
