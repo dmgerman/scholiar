@@ -1978,8 +1978,6 @@ gboolean parse_keyval_color(const gchar *group, const gchar *key, guint *val_rgb
     return FALSE;
   }
   
-  printf("Read color [%lx]\n", val);
-
   *val_rgba = val;
   g_free(str);
   return TRUE;
