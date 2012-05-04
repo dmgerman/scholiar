@@ -153,7 +153,7 @@ on_fileOpen_activate                   (GtkMenuItem     *menuitem,
   gtk_widget_destroy(dialog);
 
   set_cursor_busy(TRUE);
-  success = open_file_or_its_autosave(filename);
+  success = open_journal(filename);
   set_cursor_busy(FALSE);
   if (success) { g_free(filename); return; }
   
@@ -453,7 +453,7 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
   double tmp_x, tmp_y;
   gchar *tmpstr;
   GnomeCanvasGroup *group;
-  signal_canvas_changed();
+
   end_text();
   if (undo == NULL) return; // nothing to undo!
   reset_selection(); // safer
@@ -673,8 +673,6 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
   gchar *tmpstr;
   GnomeCanvasGroup *group;
   
-  signal_canvas_changed();
-  
   end_text();
   if (redo == NULL) return; // nothing to redo!
   reset_selection(); // safer
@@ -889,7 +887,6 @@ void
 on_editCut_activate                    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   selection_to_clip();
   selection_delete();
@@ -900,7 +897,6 @@ void
 on_editCopy_activate                   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   selection_to_clip();
 }
@@ -909,7 +905,6 @@ void
 on_editDuplicatePage_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   duplicate_page();
 }
@@ -918,7 +913,6 @@ void
 on_editCopyPage_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   copy_page();
 }
@@ -927,7 +921,6 @@ void
 on_editPastePage_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   paste_page();
 }
@@ -936,7 +929,6 @@ void
 on_editPaste_activate                  (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   clipboard_paste();
 }
@@ -946,7 +938,6 @@ void
 on_editDelete_activate                 (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   selection_delete();
 }
@@ -1317,7 +1308,6 @@ on_journalNewPageBefore_activate       (GtkMenuItem     *menuitem,
 {
   struct Page *pg;
 
-  signal_canvas_changed();
   end_text();
   reset_selection();
   pg = new_page(ui.cur_page);
@@ -1338,7 +1328,6 @@ on_journalNewPageAfter_activate        (GtkMenuItem     *menuitem,
 {
   struct Page *pg;
 
-  signal_canvas_changed();
   end_text();
   reset_selection();
   pg = new_page(ui.cur_page);
@@ -1359,7 +1348,6 @@ on_journalNewPageEnd_activate          (GtkMenuItem     *menuitem,
 {
   struct Page *pg;
 
-  signal_canvas_changed();
   end_text();
   reset_selection();
   pg = new_page((struct Page *)g_list_last(journal.pages)->data);
@@ -1381,7 +1369,6 @@ on_journalDeletePage_activate          (GtkMenuItem     *menuitem,
   GList *layerlist, *itemlist;
   struct Layer *l;
 
-  signal_canvas_changed();
   end_text();
   if (journal.npages == 1) return;
   reset_selection();  
@@ -1417,7 +1404,6 @@ on_journalNewLayer_activate            (GtkMenuItem     *menuitem,
 {
   struct Layer *l;
   
-  signal_canvas_changed();
   end_text();
   reset_selection();
   l = g_new(struct Layer, 1);
@@ -1446,7 +1432,7 @@ on_journalDeleteLayer_activate         (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   GList *list;
-  signal_canvas_changed();
+
   end_text();
   if (ui.cur_layer == NULL) return;
   reset_selection();
@@ -1570,7 +1556,6 @@ void
 on_papercolorWhite_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_papercolor_activate(menuitem, COLOR_WHITE, predef_bgcolors_rgba[COLOR_WHITE]);
 }
@@ -1580,7 +1565,6 @@ void
 on_papercolorYellow_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_papercolor_activate(menuitem, COLOR_YELLOW, predef_bgcolors_rgba[COLOR_YELLOW]);
 }
@@ -1590,7 +1574,6 @@ void
 on_papercolorPink_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_papercolor_activate(menuitem, COLOR_RED, predef_bgcolors_rgba[COLOR_RED]);
 }
@@ -1600,7 +1583,6 @@ void
 on_papercolorOrange_activate           (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_papercolor_activate(menuitem, COLOR_ORANGE, predef_bgcolors_rgba[COLOR_ORANGE]);
 }
@@ -1610,7 +1592,6 @@ void
 on_papercolorBlue_activate             (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_papercolor_activate(menuitem, COLOR_BLUE, predef_bgcolors_rgba[COLOR_BLUE]);
 }
@@ -1620,7 +1601,6 @@ void
 on_papercolorGreen_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_papercolor_activate(menuitem, COLOR_GREEN, predef_bgcolors_rgba[COLOR_GREEN]);
 }
@@ -1636,7 +1616,6 @@ on_papercolorOther_activate            (GtkMenuItem     *menuitem,
   guint rgba;
   GdkColor gdkcolor;
   
-  signal_canvas_changed();
   end_text();
   dialog = gtk_color_selection_dialog_new(_("Pick a Paper Color"));
   colorsel = GTK_COLOR_SELECTION(GTK_COLOR_SELECTION_DIALOG(dialog)->colorsel);
@@ -1657,7 +1636,6 @@ void
 on_paperstylePlain_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_paperstyle_activate(menuitem, RULING_NONE);
 }
@@ -1667,7 +1645,6 @@ void
 on_paperstyleLined_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_paperstyle_activate(menuitem, RULING_LINED);
 }
@@ -1677,7 +1654,6 @@ void
 on_paperstyleRuled_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_paperstyle_activate(menuitem, RULING_RULED);
 }
@@ -1687,7 +1663,6 @@ void
 on_paperstyleGraph_activate            (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
-  signal_canvas_changed();
   end_text();
   process_paperstyle_activate(menuitem, RULING_GRAPH);
 }
@@ -1706,7 +1681,6 @@ on_journalLoadBackground_activate      (GtkMenuItem     *menuitem,
   char *filename;
   gboolean attach;
   
-  signal_canvas_changed();
   end_text();
   dialog = gtk_file_chooser_dialog_new(_("Open Background"), GTK_WINDOW (winMain),
      GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -1824,7 +1798,6 @@ on_journalScreenshot_activate          (GtkMenuItem     *menuitem,
 {
   struct Background *bg;
   
-  signal_canvas_changed();
   end_text();
   reset_selection();
   gtk_window_iconify(GTK_WINDOW(winMain)); // hide ourselves
@@ -1870,7 +1843,7 @@ on_journalApplyAllPages_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   gboolean active;
-  signal_canvas_changed();
+
   end_text();
   active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   if (active == ui.bg_apply_all_pages) return;
@@ -2668,7 +2641,7 @@ on_canvas_button_press_event           (GtkWidget       *widget,
   // abort any page changes pending in the spin button, and take the focus
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(GET_COMPONENT("spinPageNo")), ui.pageno+1);
   reset_focus();
-  signal_canvas_changed();
+
   is_core = (event->device == gdk_device_get_core_pointer());
   if (!ui.use_xinput && !is_core) return FALSE;
   if (ui.use_xinput && is_core && ui.discard_corepointer) return FALSE;
@@ -2836,7 +2809,6 @@ on_canvas_button_release_event         (GtkWidget       *widget,
                                         gpointer         user_data)
 {
   gboolean is_core;
-  signal_canvas_changed();
 
 #ifdef INPUT_DEBUG
   printf("DEBUG: ButtonRelease (%s) (x,y)=(%.2f,%.2f), button %d, modifier %x\n", 
@@ -2950,7 +2922,6 @@ on_canvas_leave_notify_event           (GtkWidget       *widget,
     gdk_flush();
     gdk_error_trap_pop();
   }
-  signal_canvas_changed();
   return FALSE;
 }
 
@@ -3064,7 +3035,7 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   printf("DEBUG: MotionNotify (%s) (x,y)=(%.2f,%.2f), modifier %x\n", 
     is_core?"core":"xinput", event->x, event->y, event->state);
 #endif
-  ui.block_autosave = TRUE;
+
   looks_wrong = !(event->state & (1<<(7+ui.which_mouse_button)));
   if (looks_wrong) {
     gdk_device_get_state(ui.stroke_device, event->window, NULL, &mask);
@@ -3151,7 +3122,6 @@ on_comboLayer_changed                  (GtkComboBox     *combobox,
 
   if (ui.in_update_page_stuff) return; // avoid a bad retroaction
 
-  signal_canvas_changed();
   end_text();
 
   val = gtk_combo_box_get_active(combobox);
@@ -3288,7 +3258,6 @@ on_spinPageNo_value_changed            (GtkSpinButton   *spinbutton,
 
   if (!GTK_WIDGET_HAS_FOCUS(spinbutton))
     gtk_widget_grab_focus(GTK_WIDGET(canvas));
-  signal_canvas_changed();
   end_text();
 
   val = gtk_spin_button_get_value_as_int(spinbutton) - 1;
@@ -3312,7 +3281,6 @@ on_journalDefaultBackground_activate   (GtkMenuItem     *menuitem,
   struct Page *pg;
   GList *pglist;
   
-  signal_canvas_changed();
   end_text();
   reset_selection();
   
@@ -3349,7 +3317,6 @@ on_journalSetAsDefault_activate        (GtkMenuItem     *menuitem,
 {
   if (ui.cur_page->bg->type != BG_SOLID) return;
   
-  signal_canvas_changed();
   end_text();
   prepare_new_undo();
   undo->type = ITEM_NEW_DEFAULT_BG;
@@ -3373,7 +3340,6 @@ on_comboStdSizes_changed               (GtkComboBox     *combobox,
   int val;
   gchar text[20];
 
-  signal_canvas_changed();
   if (papersize_need_init) {
     gtk_combo_box_set_active(combobox, papersize_std);
     papersize_need_init = FALSE;
@@ -3410,7 +3376,6 @@ on_entryWidth_changed                  (GtkEditable     *editable,
   gchar *ptr;
   GtkComboBox *comboStdSizes;
   
-  signal_canvas_changed();
   text = gtk_entry_get_text(GTK_ENTRY(editable));
   val = strtod(text, &ptr);
   papersize_width_valid = (*ptr == 0 && val > 0.);
@@ -3433,7 +3398,6 @@ on_entryHeight_changed                 (GtkEditable     *editable,
   gchar *ptr;
   GtkComboBox *comboStdSizes;
   
-  signal_canvas_changed();
   text = gtk_entry_get_text(GTK_ENTRY(editable));
   val = strtod(text, &ptr);
   papersize_height_valid = (*ptr == 0 && val > 0.);
@@ -3455,7 +3419,6 @@ on_comboUnit_changed                   (GtkComboBox     *combobox,
   int val;
   gchar text[20];
 
-  signal_canvas_changed();
   val = gtk_combo_box_get_active(combobox);
   if (val == -1 || val == papersize_unit) return;
   papersize_unit = val;
@@ -3511,7 +3474,6 @@ on_optionsProgressiveBG_activate       (GtkMenuItem     *menuitem,
   
   active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
   if (ui.progressive_bg == active) return;
-  signal_canvas_changed();
   end_text();
   ui.progressive_bg = active;
   if (!ui.progressive_bg) rescale_bg_pixmaps();
@@ -3535,7 +3497,7 @@ on_mru_activate                        (GtkMenuItem     *menuitem,
   if (which == MRU_SIZE || ui.mru[which] == NULL) return; // not found...
 
   set_cursor_busy(TRUE);
-  success = open_file_or_its_autosave(ui.mru[which]);
+  success = open_journal(ui.mru[which]);
   set_cursor_busy(FALSE);
   if (success) return;
 
@@ -3918,7 +3880,6 @@ on_fontButton_font_set                 (GtkFontButton   *fontbutton,
 {
   gchar *str;
   
-  signal_canvas_changed();
   str = g_strdup(gtk_font_button_get_font_name(fontbutton));
   process_font_sel(str);
 }
@@ -3986,16 +3947,6 @@ on_optionsAutoSavePrefs_activate       (GtkMenuItem     *menuitem,
 }
 
 void
-on_optionsEnableAutoSave_activate      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  end_text();
-  
-  ui.enable_autosave = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
-}
-
-
-void
 on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
@@ -4006,22 +3957,6 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
   for (i=0; i<=NUM_BUTTONS; i++)
     ui.brushes[i][TOOL_PEN].variable_width = ui.pressure_sensitivity;
   update_mappings_menu();
-}
-
-gboolean
-on_autosave_activate_deferred           (gpointer         user_data)
-{
-  gchar *name;
-  // autosaves are not allowed; usually this is because there is a pen
-  // stroke or it's during an interval after a stroke
-  if (ui.autosave_defers-- != 1) return FALSE;
-  if (ui.block_autosave) return FALSE;
-  name = get_autosave_filename();
-  ui.this_is_autosave = TRUE;
-  save_journal(name);
-  ui.this_is_autosave = FALSE;
-  g_free(name);
-  return FALSE;
 }
 
 void

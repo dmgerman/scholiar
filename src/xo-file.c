@@ -259,7 +259,7 @@ gboolean save_journal(const char *filename)
           g_free(tmpstr);
         }
 	if (item->type == ITEM_IMAGE) { 
-	  if (! ui.embed_images && ! ui.this_is_autosave) { // this is disabled on autosave, since
+	  if (! ui.embed_images) { // this is disabled on autosave, since
 	    // autosave functions don't know about the separate image directory, etc.
 	    img_extension = "png";	
 	    tmpfn_img_path = g_path_get_dirname(filename);
@@ -340,7 +340,7 @@ gboolean save_journal(const char *filename)
   g_list_free_full(writenListImagesShas, g_free);
 
   // if we want to autoexport, this is the place to do it
-  if (ui.autoexport_pdf && !ui.this_is_autosave) {
+  if (ui.autoexport_pdf) {
     char pdfName[PATH_MAX+10];
     sprintf(pdfName, "%s.pdf", filename);
     print_to_pdf(pdfName);
@@ -1673,10 +1673,6 @@ void new_mru_entry(char *name)
 {
   int i, j;
 
-  // do not add autosave files to the mru list
-  if (g_str_has_suffix (name, AUTOSAVE_SUFFIX))
-    return;
-  
   for (i=0;i<MRU_SIZE;i++) 
     if (ui.mru[i]!=NULL && !strcmp(ui.mru[i], name)) {
       g_free(ui.mru[i]);
@@ -1756,7 +1752,6 @@ void init_config_default(void)
   ui.pressure_sensitivity = FALSE;
   ui.width_minimum_multiplier = 0.0;
   ui.width_maximum_multiplier = 1.25;
-  ui.enable_autosave = TRUE;
   ui.button_switch_mapping = FALSE;
   ui.autoload_pdf_xoj = FALSE;
   ui.autoexport_pdf = FALSE;
@@ -1951,9 +1946,6 @@ void save_config_to_file(void)
   update_keyval("general", "autosave_prefs",
     _(" auto-save preferences on exit (true/false)"),
     g_strdup(ui.auto_save_prefs?"true":"false"));
-  update_keyval("general", "enable_autosave",
-    _(" automatically save documents for crash recovery"),
-    g_strdup(ui.enable_autosave?"true":"false"));
   update_keyval("general", "pdf_viewer",
     _(" command line to run the pdf viewer in a given page. Should contain %d %s (page number, filename), see example"),
     g_strdup((ui.pdf_viewer_cmd!=NULL)?ui.pdf_viewer_cmd:DEFAULT_PDF_VIEWER));
@@ -2412,7 +2404,6 @@ void load_config_from_file(void)
     if (str!=NULL) { g_free(ui.shorten_menu_items); ui.shorten_menu_items = str; }
   parse_keyval_double("general", "highlighter_opacity", &ui.hiliter_opacity, 0., 1.);
   parse_keyval_boolean("general", "autosave_prefs", &ui.auto_save_prefs);
-  parse_keyval_boolean("general", "enable_autosave", &ui.enable_autosave);  
   parse_keyval_boolean("general", "poppler_force_cairo", &ui.poppler_force_cairo);
   
   parse_keyval_double("paper", "width", &ui.default_page.width, 1., 5000.);
@@ -2502,389 +2493,3 @@ void load_config_from_file(void)
 #endif
 }
 
-gchar *autosave_filename=NULL;
-
-gint get_process_id() {
-#ifndef WIN32
-  return(getpid());
-#else
-  return(GetCurrentProcessId());
-#endif
-}
-
-void
-set_autosave_filename(gchar *fn)
-{
-  if (autosave_filename)
-    g_free (autosave_filename);
-  
-  autosave_filename = g_strdup(fn);
-
-  // make an entry in ~/.xournal/autosaves
-  gchar *autosave_table_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR,
-                                               AUTOSAVES_DIR, NULL);
-  if(!g_file_test(autosave_table_dir, G_FILE_TEST_EXISTS))
-    g_mkdir(autosave_table_dir,0755);
-
-  gint pid = get_process_id();
-  gchar *pid_str = g_strdup_printf("%d", pid);
-  gchar *autosave_table_entry_filename = g_build_filename(autosave_table_dir,
-                                                          pid_str,
-                                                          NULL);
-  g_free(pid_str);
-  g_free(autosave_table_dir);
-
-  g_file_set_contents(autosave_table_entry_filename, fn, -1, NULL);
-
-  g_free(autosave_table_entry_filename);
-}
-
-gchar* autosave_make_directory_maybe(const char *autosave_basename)
-{
-  gchar *autosave_dir;
-  autosave_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR, autosave_basename, NULL);
-  if(!g_file_test(autosave_dir, G_FILE_TEST_EXISTS))
-    g_mkdir(autosave_dir,0755);
-  return autosave_dir;
-}
-
-gchar* autosave_name_of_this_file(const char *fname)
-{
-  gchar *autosave_basename, *autosave_dir, *file_dirname, *file_basename;
-  const gchar *file_basename_sha;
-  GChecksum *checksum; // for path hash
-  gchar *retval = NULL;
-  if (!fname) return NULL;
-  autosave_dir = autosave_make_directory_maybe(SAVED_AUTOSAVES_DIR);
-  file_dirname = g_path_get_dirname(fname);
-  file_basename = g_path_get_basename(fname);
-  checksum = g_checksum_new(G_CHECKSUM_SHA1);
-  g_checksum_update(checksum, (guchar *)file_dirname,strlen(file_dirname));
-  file_basename_sha = g_checksum_get_string(checksum);
-  autosave_basename = g_strdup_printf("%s~%s%s", file_basename, file_basename_sha, AUTOSAVE_SUFFIX);
-  g_checksum_free(checksum);
-  g_free(file_dirname);
-  g_free(file_basename);    
-  retval = g_build_filename(autosave_dir, autosave_basename, NULL);
-  g_free(autosave_basename);
-  g_free(autosave_dir);
-  return retval;
-}
-
-gchar* autosave_name_for_unsaved()
-{
-  gchar *autosave_basename;
-  gchar *autosave_dir = autosave_make_directory_maybe(UNSAVED_AUTOSAVES_DIR);
-  gchar *retval;
-  autosave_basename = g_strdup_printf("xournal-%d.xoj%s", get_process_id(), AUTOSAVE_SUFFIX);
-  retval = g_build_filename(autosave_dir, autosave_basename, NULL);
-  g_free(autosave_basename);
-  g_free(autosave_dir);
-  return retval;
-}
-
-gchar* get_autosave_filename()
-{
-  gchar *retval = NULL;
-  if(ui.filename == NULL) {
-    if(autosave_filename == NULL) {      
-      /* if the file has not been saved yet, make a generic autosave name in default_dir */
-      retval = autosave_name_for_unsaved();
-      set_autosave_filename(retval);
-    }
-    else
-      /* return this generic name if it has already been generated */
-      retval = g_strdup(autosave_filename);
-  } else {
-    /*  if the file has been saved, hash the path to a SHA1, 
-	append to basename, and store in autosaves dir in ~/.xournal */
-    if(autosave_filename != NULL)
-      // remove the "generic" autosave in the homedir
-      g_unlink(autosave_filename);
-
-    retval = autosave_name_of_this_file(ui.filename);
-    set_autosave_filename(retval);
-  }
-  return retval;
-}
-
-void clear_autosave_entry() {
-  // remove our entry in ~/.xournal/autosaves
-  gchar *autosave_table_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR,
-                                                      AUTOSAVES_DIR,
-                                                        NULL);
-  gint pid = get_process_id();
-  gchar *pid_str = g_strdup_printf("%d", pid);
-  gchar *autosave_table_entry_filename = g_build_filename(autosave_table_dir,
-                                                          pid_str,
-                                                          NULL);
-  g_free(pid_str);
-  g_free(autosave_table_dir);
-
-  g_unlink(autosave_table_entry_filename);
-  g_free(autosave_table_entry_filename);
-}
-
-void clear_autosave_entry_by_contents(char *contents) {
-  gchar *autosave_table_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR,
-                                                      AUTOSAVES_DIR,
-                                                        NULL);
-  GDir *dir = g_dir_open (autosave_table_dir, 0, NULL);
-  const gchar *filename;
-  while ( (filename = g_dir_read_name(dir)) ) {
-      gchar *full_filename = g_build_filename(autosave_table_dir, filename, NULL);
-      gchar *autosave_filename;
-      if (g_file_get_contents (full_filename, &autosave_filename, NULL, NULL) ) {
-        if(g_strcmp0(autosave_filename, contents) == 0)
-          g_unlink(full_filename);
-      }
-    g_free(full_filename);
-    g_free(autosave_filename);
-  }
-  g_dir_close(dir);
-  g_free(autosave_table_dir);
-}
-
-#ifdef WIN32
-boolean pid_matches(char *name, DWORD processID)
-{
-    TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
-    // Get a handle to the process.
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                                       FALSE,  processID);
-    // Get the process name.
-    if (NULL != hProcess) {
-        HMODULE hMod;
-        DWORD cbNeeded;
-        if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded)) {
-              GetModuleBaseName(hProcess, hMod, szProcessName, 
-                                   sizeof(szProcessName)/sizeof(TCHAR));
-        }
-    }
-    CloseHandle(hProcess);
-    return(!g_ascii_strcasecmp(szProcessName, name));
-}
-#endif
-
-gchar* get_xournal_pids()
-{
-  gchar *current_pids, *p;
-#ifndef WIN32
-  g_spawn_command_line_sync ("pidof xournal", &current_pids, NULL, NULL, NULL);
-  return (current_pids);
-#else
-  DWORD aProcesses[2048], cbNeeded, cProcesses;
-  guint i, nmatches = 0;
-  char buf[20];
-  if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded)) 
-    current_pids = g_strndup("",0);
-  else {
-    current_pids = p = g_malloc(2048);
-    // Calculate how many process identifiers were returned.
-    cProcesses = cbNeeded / sizeof(DWORD);
-    // Print the name and process identifier for each process.
-    for (i = 0; i < cProcesses; i++)
-      if (pid_matches("xournal.exe", aProcesses[i])) {
-	g_snprintf(buf,20,"%u",(guint)aProcesses[i]);
-	g_sprintf(p, "%s", buf);
-	p += strlen(buf);
-	if (i < cProcesses - 1) {
-	  g_sprintf(p, " ");
-	  p++;
-	}
-      }
-  }
-  return (current_pids);
-#endif
-}
-
-// return value: TRUE if any autosaves have been restored by spawning child
-// processes. In this case, this instance of xournal should exit.
-gboolean check_and_restore_autosaves() {
-  // check whether ~/.xournal/autosaves contains any entries which have
-  // process ids that currently do not correspond to a xournal pid.
-
-  gchar *autosave_table_dir = g_build_filename(g_get_home_dir(), CONFIG_DIR,
-                                                      AUTOSAVES_DIR,
-                                                        NULL);
-  GDir *dir = g_dir_open (autosave_table_dir, 0, NULL);
-
-  // get all PIDs that currently belong to xournal
-  gchar *current_pids = get_xournal_pids();
-
-  GList *autosave_filenames = NULL;
-
-  const gchar *filename;
-  while ( (filename = g_dir_read_name(dir)) ) {
-    // check if any of the filenames are not currently xournal PIDs
-    if(g_strstr_len (current_pids,-1, filename) == NULL) {
-      // if so, open the file. Its contents should be the name of an autosave filename
-      gchar *full_filename = g_build_filename(autosave_table_dir, filename, NULL);
-      gchar *autosave_filename;
-      if (g_file_get_contents (full_filename, &autosave_filename, NULL, NULL) ) {
-        // delete the entry in ~/.xournal/autosaves
-        g_unlink(full_filename);
-        // if the file exists, add the filename to the list
-        if (g_file_test (autosave_filename, G_FILE_TEST_EXISTS))
-          autosave_filenames = g_list_prepend(autosave_filenames, autosave_filename);
-      }
-      g_free(full_filename);
-    }
-  }
-  g_free (current_pids);
-  g_free(autosave_table_dir);
-  g_dir_close (dir);
-
-  // ask user's confirmation before loading
-  gint autosave_count = g_list_length(autosave_filenames);
-  if(autosave_count != 0) {
-    GtkWidget *w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
-                                          _("Found %d autosave file(s). Do you want to recover these files?"), autosave_count);
-    gtk_dialog_add_buttons(GTK_DIALOG(w), _("Recover"), 0, _("Delete"), 1, NULL);
-    gint result = gtk_dialog_run(GTK_DIALOG(w));
-    gtk_widget_destroy(w);
-    if (result == 0) {
-      // spawn all child processes
-      GList *iter;
-      for(iter = g_list_first(autosave_filenames); 
-          iter;
-          iter = iter->next) {
-#ifndef WIN32            
-        gchar *cmdline = g_strconcat(ui.xournal_exe_cmd, " \"", iter->data, "\"", NULL);
-#else	
-        gchar *cmdline = g_strconcat("\"",ui.xournal_exe_cmd,"\"", " \"", iter->data, "\"", NULL);
-#endif	
-        g_spawn_command_line_async(cmdline, NULL);
-        g_free(cmdline);
-        g_free(iter->data);
-      }
-      g_list_free(autosave_filenames);
-      return TRUE;
-    }
-    else if (result == 1) {
-      GList *iter;
-      for(iter = g_list_first(autosave_filenames); 
-          iter;
-          iter = iter->next) {
-        g_unlink(iter->data);
-        g_free(iter->data);
-              
-      }
-    }
-  }
-  g_list_free(autosave_filenames);
-  return FALSE;
-}
-
-gboolean open_file_and_autosave(gchar *filename, gchar *autosavename)
-{
-  int success;
-  GtkWidget *w;
-
-  set_cursor_busy(TRUE);
-  if (autosavename)
-    success = open_journal(autosavename);
-  else
-    success = open_journal(filename);
-  signal_canvas_changed();
-  set_cursor_busy(FALSE);
-  
-  if (!success) {
-    if(autosavename)
-      w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), autosavename);
-    else
-      w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-       GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Error opening file '%s'"), filename);
-    
-    gtk_dialog_run(GTK_DIALOG(w));
-    gtk_widget_destroy(w);
-  } else {
-    update_file_name(g_strdup(filename));
-    if(autosavename) {
-      set_autosave_filename(autosavename);
-      ui.saved=FALSE;
-    }
-    else
-      ui.saved=TRUE;     
-  }
-  return success;
-}
-
-gboolean open_file_or_its_autosave(const char *fname) 
-{
-  gchar *tmpfn, *tmppath, *tmpautofn;
-  gboolean success;
-  GtkWidget *w;
- 
-  // make an absolute path
-  if (g_path_is_absolute(fname))
-    tmpfn = g_strdup(fname);
-  else {
-    tmppath = g_get_current_dir();
-    tmpfn = g_build_filename(tmppath, fname, NULL);
-    g_free(tmppath);
-  }
-  /* check if the argument is an autosave file. If it is, this instance of xournal
-     was probably spawned by check_and_restore_autosaves() and we do not have to
-     ask for user's confirmation */
-  if (g_str_has_suffix (tmpfn, AUTOSAVE_SUFFIX)) {
-    tmpautofn = g_strdup(tmpfn);
-    g_strrstr(tmpfn, AUTOSAVE_SUFFIX)[0] = 0;
-    // check if the autosave comes with an 'official' saved version
-    if (!g_file_test (tmpfn, G_FILE_TEST_EXISTS)) {
-      g_free(tmpfn);
-      tmpfn = NULL;
-    }
-  } else {
-    // if it is not, we check if an autosave of this file exists
-    tmpautofn = autosave_name_of_this_file(tmpfn);
-    if (g_file_test (tmpautofn, G_FILE_TEST_EXISTS)) {
-      // we only want to load the autosave file if it is newer
-      GFile *tmp = g_file_new_for_path(tmpfn);
-      GFile *tmpauto = g_file_new_for_path(tmpautofn);
-      GFileInfo *tmp_info = g_file_query_info(tmp, G_FILE_ATTRIBUTE_TIME_MODIFIED,
-                                              0, NULL, NULL);
-      GFileInfo *tmpauto_info = g_file_query_info(tmpauto, G_FILE_ATTRIBUTE_TIME_MODIFIED,
-                                                  0, NULL, NULL);
-      
-      guint64 tmptime = g_file_info_get_attribute_uint64(tmp_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
-      guint64 tmpautotime = g_file_info_get_attribute_uint64(tmpauto_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
-      g_object_unref(tmp_info);
-      g_object_unref(tmpauto_info);
-      g_object_unref(tmp);
-      g_object_unref(tmpauto);
-      if(tmptime < tmpautotime) {
-        // take ownership of this autosave
-        clear_autosave_entry_by_contents(tmpautofn);
-
-        // ask user's confirmation before loading
-        w = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
-                                   _("Found an autosave file for '%s'. Do you want to recover this file?"), tmpfn);
-        gtk_dialog_add_buttons(GTK_DIALOG(w), _("Recover"), 0, _("Delete"), 1, NULL);
-        gint result = gtk_dialog_run(GTK_DIALOG(w));
-        gtk_widget_destroy(w);
-        if (result == 1) {
-          // otherwise, delete the autosave
-          g_unlink(tmpautofn);
-          g_free(tmpautofn);
-          tmpautofn = NULL;
-        }
-      } else {
-        // if the autosave file is older, then we should just delete the autosave
-        g_unlink(tmpautofn);
-        g_free(tmpautofn);
-        tmpautofn = NULL;
-      }
-    } else {
-      // if it does not exist, there is no autosave to load
-      g_free(tmpautofn);
-      tmpautofn = NULL;
-    }
-  }
-
-  success = open_file_and_autosave(tmpfn, tmpautofn);
-  g_free(tmpfn);
-  g_free(tmpautofn);
-  return (success);
-}

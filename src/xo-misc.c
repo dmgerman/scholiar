@@ -2003,11 +2003,7 @@ gboolean ok_to_close(void)
   GtkWidget *dialog;
   GtkResponseType response;
 
-  if (ui.saved)
-  {
-     g_unlink(get_autosave_filename());
-	 return TRUE;
-  }
+  if (ui.saved) return TRUE;
   dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
     GTK_MESSAGE_WARNING, GTK_BUTTONS_NONE, _("Save changes to '%s'?"),
     (ui.filename!=NULL) ? ui.filename:_("Untitled"));
@@ -2023,7 +2019,6 @@ gboolean ok_to_close(void)
     on_fileSave_activate(NULL, NULL);
     if (!ui.saved) return FALSE; // if save failed, then we abort
   }
-  g_unlink(get_autosave_filename());
   return TRUE;
 }
 
@@ -2622,145 +2617,6 @@ void install_focus_hooks(GtkWidget *w, gpointer data)
   if(GTK_IS_CONTAINER(w))
     gtk_container_forall(GTK_CONTAINER(w), install_focus_hooks, data);
 }
-
-// This function should be called at the beginning of pertinent event handlers.
-// If Xournal ever becomes multithreaded, note that we assume 2 seconds is long
-// enough for the event handler to do what needs to get done--if this is not
-// acceptable you will need to split it up into two functions, the increment
-// done at the beginning of the event handler and the registration of the callback
-// at the end.
-void signal_canvas_changed(void)
-{
-  if (ui.enable_autosave) {
-    ui.block_autosave = FALSE;
-    ui.autosave_defers++;
-
-    // If there were no deferrals in the last two seconds:
-    //    ui.autosave_defers == 1
-    // Otherwise,
-    //    ui.autosave_defers == 1  number of deferrals
-    // If no deferrals occur in the next two seconds, ui.autosave_defers
-    // will equal 1 again.
-    //    ui.autosave_defers == 0
-    // indicates there are no deferred autosaves pending
-
-    g_timeout_add_seconds(AUTOSAVE_DEFER_SECONDS, on_autosave_activate_deferred, NULL);
-  }
-}
-
-#ifdef adfasdf
-/* Code cloned from needs to be implemented but my gtk knowledge is to little */
-
-void
-draw_rubberband (GtkWidget *widget, GdkWindow *window,
-		 const GdkRectangle *rect, guchar alpha)
-{
-	GdkGC *gc;
-	GdkPixbuf *pixbuf;
-	GdkColor *fill_color_gdk;
-	guint fill_color;
-
-	fill_color_gdk = gdk_color_copy (&GTK_WIDGET (widget)->style->base[GTK_STATE_SELECTED]);
-	fill_color = ev_gdk_color_to_rgb (fill_color_gdk) << 8 | alpha;
-
-	pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8,
-				 rect->width, rect->height);
-	gdk_pixbuf_fill (pixbuf, fill_color);
-
-	gdk_draw_pixbuf (window, NULL, pixbuf,
-			 0, 0,
-			 rect->x /*- EV_VIEW (widget)->scroll_x*/, 
-                         rect->y /*- EV_VIEW (widget)->scroll_y*/,
-			 rect->width, rect->height,
-			 GDK_RGB_DITHER_NONE,
-			 0, 0);
-
-	g_object_unref (pixbuf);
-
-	gc = gdk_gc_new (window);
-	gdk_gc_set_rgb_fg_color (gc, fill_color_gdk);
-	gdk_draw_rectangle (window, gc, FALSE,
-			    rect->x /* Should take into account scroll - EV_VIEW (widget)->scroll_x*/,
-                            rect->y /* scroll? EV_VIEW (widget)->scroll_y */,
-			    rect->width - 1,
-			    rect->height - 1);
-	g_object_unref (gc);
-
-	gdk_color_free (fill_color_gdk);
-}
-
-void
-highlight_find_results (GtkWidget *widget, int page)
-{
-	gint i, n_results = 0;
-
-	n_results = ev_view_find_get_n_results (view, page);
-
-	for (i = 0; i < n_results; i++) {
-		EvRectangle *rectangle;
-		GdkRectangle view_rectangle;
-		guchar alpha;
-
-		if (i == view->find_result && page == view->current_page) {
-			alpha = 0x90;
-		} else {
-			alpha = 0x20;
-		}
-
-		rectangle = ev_view_find_get_result (view, page, i);
-		doc_rect_to_view_rect (view, page, rectangle, &view_rectangle);
-		draw_rubberband (GTK_WIDGET (view), view->layout.bin_window,
-				 &view_rectangle, alpha);
-        }
-}
-
-static void
-doc_rect_to_view_rect (EvView       *view,
-                       int           page,
-		       EvRectangle  *doc_rect,
-		       GdkRectangle *view_rect)
-{
-	GdkRectangle page_area;
-	GtkBorder border;
-	double x, y, w, h;
-	gdouble width, height;
-
-	get_doc_page_size (view, page, &width, &height);
-
-	if (view->rotation == 0) {
-		x = doc_rect->x1;
-		y = doc_rect->y1;
-		w = doc_rect->x2 - doc_rect->x1;
-		h = doc_rect->y2 - doc_rect->y1;
-	} else if (view->rotation == 90) {
-		x = width - doc_rect->y2;
-		y = doc_rect->x1;
-		w = doc_rect->y2 - doc_rect->y1;
-		h = doc_rect->x2 - doc_rect->x1;
-	} else if (view->rotation == 180) {
-		x = width - doc_rect->x2;
-		y = height - doc_rect->y2;
-		w = doc_rect->x2 - doc_rect->x1;
-		h = doc_rect->y2 - doc_rect->y1;
-	} else if (view->rotation == 270) {
-		x = doc_rect->y1;
-		y = height - doc_rect->x2;
-		w = doc_rect->y2 - doc_rect->y1;
-		h = doc_rect->x2 - doc_rect->x1;
-	} else {
-		g_assert_not_reached ();
-	}
-
-	get_page_extents (view, page, &page_area, &border);
-
-	view_rect->x = x * view->scale + page_area.x;
-	view_rect->y = y * view->scale + page_area.y;
-	view_rect->width = w * view->scale;
-	view_rect->height = h * view->scale;
-}
-
-
-#endif 
 
 static gint is_unchanged_uri_char(char c)
 {

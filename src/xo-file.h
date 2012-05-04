@@ -40,9 +40,4 @@ void init_config_default(void);
 void load_config_from_file(void);
 void save_config_to_file(void);
 
-gchar* get_autosave_filename(void);
-void clear_autosave_entry(void);
-gboolean check_and_restore_autosaves();
-gboolean open_file_or_its_autosave(const char *fname);
-
 #endif /* XO_FILE_H */

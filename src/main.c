@@ -70,7 +70,6 @@ void init_stuff (int argc, char *argv[])
 
   // create some data structures needed to populate the preferences
   ui.default_page.bg = g_new(struct Background, 1);
-  ui.xournal_exe_cmd = argv[0];
 
   // initialize config file names
   tmppath = g_build_filename(g_get_home_dir(), CONFIG_DIR, NULL);
@@ -95,8 +94,6 @@ void init_stuff (int argc, char *argv[])
   // initialize data
   ui.default_page.bg->canvas_item = NULL;
   ui.layerbox_length = 0;
-  ui.autosave_defers = 0;
-  ui.this_is_autosave = FALSE;
 
   // parse command line options
   context = g_option_context_new ("");
@@ -123,15 +120,6 @@ void init_stuff (int argc, char *argv[])
     show_gui = FALSE;
   }
 
-  // load the MRU
-  if (show_gui) init_mru();
-
-  // if any autosaves have been restored by spawning child processes, we exit
-  // this instance of xournal.  Note: check autosaves only if in gui mode, and 
-  // only if we aren't opening a file directly from command line
-  if (show_gui && (fileArguments == NULL) && check_and_restore_autosaves())
-    exit(1);
-
   if (fileArguments == NULL) {
     if(exportPdfFile) {
        // If exporting having a file to open is essential
@@ -147,7 +135,7 @@ void init_stuff (int argc, char *argv[])
       g_free(tmppath);
     }
 
-    success = open_file_or_its_autosave(tmpfn);
+    success = open_journal(tmpfn);
     g_free(tmpfn);
     if (!success && !show_gui) { // GUI error is showed later
       printf(_("Error opening file '%s'"), fileArguments[0]);
@@ -364,6 +352,9 @@ void init_stuff (int argc, char *argv[])
       NULL);
   }
 
+  // load the MRU
+  
+  init_mru();
 
   // here is the command line "option" is handled
 
@@ -463,8 +454,6 @@ main (int argc, char *argv[])
   save_mru_list();
   if (ui.auto_save_prefs) save_config_to_file();
 
-  clear_autosave_entry();
-  
   return 0;
 }
 

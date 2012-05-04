@@ -71,11 +71,6 @@
 #define MIN_ZOOM 0.2
 #define RESIZE_MARGIN 6.0
 #define MAX_SAFE_RENDER_DPI 720 // max dpi at which PDF bg's get rendered
-#define AUTOSAVE_DEFER_SECONDS 3
-#define AUTOSAVES_DIR "autosaves_meta" // for pids and autosave metadata
-#define SAVED_AUTOSAVES_DIR "autosaves" // for files that already have a filename
-#define UNSAVED_AUTOSAVES_DIR "autosaves_tmp" // for new, unsaved files
-#define AUTOSAVE_SUFFIX ".as~"
 #define VBOX_MAIN_NITEMS 5 // number of interface items in vboxMain
 
 /* a string (+ aux data) that maintains a refcount */
@@ -380,9 +375,6 @@ typedef struct UIData {
   gchar *shorten_menu_items; // which items to hide
   gboolean is_sel_cursor; // displaying a selection-related cursor
 
-  gboolean enable_autosave; // whether or not autosave is allowed
-  guint autosave_defers; // number of stacked deferrals
-  gboolean block_autosave; // block autosave from occurring when true
   gint pre_fullscreen_width, pre_fullscreen_height; // for win32 fullscreen
   gboolean embed_images;
 
@@ -390,9 +382,6 @@ typedef struct UIData {
   GtkPrintSettings *print_settings;
 #endif
   gboolean poppler_force_cairo; // force poppler to use cairo
-
-  char *xournal_exe_cmd; // command line w/ which xournal was invoked (argv[0])
-  gboolean this_is_autosave; // use to preclude auto-pdf export on autosave
 
 } UIData;
 
