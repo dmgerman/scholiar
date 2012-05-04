@@ -50,6 +50,7 @@ double RULING_TOPMARGIN =80.0;
 double RULING_SPACING = 24.0;
 double RULING_BOTTOMMARGIN =  24.0;
 
+guint SEARCH_RESULTS_COLOR = 0xffff0080;
 
 double RULING_GRAPHSPACING= 14.17;
 
@@ -64,12 +65,14 @@ void init_layer(struct Layer *l)
 void init_search_layer(Page *pg)
 {
 
-  pg->searchLayer = g_new(struct Layer, 1);
+  pg->searchLayer = g_new0(struct Layer, 1);
   assert(pg->searchLayer != NULL);
   init_layer(pg->searchLayer);
   if (pg->group != NULL)  {
     pg->searchLayer->group = (GnomeCanvasGroup *) gnome_canvas_item_new( pg->group, gnome_canvas_group_get_type(), NULL);
     lower_canvas_item_to(pg->group, GNOME_CANVAS_ITEM(pg->searchLayer->group), pg->bg->canvas_item);      
+  } else {
+    pg->searchLayer->group = NULL;
   }
 
   // We need to add layer to  page
@@ -397,7 +400,8 @@ void delete_layer(struct Layer *l)
     g_free(item);
     l->items = g_list_delete_link(l->items, l->items);
   }
-  if (l->group!= NULL) gtk_object_destroy(GTK_OBJECT(l->group));
+  if (l->group!= NULL) 
+    gtk_object_destroy(GTK_OBJECT(l->group));
   g_free(l);
 }
 
@@ -2615,7 +2619,7 @@ void page_search_draw_match(Page *pg, PopplerRectangle * rect)
 
   searchItem->canvas_item = gnome_canvas_item_new(searchLayer->group,
       gnome_canvas_rect_get_type(), "width-pixels", 2, 
-      "fill-color-rgba", 0xffff0080,
+      "fill-color-rgba", SEARCH_RESULTS_COLOR,
       "x1", rect->x1, "x2", rect->x2, "y1", rect->y1, "y2", rect->y2, NULL);
   searchLayer->items = g_list_append(searchLayer->items, searchItem);
   searchLayer->nitems++;

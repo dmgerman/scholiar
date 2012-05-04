@@ -1808,6 +1808,10 @@ void save_config_to_file(void)
     _(" width of lines (in picas)"),
     g_strdup_printf("%10.3f", RULING_THICKNESS));
 
+  update_keyval("search", "results_color", 
+    _(" color for search results (RGBA) format"),
+    g_strdup_printf("0x%X", SEARCH_RESULTS_COLOR));
+
   update_keyval("tools", "startup_tool",
     _(" selected tool at startup (pen, eraser, highlighter, selectrect, vertspace, hand)"),
     g_strdup(tool_names[ui.startuptool]));
@@ -2220,6 +2224,8 @@ void load_config_from_file(void)
   parse_keyval_double("paper", "ruling_bottom_margin", &RULING_BOTTOMMARGIN, 0, 1000.0);
   parse_keyval_double("paper", "ruling_spacing", &RULING_SPACING, 1, 1000.0);
   parse_keyval_double("paper", "ruling_graph_spacing", &RULING_GRAPHSPACING, 0.1, 1200.0);
+
+  parse_keyval_color("search", "results_color", &SEARCH_RESULTS_COLOR);
 
   parse_keyval_enum("tools", "startup_tool", &ui.startuptool, tool_names, NUM_TOOLS);
   ui.toolno[0] = ui.startuptool;

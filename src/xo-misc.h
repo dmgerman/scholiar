@@ -129,7 +129,7 @@ extern double RULING_LEFTMARGIN;
 extern double RULING_TOPMARGIN;
 extern double RULING_SPACING;
 extern double RULING_BOTTOMMARGIN;
-
+extern guint SEARCH_RESULTS_COLOR;
 
 /*
 static void       draw_rubberband                            (GtkWidget          *widget,
