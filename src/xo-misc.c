@@ -102,12 +102,13 @@ struct Page *new_page(struct Page *template)
   pg->layers = g_list_append(NULL, l);
   pg->nlayers = 1;
 
-  if (pg->bg->type == BG_PDF) {
+  if (pg->bg->type == BG_PDF && !ui.bg_new_background_from_pdf) {
     // for pdfs load trhe default background
     pg->bg = (struct Background *)g_memdup(ui.default_page.bg, sizeof(struct Background));
   } else {
     pg->bg = (struct Background *)g_memdup(template->bg, sizeof(struct Background));
   }
+
   pg->bg->canvas_item = NULL;
   if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF) {
     gdk_pixbuf_ref(pg->bg->pixbuf);

@@ -3861,19 +3861,150 @@ on_optionsPressureSensitive_activate   (GtkMenuItem     *menuitem,
   update_mappings_menu();
 }
 
+GList* scan_directory(char* curdir)
+{
+  GDir *dirh = NULL;
+  GList *list = NULL;
+  const gchar *curname;
+
+  dirh = g_dir_open(curdir, 0, NULL);
+  if (dirh ==NULL)
+    return NULL;
+  while ((curname = g_dir_read_name(dirh))) {
+    int len = strlen(curname);
+
+    // if we autoload pdfs we load pdfs and xoj files
+    if (ui.autoload_pdf_xoj) {
+      if (g_strcmp0(curname+len-4, ".xoj") != 0 && g_strcmp0(curname+len-4, ".pdf") != 0) {
+        continue;
+      }
+    } else {
+      if (g_strcmp0(curname+len-4, ".xoj") != 0) {
+        continue;
+      }
+    }
+    //    printf("adding [%s]\n", curname);
+    list = g_list_insert_sorted(list, g_strdup(curname), (GCompareFunc)strcmp);
+  }
+  g_dir_close(dirh);
+
+  return list;
+}
+
+
+
+char *find_next_candidate_file(GList *list, char *ourname, int nextprev)
+{
+  GList *itemList;
+  char *tmpname;
+  /// list contains the list of files in the directory to scan
+  
+  if (list == NULL) 
+    return NULL ;
+  
+  // now, here is the tricky part... if we are scanning pdfs we need to get rid of .pdfs that have a .xoj file,
+  // and of .xoj.pdf files too
+  // otherwise we will be loading the same file over and over again
+  
+  if (ui.autoload_pdf_xoj) {
+    // TODO: this is rather inneficient (order n^2) but
+    // hopefully nobody has thousands of files in a directory
+  
+    for (itemList = list; itemList = g_list_next(itemList); itemList != NULL) {
+      char *this;
+      int len;
+      this = itemList->data;
+      len = strlen(this);
+      
+      if (g_strcmp0(this+len-4, ".xoj") == 0) {
+        // this is  xournal file... remove its pdf from the list
+        char *temp = NULL;
+        GList *found = NULL;
+        char *basename = g_strdup(this);
+        
+        
+        basename[len-4] = 0; // drop extension
+        //        printf("Searching for basename [%s] [%s]\n", basename, this);
+        len = strlen(basename);
+        if (g_strcmp0(basename+len-4, ".pdf")  == 0) {
+          // only check if this is the xoj of the pdf
+          // in that case remove the basename pdf
+          //printf("It is a xoj basename [%s]\n", basename);
+          if ((found = g_list_find_custom (list, basename, (GCompareFunc)strcmp)) != NULL) {
+            //  printf ("Removing [%s]\n", basename);
+            g_free(found->data);
+            list = g_list_delete_link(list,found);
+          }
+        }
+        g_free(basename);
+        // remove the out pdf of this file
+        temp = g_strdup_printf("%s.pdf", this);
+        if ((found = g_list_find_custom (list, temp, (GCompareFunc)strcmp)) != NULL) {
+          //          printf("Removing [%s]\n", temp);
+          g_free(found->data);
+          list = g_list_delete_link(list,found);
+        }
+        g_free(temp);
+      }
+    }
+  }
+  for (itemList = list; itemList = g_list_next(itemList); itemList != NULL) {
+    char *this;
+    this = itemList->data;
+    //    printf("Cleaned list: %s\n", this);
+  }
+
+  // ok, now the list has only files we can possible load next
+  
+  if (ourname != NULL) 
+    itemList = g_list_find_custom (list, ourname, (GCompareFunc)strcmp);
+  if (ourname == NULL || itemList == NULL) {
+    // not found... or we don't have anything to search for
+    // return first or last
+    if (nextprev > 0) {
+      // find first
+      tmpname = g_strdup(list->data);
+    } else {
+      // find last
+      tmpname = g_strdup(g_list_last(list)->data);
+    }
+  } else if (g_list_last(list) == list) {
+    // list has only one element, which is the current one
+    tmpname = NULL;
+  } else  {
+    // in this case we found in the directory the current file
+    // find the "next" one that is not the same file as the one we have openned
+    ///return the next of the previous
+    
+    if (nextprev > 0) {
+      itemList = g_list_next(itemList);
+      if (itemList == NULL) {
+        itemList = g_list_first(list);
+      }
+    } else {
+      itemList = g_list_previous(itemList);
+      if (itemList == NULL) {
+        itemList = g_list_last(list);              
+      }
+    }
+    tmpname = g_strdup(itemList->data);
+
+  }
+  return tmpname;
+}
+
+
+
 void
 open_relative_journal(int nextprev)
 {
-  const gchar *curname;
-  gchar *curdir, *ourname, *tmpname = NULL, *filename = NULL;
-  GDir *dirh;
+  gchar *curdir = NULL;
+  gchar *ourname = NULL;
+  gchar *tmpname = NULL;
+  gchar *filename = NULL;
   GtkWidget *dialog;
-
-  if (ui.filename == NULL) {
-    // FIX ME... disable buttons
-    printf("FIXME: No file loaded,buttons should be disabled\n");
-    return;
-  }
+  gboolean found = FALSE;
+  GList *list = NULL;
 
   // set the directory where to look
   if (ui.filename == NULL) {
@@ -3881,7 +4012,6 @@ open_relative_journal(int nextprev)
     if (bgpdf.status != STATUS_NOT_INIT && bgpdf.filename != NULL) {
       curdir = g_path_get_dirname(bgpdf.filename->s);
     } else {
-
       assert(ui.default_path!=NULL);
       // we need to duplicate, since g_path_get_dirname allocates
       curdir = g_strdup (ui.default_path);
@@ -3890,47 +4020,55 @@ open_relative_journal(int nextprev)
       curdir = g_path_get_dirname(ui.filename);
   }
 
+
   set_cursor_busy(TRUE);
-  dirh = g_dir_open(curdir, 0, NULL);
-  if (!dirh) {
+
+  list = scan_directory(curdir);
+
+  if (list == NULL) {
 
     dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
                                     GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Unable to scan directory '%s'"), curdir);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
-
-    g_free(curdir);
     set_cursor_busy(FALSE);
+    g_free(curdir);
     return;
   }
-  ourname = g_path_get_basename(ui.filename);
 
-  // Scan the directory
-  while ((curname = g_dir_read_name(dirh))) {
-    int len = strlen(curname);
-    if (g_strcmp0(curname+len-4, ".xoj") != 0) {
-      continue;
-    }
-    if (g_strcmp0(curname, ourname) == nextprev) {
-      if (NULL == tmpname || g_strcmp0(curname, tmpname) == -nextprev) {
-        tmpname = g_strdup(curname);
-      }
-    }
+  if (ui.filename != NULL) {
+    ourname = g_path_get_basename(ui.filename);
+  } else {
+    if (bgpdf.filename != NULL) 
+      ourname = g_path_get_basename(bgpdf.filename->s);
+    else 
+      ourname = NULL;
   }
-  g_dir_close(dirh);
-  g_free(ourname);
 
-  //  printf("FILENAME [%s][%s][%s]\n", curname,ourname,tmpname);
+  tmpname = find_next_candidate_file(list, ourname, nextprev);
+
+  if (ourname != NULL)
+    g_free(ourname);
+  // we should free the list
+  if (list != NULL) {
+    g_list_foreach(list, (GFunc)g_free, NULL);
+    g_list_free(list);
+  }
+
+  // at this point tmpname points to the next file, null if nothing
+
+  //  printf("tmpname [%s]\n", tmpname);
 
   if (NULL == tmpname) {
 
     dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("No %s Xournal file in directory '%s'"), nextprev==1?"Next":"Previous", curdir);
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("No other %s Xournal file in directory '%s'"), nextprev==1?"Next":"Previous", curdir);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 
-    g_free(curdir);
     set_cursor_busy(FALSE);
+    g_free(curdir);
+
     return;
   }
   filename = g_build_filename(curdir, tmpname, NULL);
