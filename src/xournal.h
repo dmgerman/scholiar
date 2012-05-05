@@ -20,7 +20,11 @@
 
 // PREF FILES INFO
 
-#define CONFIG_DIR ".xournal"
+#define SCHOLIAR_NAME  "scholiar"
+
+
+#define CONFIG_DIR "." SCHOLIAR_NAME
+
 #define MRU_FILE "recent-files"
 #define MRU_SIZE 8 
 #define CONFIG_FILE "config"
@@ -406,3 +410,4 @@ extern double DEFAULT_ZOOM;
 #define UNIT_IN 1
 #define UNIT_PX 2
 #define UNIT_PT 3
+

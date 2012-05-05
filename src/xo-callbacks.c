@@ -135,7 +135,7 @@ on_fileOpen_activate                   (GtkMenuItem     *menuitem,
   gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_xoj = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_xoj, _("Xournal files"));
+  gtk_file_filter_set_name(filt_xoj, _("Seshat files"));
   gtk_file_filter_add_pattern(filt_xoj, "*.xoj");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_xoj);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
@@ -234,7 +234,7 @@ on_fileSaveAs_activate                 (GtkMenuItem     *menuitem,
   gtk_file_filter_set_name(filt_all, _("All files"));
   gtk_file_filter_add_pattern(filt_all, "*");
   filt_xoj = gtk_file_filter_new();
-  gtk_file_filter_set_name(filt_xoj, _("Xournal files"));
+  gtk_file_filter_set_name(filt_xoj, _("Seshat files"));
   gtk_file_filter_add_pattern(filt_xoj, "*.xoj");
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_xoj);
   gtk_file_chooser_add_filter(GTK_FILE_CHOOSER (dialog), filt_all);
@@ -2503,7 +2503,7 @@ on_helpAbout_activate                  (GtkMenuItem     *menuitem,
   aboutDialog = create_aboutDialog ();
   labelTitle = GTK_LABEL(g_object_get_data(G_OBJECT(aboutDialog), "labelTitle"));
   gtk_label_set_markup(labelTitle, 
-    "<span size=\"xx-large\" weight=\"bold\">Xournal " VERSION_STRING "</span>");
+    "<span size=\"xx-large\" weight=\"bold\">" SCHOLIAR_NAME " " VERSION_STRING "</span>");
   gtk_dialog_run (GTK_DIALOG(aboutDialog));
   gtk_widget_destroy(aboutDialog);
 }

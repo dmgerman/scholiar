@@ -7,9 +7,9 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = xournal
+bin_PROGRAMS = scholiar
 
-xournal_SOURCES = \
+scholiar_SOURCES = \
 	main.c xournal.h \
 	xo-misc.c xo-misc.h \
 	xo-file.c xo-file.h \
@@ -21,6 +21,6 @@ xournal_SOURCES = \
 	eggfindbar.c 	eggfindbar.h \
 	xo-shapes.c xo-shapes.h
 
-xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lX11 -lz
+scholiar_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lX11 -lz
 
-xournal_LDFLAGS = -Wl,--as-needed
+scholiar_LDFLAGS = -Wl,--as-needed

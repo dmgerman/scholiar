@@ -4,8 +4,8 @@ SUBDIRS = src po
 
 EXTRA_DIST = \
 	autogen.sh \
-	xournal.glade xournal.gladep \
-	xournal.xml x-xoj.desktop xournal.desktop
+	scholiar.glade scholiar.gladep \
+	scholiar.xml x-xoj.desktop scholiar.desktop
 
 install-data-local:
 	@$(NORMAL_INSTALL)
@@ -42,13 +42,13 @@ desktop-install:
 	$(mkinstalldirs) $(DESTDIR)$$desktopdir/mime/packages; \
 	$(mkinstalldirs) $(DESTDIR)$$desktopdir/applications; \
 	$(mkinstalldirs) $(DESTDIR)/usr/share/mimelnk/application; \
-	$(INSTALL_DATA) $(srcdir)/pixmaps/xournal.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/apps; \
+	$(INSTALL_DATA) $(srcdir)/pixmaps/scholiar.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/apps; \
 	$(INSTALL_DATA) $(srcdir)/pixmaps/xoj.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/mimetypes; \
 	if test ! -e $(DESTDIR)$$desktopdir/icons/hicolor/scalable/mimetypes/gnome-mime-application-x-xoj.svg; then \
 	  ln -s xoj.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/mimetypes/gnome-mime-application-x-xoj.svg; \
 	fi; \
-	$(INSTALL_DATA) $(srcdir)/xournal.xml $(DESTDIR)$$desktopdir/mime/packages; \
-	$(INSTALL_DATA) $(srcdir)/xournal.desktop $(DESTDIR)$$desktopdir/applications; \
+	$(INSTALL_DATA) $(srcdir)/scholiar.xml $(DESTDIR)$$desktopdir/mime/packages; \
+	$(INSTALL_DATA) $(srcdir)/scholiar.desktop $(DESTDIR)$$desktopdir/applications; \
 	$(INSTALL_DATA) $(srcdir)/x-xoj.desktop $(DESTDIR)/usr/share/mimelnk/application; \
 	if test -z "$(DESTDIR)"; then \
 	  echo "Updating desktop, mime, and icon databases."; \
@@ -69,13 +69,13 @@ home-desktop-install:
 	$(mkinstalldirs) $(DESTDIR)$$desktopdir/mime/packages; \
 	$(mkinstalldirs) $(DESTDIR)$$desktopdir/applications; \
 	$(mkinstalldirs) $(DESTDIR)$(HOME)/.kde/share/mimelnk/application; \
-	$(INSTALL_DATA) $(srcdir)/pixmaps/xournal.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/apps; \
+	$(INSTALL_DATA) $(srcdir)/pixmaps/Scholiar.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/apps; \
 	$(INSTALL_DATA) $(srcdir)/pixmaps/xoj.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/mimetypes; \
 	if test ! -e $(DESTDIR)$$desktopdir/icons/hicolor/scalable/mimetypes/gnome-mime-application-x-xoj.svg; then \
 	  ln -s xoj.svg $(DESTDIR)$$desktopdir/icons/hicolor/scalable/mimetypes/gnome-mime-application-x-xoj.svg; \
 	fi; \
-	$(INSTALL_DATA) $(srcdir)/xournal.xml $(DESTDIR)$$desktopdir/mime/packages; \
-	$(INSTALL_DATA) $(srcdir)/xournal.desktop $(DESTDIR)$$desktopdir/applications; \
+	$(INSTALL_DATA) $(srcdir)/scholiar.xml $(DESTDIR)$$desktopdir/mime/packages; \
+	$(INSTALL_DATA) $(srcdir)/scholiar.desktop $(DESTDIR)$$desktopdir/applications; \
 	$(INSTALL_DATA) $(srcdir)/x-xoj.desktop $(DESTDIR)$(HOME)/.kde/share/mimelnk/application; \
 	if test -z "$(DESTDIR)"; then \
 	  echo "Updating desktop, mime, and icon databases."; \

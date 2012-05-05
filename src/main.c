@@ -34,7 +34,7 @@ static GOptionEntry entries[] =
   { "export-pdf", 'A', 0, G_OPTION_ARG_STRING, &exportPdfFile, "Export document to a PDF file", "FILENAME" },
   { "no-interface", 'A', 0, G_OPTION_ARG_NONE, &donotShowInterface, "Show interface" },
   { "no-interface-fullscreen", 'A', 0, G_OPTION_ARG_NONE, &donotShowInterfaceFullscreen, "Do not show interface in fullscreen mode." },
-  { "fullscreen", 'A', 0, G_OPTION_ARG_NONE, &fullScreen, "Run xournal in full screen" },
+  { "fullscreen", 'A', 0, G_OPTION_ARG_NONE, &fullScreen, "Run seshat in full screen" },
   { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &fileArguments, NULL, N_("[FILE]") },
   { NULL }
 };
@@ -354,7 +354,7 @@ void init_stuff (int argc, char *argv[])
 
   // here is the command line "option" is handled
 
-  context = g_option_context_new ("Xournal");
+  context = g_option_context_new (SCHOLIAR_NAME);
   g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
   g_option_context_add_group (context, gtk_get_option_group (TRUE));
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
@@ -443,7 +443,7 @@ main (int argc, char *argv[])
   winMain = create_winMain ();
   
   init_stuff (argc, argv);
-  gtk_window_set_icon(GTK_WINDOW(winMain), create_pixbuf("xournal.png"));
+  gtk_window_set_icon(GTK_WINDOW(winMain), create_pixbuf(SCHOLIAR_NAME "_icon.svg"));
   
   gtk_main ();
   

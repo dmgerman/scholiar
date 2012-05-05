@@ -15,6 +15,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
+#include "xournal.h"
 #include "xo-callbacks.h"
 #include "xo-interface.h"
 #include "xo-support.h"
@@ -369,7 +370,7 @@ create_winMain (void)
   accel_group = gtk_accel_group_new ();
 
   winMain = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title (GTK_WINDOW (winMain), _("Xournal"));
+  gtk_window_set_title (GTK_WINDOW (winMain), _(SCHOLIAR_NAME));
 
   vboxMain = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vboxMain);
@@ -3149,22 +3150,24 @@ create_aboutDialog (void)
   GtkWidget *closebutton1;
 
   aboutDialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (aboutDialog), _("About Xournal"));
+  gtk_window_set_title (GTK_WINDOW (aboutDialog), _("About" SCHOLIAR_NAME));
   gtk_window_set_resizable (GTK_WINDOW (aboutDialog), FALSE);
   gtk_window_set_type_hint (GTK_WINDOW (aboutDialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox2 = GTK_DIALOG (aboutDialog)->vbox;
   gtk_widget_show (dialog_vbox2);
 
-  image387 = create_pixmap (aboutDialog, "xournal.png");
+  image387 = create_pixmap (aboutDialog, SCHOLIAR_NAME "_icon.svg");
   gtk_widget_show (image387);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), image387, FALSE, TRUE, 12);
 
-  labelTitle = gtk_label_new (_("Xournal"));
+  labelTitle = gtk_label_new (_(SCHOLIAR_NAME));
   gtk_widget_show (labelTitle);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), labelTitle, FALSE, FALSE, 3);
 
-  labelInfo = gtk_label_new (_("Written by Denis Auroux\nand other contributors\n       http://xournal.sourceforge.net/       "));
+  labelInfo = gtk_label_new (_("Derived from Xournal (by Denis Auroux and other contributors)\n"
+                               "Current developer and maintainer Daniel M German\n\n"
+                               "Licensed under the GNU General Public License Version 2"));
   gtk_widget_show (labelInfo);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), labelInfo, FALSE, FALSE, 0);
   gtk_misc_set_padding (GTK_MISC (labelInfo), 20, 10);

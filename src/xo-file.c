@@ -102,7 +102,7 @@ gboolean save_journal(const char *filename)
   
   gzprintf(f, "<?xml version=\"1.0\" standalone=\"no\"?>\n"
      "<xournal version=\"" VERSION "\">\n"
-     "<title>Xournal document - see http://math.mit.edu/~auroux/software/xournal/</title>\n");
+     "<title>" SCHOLIAR_NAME " document - see http://math.mit.edu/~auroux/software/xournal/</title>\n");
   //save last seen page number in file
   gzprintf(f, "<lastpage number=\"%d\" />\n", ui.pageno); 
   for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {

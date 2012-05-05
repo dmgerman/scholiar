@@ -39,7 +39,7 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
   };
 
 // defaults for paper
-guint RULING_COLOR       = 0xff0080ff;
+guint RULING_COLOR       = 0x808080ff;
 guint RULING_MARGIN_COLOR = 0xff0080ff;
 guint RULING_MARGIN_INTERSECT_COLOR = 0xff0080ff;
 double RULING_THICKNESS = 0.5;
