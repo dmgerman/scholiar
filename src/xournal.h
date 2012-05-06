@@ -76,11 +76,16 @@
 /* a string (+ aux data) that maintains a refcount */
 
 typedef struct Refstring {
-  int nref;
-  char *s;
-  gpointer aux;
+   int nref;
+   char *s;
+   gpointer aux;
 } Refstring;
 
+typedef struct searchDataType {
+  int totalMatches;
+  int pagesWithMatches;
+  gchar *term;
+} searchDataType;
 
 /* The journal is mostly a list of pages. Each page is a list of layers,
    and a background. Each layer is a list of items, from bottom to top.
@@ -236,8 +241,6 @@ typedef struct Item {
 #define ITEM_DUPLICATE_PAGE 28
 #define ITEM_PASTE_PAGE 29
 #define ITEM_REORDER_PAGE 30
-
-
 #define ITEM_MOVE_PAGE 90
 #define ITEM_ALL 99
 
@@ -251,6 +254,7 @@ typedef struct Layer {
 typedef struct Page {
   GList *layers; // the layers on the page
   int nlayers;
+  Layer  *searchLayer;
   double height, width;
   double hoffset, voffset; // offsets of canvas group rel. to canvas root
   struct Background *bg;
@@ -261,6 +265,7 @@ typedef struct Journal {
   GList *pages;  // the pages in the journal
   int npages;
   int last_attach_no; // for naming of attached backgrounds
+  char *searchTerm;
   unsigned int image_id_counter;
 } Journal;
 
@@ -385,7 +390,7 @@ typedef struct UIData {
   GtkPrintSettings *print_settings;
 #endif
   gboolean poppler_force_cairo; // force poppler to use cairo
-
+  searchDataType searchData;
 } UIData;
 
 #define BRUSH_LINKED 0
