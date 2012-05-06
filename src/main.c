@@ -60,7 +60,7 @@ void init_stuff (int argc, char *argv[])
   GdkScreen *screen;
   int i, j;
   struct Brush *b;
-  gboolean can_xinput, success = 0;
+  gboolean can_xinput = FALSE, success = FALSE;
   gchar *tmppath, *tmpfn;
   GError  *error = NULL;
   GOptionContext *context;
