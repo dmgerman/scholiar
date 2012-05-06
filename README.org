@@ -23,7 +23,7 @@ regularly annotate pdfs.
 | Last page seen         | Jump to the last page seen (info stored in the .xoj file)                                                     |
 | Next-prev file         | Quickly go from one file to the next/prev in the current directory                                            |
 | Poor man's bookmarks   | Jump quickly to the previous/next annotation                                                                  |
-| Partial search         | Search: finds occurrence, but no  UI (see branch search for full features)                                    |
+| Search PDF             | Search: finds strings in PDF                                                                                  |
 | Move pages             | Ability to move a pages one page up or down                                                                   |
 | Config file options    | Paper related options                                                                                         |
 |                        | - ruling_color: color of lines of graph and ruled paper (RGBA)                                                |
@@ -101,6 +101,10 @@ in the same directory, in lexicographical order.  If "autoload
 PDF and XOJ files in a directory. If the same file exists in .pdf and
 .pdf.xoj, the .pdf.xoj is loaded.
 
+** Search
+
+Search the background PDF. Currently it only supports lowercase matching.
+
 ** Move pages
 
 You can move pages one page at a time in both directions. The options
@@ -152,14 +156,14 @@ of annotation
 The following are current branches with different experimental features:
 
 
-- master: the main branch with my code and many extra features (should
-  be stable)
+- stable:    should be safe to use
+- master:    the main branch with my code and many extra features. Not
+             100% guaranteed, but it should be fairly reliable.
 - upstream:  denis code, reflecting his CVS repository
 - debian:    ubuntu xournal packages
 
-- search:    implements search, basically completed (needs testing)
 - bookmarks: implements basic bookmarks (needs work)
-- leo:       implements improved image handling (needs testing, needs
+- images:    implements improved image handling (needs testing, needs
              to be rebased)
 - multipage: implements dual page view (buggy, needs work)
 
