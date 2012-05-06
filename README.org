@@ -24,6 +24,7 @@ regularly annotate pdfs.
 | Next-prev file         | Quickly go from one file to the next/prev in the current directory                                            |
 | Poor man's bookmarks   | Jump quickly to the previous/next annotation                                                                  |
 | Partial search         | Search: finds occurrence, but no  UI (see branch search for full features)                                    |
+| Move pages             | Ability to move a pages one page up or down                                                                   |
 | Config file options    | Paper related options                                                                                         |
 |                        | - ruling_color: color of lines of graph and ruled paper (RGBA)                                                |
 |                        | - ruling_graph_spacing: size of squares in graph paper (in picas)                                             |
@@ -36,7 +37,7 @@ regularly annotate pdfs.
 |                        | show_interface: do we show the interface by default?                                                          |
 |                        | touch_screen_as_hand_tool: in tablets that support it, use touch screen as a hand tool and stylus for writing |
 |                        | autoexport_pdf: auto export a PDF every time a file is saved                                                  |
-|                        | pdf_viewer: command line for external pdf viewer                                                                        |
+|                        | pdf_viewer: command line for external pdf viewer                                                              |
 |------------------------+---------------------------------------------------------------------------------------------------------------|
 
 * Features Implemented
@@ -91,6 +92,19 @@ empty.
 
 Scroll the document using SPACE bar, as if it was page down.
 
+** Next-prev file
+
+You can easily navigate through files in a directory. If "autoload
+.pdf.xoj" is FALSE, it will allow you to move through all .xoj files
+in the same directory, in lexicographical order.  If "autoload
+.pdf.xoj" option is enabled, this option will allow you to navigate
+PDF and XOJ files in a directory. If the same file exists in .pdf and
+.pdf.xoj, the .pdf.xoj is loaded.
+
+** Move pages
+
+You can move pages one page at a time in both directions. The options
+in the menu are "Move page before" and "Move page after"
 
 ** Config file options
 
