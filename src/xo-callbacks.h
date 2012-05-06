@@ -144,6 +144,14 @@ on_viewHideLayer_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_journalMovePageBefore_activate       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_journalMovePageAfter_activate       (GtkMenuItem     *menuitem,
+                                       gpointer         user_data);
+
+void
 on_journalNewPageBefore_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
@@ -719,5 +727,7 @@ on_find_bar_prev                       (GtkWidget       *widget,
 gboolean on_text_keypress_event(GtkWidget   *widget,
                                 GdkEventKey *event,
                                 gpointer     user_data) ;
+
+
 #endif  /* XO_CALLBACKS_H */
 
