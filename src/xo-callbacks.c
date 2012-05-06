@@ -4044,10 +4044,10 @@ char *find_next_candidate_file(GList **pList, char *ourname, int nextprev)
   for (itemList = *pList; itemList = g_list_next(itemList); itemList != NULL) {
     char *this;
     this = itemList->data;
-    printf("Cleaned list: %s\n", this);
+    //    printf("Cleaned list: %s\n", this);
   }
 
-  printf("End Cleaned list\n");
+  //  printf("End Cleaned list\n");
   // ok, now the list has only files we can possible load next
   
   if (ourname != NULL) 
