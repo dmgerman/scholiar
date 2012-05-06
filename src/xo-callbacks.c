@@ -3893,13 +3893,13 @@ GList* scan_directory(char* curdir)
 
 
 
-char *find_next_candidate_file(GList *list, char *ourname, int nextprev)
+char *find_next_candidate_file(GList **pList, char *ourname, int nextprev)
 {
   GList *itemList;
   char *tmpname;
   /// list contains the list of files in the directory to scan
   
-  if (list == NULL) 
+  if (*pList == NULL) 
     return NULL ;
   
   // now, here is the tricky part... if we are scanning pdfs we need to get rid of .pdfs that have a .xoj file,
@@ -3910,7 +3910,7 @@ char *find_next_candidate_file(GList *list, char *ourname, int nextprev)
     // TODO: this is rather inneficient (order n^2) but
     // hopefully nobody has thousands of files in a directory
   
-    for (itemList = list; itemList = g_list_next(itemList); itemList != NULL) {
+    for (itemList = *pList; itemList = g_list_next(itemList); itemList != NULL) {
       char *this;
       int len;
       this = itemList->data;
@@ -3930,45 +3930,46 @@ char *find_next_candidate_file(GList *list, char *ourname, int nextprev)
           // only check if this is the xoj of the pdf
           // in that case remove the basename pdf
           //printf("It is a xoj basename [%s]\n", basename);
-          if ((found = g_list_find_custom (list, basename, (GCompareFunc)strcmp)) != NULL) {
+          if ((found = g_list_find_custom (*pList, basename, (GCompareFunc)strcmp)) != NULL) {
             //  printf ("Removing [%s]\n", basename);
             g_free(found->data);
-            list = g_list_delete_link(list,found);
+            *pList = g_list_delete_link(*pList,found);
           }
         }
         g_free(basename);
         // remove the out pdf of this file
         temp = g_strdup_printf("%s.pdf", this);
-        if ((found = g_list_find_custom (list, temp, (GCompareFunc)strcmp)) != NULL) {
+        if ((found = g_list_find_custom (*pList, temp, (GCompareFunc)strcmp)) != NULL) {
           //          printf("Removing [%s]\n", temp);
           g_free(found->data);
-          list = g_list_delete_link(list,found);
+          *pList = g_list_delete_link(*pList,found);
         }
         g_free(temp);
       }
     }
   }
-  for (itemList = list; itemList = g_list_next(itemList); itemList != NULL) {
+  for (itemList = *pList; itemList = g_list_next(itemList); itemList != NULL) {
     char *this;
     this = itemList->data;
-    //    printf("Cleaned list: %s\n", this);
+    printf("Cleaned list: %s\n", this);
   }
 
+  printf("End Cleaned list\n");
   // ok, now the list has only files we can possible load next
   
   if (ourname != NULL) 
-    itemList = g_list_find_custom (list, ourname, (GCompareFunc)strcmp);
+    itemList = g_list_find_custom (*pList, ourname, (GCompareFunc)strcmp);
   if (ourname == NULL || itemList == NULL) {
     // not found... or we don't have anything to search for
     // return first or last
     if (nextprev > 0) {
       // find first
-      tmpname = g_strdup(list->data);
+      tmpname = g_strdup((*pList)->data);
     } else {
       // find last
-      tmpname = g_strdup(g_list_last(list)->data);
+      tmpname = g_strdup(g_list_last(*pList)->data);
     }
-  } else if (g_list_last(list) == list) {
+  } else if (g_list_last(*pList) == *pList) {
     // list has only one element, which is the current one
     tmpname = NULL;
   } else  {
@@ -3979,17 +3980,18 @@ char *find_next_candidate_file(GList *list, char *ourname, int nextprev)
     if (nextprev > 0) {
       itemList = g_list_next(itemList);
       if (itemList == NULL) {
-        itemList = g_list_first(list);
+        itemList = g_list_first(*pList);
       }
     } else {
       itemList = g_list_previous(itemList);
       if (itemList == NULL) {
-        itemList = g_list_last(list);              
+        itemList = g_list_last(*pList);
       }
     }
     tmpname = g_strdup(itemList->data);
 
   }
+
   return tmpname;
 }
 
@@ -4036,6 +4038,7 @@ open_relative_journal(int nextprev)
     return;
   }
 
+
   if (ui.filename != NULL) {
     ourname = g_path_get_basename(ui.filename);
   } else {
@@ -4045,14 +4048,15 @@ open_relative_journal(int nextprev)
       ourname = NULL;
   }
 
-  tmpname = find_next_candidate_file(list, ourname, nextprev);
+  tmpname = find_next_candidate_file(&list, ourname, nextprev);
+
 
   if (ourname != NULL)
     g_free(ourname);
   // we should free the list
   if (list != NULL) {
-    g_list_foreach(list, (GFunc)g_free, NULL);
-    g_list_free(list);
+    g_list_free_full(list, g_free);
+    list = NULL;
   }
 
   // at this point tmpname points to the next file, null if nothing
