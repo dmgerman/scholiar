@@ -57,6 +57,7 @@ create_winMain (void)
   GtkWidget *filePrint;
   GtkWidget *filePrintPDF;
   GtkWidget *separator2;
+  GtkWidget *separator4;
   GtkWidget *fileQuit;
   GtkWidget *menuEdit;
   GtkWidget *menuEdit_menu;
@@ -80,7 +81,6 @@ create_winMain (void)
   GtkWidget *viewOnePage;
   GtkWidget *separator20;
   GtkWidget *viewFullscreen;
-  GtkWidget *separator4;
   GtkWidget *menuViewZoom;
   GtkWidget *menuViewZoom_menu;
   GtkWidget *viewZoomIn;
@@ -113,6 +113,8 @@ create_winMain (void)
   GtkWidget *journalNewPageAfter;
   GtkWidget *journalNewPageEnd;
   GtkWidget *journalDeletePage;
+  GtkWidget *journalMovePageBefore;
+  GtkWidget *journalMovePageAfter;
   GtkWidget *separator7;
   GtkWidget *journalNewLayer;
   GtkWidget *journalDeleteLayer;
@@ -758,6 +760,14 @@ create_winMain (void)
   journalDeletePage = gtk_menu_item_new_with_mnemonic (_("_Delete Page"));
   gtk_widget_show (journalDeletePage);
   gtk_container_add (GTK_CONTAINER (menuJournal_menu), journalDeletePage);
+
+  journalMovePageBefore = gtk_menu_item_new_with_mnemonic (_("Move page before"));
+  gtk_widget_show (journalMovePageBefore);
+  gtk_container_add (GTK_CONTAINER (menuJournal_menu), journalMovePageBefore);
+
+  journalMovePageAfter = gtk_menu_item_new_with_mnemonic (_("Move page after"));
+  gtk_widget_show (journalMovePageAfter);
+  gtk_container_add (GTK_CONTAINER (menuJournal_menu), journalMovePageAfter);
 
   separator7 = gtk_separator_menu_item_new ();
   gtk_widget_show (separator7);
@@ -2234,6 +2244,12 @@ create_winMain (void)
                     NULL);
   g_signal_connect ((gpointer) journalDeletePage, "activate",
                     G_CALLBACK (on_journalDeletePage_activate),
+                    NULL);
+  g_signal_connect ((gpointer) journalMovePageBefore, "activate",
+                    G_CALLBACK (on_journalMovePageBefore_activate),
+                    NULL);
+  g_signal_connect ((gpointer) journalMovePageAfter, "activate",
+                    G_CALLBACK (on_journalMovePageAfter_activate),
                     NULL);
   g_signal_connect ((gpointer) journalNewLayer, "activate",
                     G_CALLBACK (on_journalNewLayer_activate),

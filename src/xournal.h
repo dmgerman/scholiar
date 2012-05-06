@@ -193,7 +193,12 @@ typedef struct Item {
 #define ITEM_RESIZESEL 22
 #define ITEM_RECOGNIZER 23
 #define ITEM_IMAGE 24
-
+#define ITEM_SELECTREGION 25
+#define ITEM_COPY_PAGE 26
+#define ITEM_COPY_LAYER 27
+#define ITEM_DUPLICATE_PAGE 28
+#define ITEM_PASTE_PAGE 29
+#define ITEM_REORDER_PAGE 30
 #define ITEM_MOVE_PAGE 90
 
 typedef struct Layer {

@@ -128,6 +128,14 @@ on_viewHideLayer_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_journalMovePageBefore_activate       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_journalMovePageAfter_activate       (GtkMenuItem     *menuitem,
+                                       gpointer         user_data);
+
+void
 on_journalNewPageBefore_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 

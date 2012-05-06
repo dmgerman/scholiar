@@ -540,6 +540,12 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
     make_canvas_items(); // re-create the canvas items
     do_switch_page(undo->val, TRUE, TRUE);
   }
+  else if (undo->type == ITEM_REORDER_PAGE) {
+    //we have to delete the page first
+    journal.pages = g_list_remove(journal.pages, undo->page);
+    journal.pages = g_list_insert(journal.pages, undo->page, undo->val);
+    do_switch_page(undo->val, TRUE, TRUE);
+  }
   else if (undo->type == ITEM_MOVESEL) {
     for (itemlist = undo->itemlist; itemlist != NULL; itemlist = itemlist->next) {
       it = (struct Item *)itemlist->data;
@@ -1274,6 +1280,91 @@ on_viewHideLayer_activate              (GtkMenuItem     *menuitem,
 
 
 void
+on_journalMovePageBefore_activate       (GtkMenuItem     *menuitem,
+                                             gpointer         user_data)
+{
+  struct Page *pg;
+  GList *current;
+  GList *newLoc;
+  int pageNo;
+
+  // do nothing in one page document
+  if (journal.npages <= 1) return;
+
+  end_text();
+  reset_selection();
+
+  pg = ui.cur_page;
+  pageNo = ui.pageno;
+  
+  // find the page,and its new location
+  current = g_list_find(journal.pages, pg);
+  newLoc = g_list_previous(current);
+
+  // delete the node from the list
+  journal.pages = g_list_delete_link(journal.pages, current);
+  if (newLoc == NULL) {
+    // it is the first page, move to the end
+    journal.pages = g_list_append(journal.pages, pg);
+    do_switch_page(journal.npages-1, TRUE, TRUE);
+  } else {
+    // it is not the first
+    assert(ui.cur_page > 0);
+    journal.pages = g_list_insert_before(journal.pages, newLoc, pg);
+    do_switch_page(ui.pageno-1, TRUE, TRUE);
+  }
+    
+  prepare_new_undo();
+  undo->type = ITEM_REORDER_PAGE;
+  undo->val = pageNo;
+  undo->page = pg;
+}
+
+void
+on_journalMovePageAfter_activate       (GtkMenuItem     *menuitem,
+                                             gpointer         user_data)
+{
+  struct Page *pg;
+  GList *current;
+  GList *newLoc;
+  int pageNo;
+  // do nothing in one page document
+  if (journal.npages <= 1) return;
+
+  end_text();
+  reset_selection();
+
+  pg = ui.cur_page;
+  pageNo = ui.pageno;
+
+  // find the page,and its new location
+  current = g_list_find(journal.pages, pg);
+  newLoc = g_list_next(current);
+
+  // delete the node from the list
+  journal.pages = g_list_delete_link(journal.pages, current);
+  if (newLoc == NULL) {
+    // it is the last page, move to the beginning
+    journal.pages = g_list_prepend(journal.pages, pg);
+    do_switch_page(0, TRUE, TRUE);
+  } else {
+    // it is not the first, just move to the next location
+    assert(ui.pageno < journal.npages -1 );
+
+    journal.pages = g_list_insert_before(journal.pages, g_list_next(newLoc), pg);
+
+    do_switch_page(ui.pageno+1, TRUE, TRUE);
+  }
+
+  prepare_new_undo();
+  undo->type = ITEM_REORDER_PAGE;
+  undo->val = pageNo;
+  undo->page = pg;
+}
+
+
+
+void
 on_journalNewPageBefore_activate       (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
@@ -1286,10 +1377,12 @@ on_journalNewPageBefore_activate       (GtkMenuItem     *menuitem,
   journal.npages++;
   do_switch_page(ui.pageno, TRUE, TRUE);
   
+  /*
   prepare_new_undo();
   undo->type = ITEM_NEW_PAGE;
   undo->val = ui.pageno;
   undo->page = pg;
+  */
 }
 
 
