@@ -233,8 +233,7 @@ void item_free_contents(struct Item *item)
     if (item->image_scaled)
       g_free(item->imageSha);
   } else {
-    fprintf(stderr, "Not implemented yet [item_free_contents");
-    assert(0);
+    fprintf(stderr, "Not implemented yet, not shure if should be [item_free_contents] item type [%d]\n", item->type);
   }
 }
 
