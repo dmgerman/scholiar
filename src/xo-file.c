@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <error.h>
+#include <unistd.h>
 
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
@@ -1764,7 +1765,8 @@ void init_config_default(void)
   ui.progressive_bg = TRUE;
   ui.print_ruling = TRUE;
   ui.default_unit = UNIT_CM;
-  ui.default_path = NULL;
+  // default to current directory before loading config 
+  ui.default_path = get_current_dir_name();
   ui.default_image = NULL;
   ui.default_font_name = g_strdup(DEFAULT_FONT);
   ui.default_font_size = DEFAULT_FONT_SIZE;
