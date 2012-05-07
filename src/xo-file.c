@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <error.h>
+#include <unistd.h>
 
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
@@ -1513,6 +1514,7 @@ void save_mru_list(void)
 void init_config_default(void)
 {
   int i, j;
+  char temp[1024];
 
   DEFAULT_ZOOM = DISPLAY_DPI_DEFAULT/72.0;
   ui.zoom = ui.startup_zoom = 1.0*DEFAULT_ZOOM;
@@ -1542,7 +1544,10 @@ void init_config_default(void)
   ui.progressive_bg = TRUE;
   ui.print_ruling = TRUE;
   ui.default_unit = UNIT_CM;
-  ui.default_path = NULL;
+  // default to current directory before loading config 
+
+
+  ui.default_path = g_strdup(getcwd(temp, 1024));
   ui.default_font_name = g_strdup(DEFAULT_FONT);
   ui.default_font_size = DEFAULT_FONT_SIZE;
   ui.pressure_sensitivity = FALSE;

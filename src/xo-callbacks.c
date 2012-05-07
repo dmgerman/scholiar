@@ -4121,9 +4121,12 @@ open_relative_journal(int nextprev)
   list = scan_directory(curdir);
 
   if (list == NULL) {
-
+    // TODO: 
+    // check if the directory exists
+    // in that case, complain bitterly about that
+    // for the time being, we assume the directory works ;)
     dialog = gtk_message_dialog_new(GTK_WINDOW (winMain), GTK_DIALOG_DESTROY_WITH_PARENT,
-                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("Unable to scan directory '%s'"), curdir);
+                                    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, _("No xournal files found in '%s'"), curdir);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
     set_cursor_busy(FALSE);
