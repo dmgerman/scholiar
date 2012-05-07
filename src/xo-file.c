@@ -310,7 +310,7 @@ gboolean save_journal(const char *filename)
 #ifdef IMAGE_DEBUG
               printf("Foundndddd previously written image [%s]\n", (char*) foundSha->data);
 #endif
-              gzprintf(f, " embedded=\"TRUE\" refid=\"%s\"/>n", shaImage);
+              gzprintf(f, " embedded=\"TRUE\" idref=\"%s\"/>\n", shaImage);
               // we must release the memory of shaImage
               // release the memory of the 
               free(shaImage);
@@ -797,7 +797,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
 #endif
 	  tmpItem->image_embedded = TRUE;
 	}
-      } else if (!strcmp(*attribute_names, "refid")) {
+      } else if (!strcmp(*attribute_names, "idref")) {
         // refids refer to images that have been previously read
         // our writting algorithm guarantees that redifs are always referrring to 
         // previously written images
