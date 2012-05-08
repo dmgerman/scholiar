@@ -2705,6 +2705,8 @@ void ui_search_term_set(const char *st)
 }
 
 
+// use this function if you need to do anything for
+// every item in the journal. It is basically an iterator
 void for_every_item_in_journal(void (*func)(struct Page *pg,
                                             struct Layer *layer,
                                             struct Item *item
