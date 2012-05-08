@@ -160,3 +160,7 @@ void journal_reset_search_layer(struct Journal *j);
 void reset_find_bar(void);
 void init_search_layer(Page *pg);
 void init_layer(struct Layer *l);
+void for_every_item_in_journal(void (*func)(struct Page *pg,
+                                            struct Layer *layer,
+                                            struct Item *item
+                                            ));

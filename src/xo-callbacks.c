@@ -4588,13 +4588,31 @@ gboolean on_text_keypress_event(GtkWidget   *widget,
 }
 
 
+void do_text_background(struct Page *pg, struct Layer *layer, struct Item *item)
+{
+  if (item->type == ITEM_TEXT) {
+    // this one will delete the current background if 
+    // (ui.textNoteMode)is null
+    create_text_background(layer->group, item);
+  }
+}
+                                            
+
 
 void 
 on_optionsTextAsNote_activate          (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   gboolean active;
+  GList *pagelist, *layerlist;
+  struct Page *pg;
+  GList *listItem;
+  struct Item *item;
+  struct Layer *layer;
 
   active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+
   ui.textNoteMode = active;
+
+  for_every_item_in_journal(do_text_background);
 }

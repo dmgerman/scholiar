@@ -2705,6 +2705,32 @@ void ui_search_term_set(const char *st)
 }
 
 
+void for_every_item_in_journal(void (*func)(struct Page *pg,
+                                            struct Layer *layer,
+                                            struct Item *item
+                                            ))
+{
+  GList *pagelist, *layerlist;
+  struct Page *pg;
+  GList *listItem;
+  struct Item *item;
+  struct Layer *layer;
+  
+  //for every page, for every layer, for every ittem
+  for (pagelist = journal.pages; pagelist!=NULL; pagelist = pagelist->next) {
+    pg = (struct Page *)pagelist->data;
+    for (layerlist = pg->layers; layerlist!=NULL; layerlist = layerlist->next) {
+      layer = (struct Layer *)layerlist->data;
+      if (layer->items != NULL ) {
+        for (listItem=layer->items; listItem!=NULL; listItem=listItem->next) {
+          item = (struct Item *)listItem->data;
+          (*func)(pg, layer, item);
+        }
+      }
+    }
+  }
+}
+
 //void ui_search_print(void) 
 //{
 //  if (ui.searchData.term == NULL)
