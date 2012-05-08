@@ -1366,6 +1366,7 @@ void start_text(GdkEvent *event, struct Item *item)
 // Create the background of a text annotation is required
 void create_text_background(GnomeCanvasGroup *group, struct Item *item)
 {
+  assert(group != NULL);
   if (item->type != ITEM_TEXT)  {
     printf("This is something it should not be executed\n");
     // at some point we'll remove the assertion, but for now
@@ -1513,6 +1514,7 @@ void refont_text_item(struct Item *item, gchar *font_name, double font_size)
     prepare_new_undo();
     undo->type = ITEM_TEXT_ATTRIB;
     undo->item = item;
+    undo->layer = ui.cur_layer;
     undo->str = item->font_name;
     undo->val_x = item->font_size;
     undo->brush = (struct Brush *)g_memdup(&(item->brush), sizeof(struct Brush));

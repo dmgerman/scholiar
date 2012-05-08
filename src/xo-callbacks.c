@@ -656,7 +656,8 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
       "fill-color-rgba", undo->item->brush.color_rgba, NULL);
     update_text_item_displayfont(undo->item);
     update_item_bbox(undo->item);
-    //    create_text_background(undo->layer->group, undo->item);
+    assert(undo->layer!= NULL);
+    create_text_background(undo->layer->group, undo->item);
   }
   else if (undo->type == ITEM_MOVE_PAGE) {
     do_switch_page(undo->val, TRUE, TRUE);
@@ -882,7 +883,8 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
       "fill-color-rgba", redo->item->brush.color_rgba, NULL);
     update_text_item_displayfont(redo->item);
     update_item_bbox(redo->item);
-    //    create_text_background(redo->layer->group, redo->item);
+    assert(redo->layer!= NULL);
+    create_text_background(redo->layer->group, redo->item);
   }
   else if (redo->type == ITEM_MOVE_PAGE) {
     do_switch_page(redo->val, TRUE, TRUE);
