@@ -32,6 +32,10 @@ void
 on_filePrintPDF_activate               (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
+void 
+on_optionsTextAsNote_activate          (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
 void
 on_optionsShowInterface_activate      (GtkMenuItem     *menuitem,
                                        gpointer         user_data);

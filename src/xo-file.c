@@ -1561,6 +1561,7 @@ void init_config_default(void)
   ui.showInterfaceFullscreen = TRUE;
 
   ui.poppler_force_cairo = FALSE;
+  ui.textNoteMode = FALSE;
   
   // the default UI vertical order
   ui.vertical_order[0][0] = 1; 
@@ -1800,22 +1801,22 @@ void save_config_to_file(void)
     _(" color for margin line in lined paper (RGBA format)"),
     g_strdup_printf("0x%X", RULING_MARGIN_COLOR));
   update_keyval("paper", "ruling_graph_spacing", 
-    _(" grid spacing distance for graph paper (in picas)"),
+    _(" grid spacing distance for graph paper (in points)"),
     g_strdup_printf("%10.3f", RULING_GRAPHSPACING));
   update_keyval("paper", "ruling_lined_spacing", 
-    _(" distances between lines in lined paper (in picas)"),
+    _(" distances between lines in lined paper (in points)"),
     g_strdup_printf("%10.3f", RULING_SPACING));
   update_keyval("paper", "ruling_top_margin", 
     _(" top margin for lined paper (in picas)"),
     g_strdup_printf("%10.3f", RULING_TOPMARGIN));
   update_keyval("paper", "ruling_bottom_margin", 
-    _(" bottom margin for lined paper (in picas)"),
+    _(" bottom margin for lined paper (in points)"),
     g_strdup_printf("%10.3f", RULING_BOTTOMMARGIN));
   update_keyval("paper", "ruling_left_margin", 
-    _(" left margin for lined paper (in picas)"),
+    _(" left margin for lined paper (in points)"),
     g_strdup_printf("%10.3f", RULING_TOPMARGIN));
   update_keyval("paper", "ruling_thickness", 
-    _(" width of lines (in picas)"),
+    _(" width of lines (in points)"),
     g_strdup_printf("%10.3f", RULING_THICKNESS));
 
   update_keyval("search", "results_color", 
@@ -1938,6 +1939,27 @@ void save_config_to_file(void)
   update_keyval("tools", "default_font_size",
     _(" default font size"),
     g_strdup_printf("%.1f", ui.default_font_size));
+
+  // variables for the background of text annotations
+  // when enabled
+  update_keyval("tools", "text_ann_have_bg",
+                _(" draw a background for text annotations"),
+                g_strdup(ui.textNoteMode?"true":"false"));
+
+  update_keyval("tools", "text_ann_bg_color",
+                _(" color for background of text annotations (RGBA format)"),
+                g_strdup_printf("0x%X", NOTE_BACKGROUND_COLOR));
+  update_keyval("tools", "text_ann_bg_border_color",
+                _(" color for border of the background of text annotations (RGBA format)"),
+                g_strdup_printf("0x%X", NOTE_BORDER_COLOR));
+
+  update_keyval("tools", "text_ann_bg_border_width",
+                _(" width for  border of background of text annotations (in points)"),
+                g_strdup_printf("%.1f", NOTE_BORDER_WIDTH));
+
+  update_keyval("tools", "text_ann_bg_margin",
+                _(" margin between text and border of background of text annotations (in points)"),
+                g_strdup_printf("%.1f", NOTE_MARGIN));
 
   buf = g_key_file_to_data(ui.config_data, NULL, NULL);
   if (buf == NULL) return;
@@ -2296,5 +2318,11 @@ void load_config_from_file(void)
   if (parse_keyval_string("tools", "default_font", &str))
     if (str!=NULL) { g_free(ui.default_font_name); ui.default_font_name = str; }
   parse_keyval_double("tools", "default_font_size", &ui.default_font_size, 1., 200.);
+
+  parse_keyval_boolean("tools", "text_ann_have_bg", &ui.textNoteMode);  
+  parse_keyval_color("tools", "text_ann_bg_color", &NOTE_BACKGROUND_COLOR);  
+  parse_keyval_color("tools", "text_ann_bg_border_color", &NOTE_BORDER_COLOR);  
+  parse_keyval_double("tools", "text_ann_bg_border_width", &NOTE_BORDER_WIDTH, 0.1, 20.);  
+  parse_keyval_double("tools", "text_ann_bg_margin", &NOTE_MARGIN,  0.1, 200.);  
 #endif
 }

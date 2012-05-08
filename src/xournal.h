@@ -171,6 +171,7 @@ typedef struct Item {
   gchar *text;
   gchar *font_name;
   gdouble font_size;
+  GnomeCanvasItem *textBg; // if the text has a background, it lives here
   GtkWidget *widget; // the widget while text is being edited (ITEM_TEMP_TEXT)
   // the following fields for ITEM_IMAGE:
   gchar *image_path;
@@ -334,6 +335,7 @@ typedef struct UIData {
 
   gboolean poppler_force_cairo; // force poppler to use cairo
   searchDataType searchData;
+  gboolean textNoteMode; // if 1, the text annotation should have a colored background
 } UIData;
 
 #define BRUSH_LINKED 0

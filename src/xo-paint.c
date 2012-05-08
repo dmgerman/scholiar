@@ -6,6 +6,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
+#include <assert.h>
 
 #include <libart_lgpl/art_vpath_dash.h>
 
@@ -506,6 +507,12 @@ void finalize_erasure(void)
       gtk_object_destroy(GTK_OBJECT(item->canvas_item));
       item->canvas_item = NULL;
     }
+    if (item->textBg!=NULL) {
+      // delete the background of the note
+      gtk_object_destroy(GTK_OBJECT(item->textBg));
+      item->textBg = NULL;
+    }
+
     undo->erasurelist = g_list_append(undo->erasurelist, item->erasure);
     // add the new strokes into the current layer
     for (partlist = item->erasure->replacement_items; partlist!=NULL; partlist = partlist->next)
@@ -767,6 +774,10 @@ void continue_movesel(GdkEvent *event)
     gnome_canvas_item_reparent(ui.selection->canvas_item, ui.selection->move_layer->group);
     for (list = ui.selection->items; list!=NULL; list = list->next) {
       item = (struct Item *)list->data;
+      //first reparent the background, so it is below the text
+      if (item->type == ITEM_TEXT && item->textBg != NULL) {
+        gnome_canvas_item_reparent(item->textBg, ui.selection->move_layer->group);
+      }
       if (item->canvas_item!=NULL)
         gnome_canvas_item_reparent(item->canvas_item, ui.selection->move_layer->group);
     }
@@ -796,6 +807,9 @@ void continue_movesel(GdkEvent *event)
     item = (struct Item *)list->data;
     if (item->canvas_item != NULL)
       gnome_canvas_item_move(item->canvas_item, dx, dy);
+    if (item->type == ITEM_TEXT && item->textBg != NULL) {
+      gnome_canvas_item_move(item->textBg, dx, dy);
+    }
   }
 }
 
@@ -932,6 +946,11 @@ void selection_delete(void)
     item = (struct Item *)itemlist->data;
     if (item->canvas_item!=NULL)
       gtk_object_destroy(GTK_OBJECT(item->canvas_item));
+    if (item->textBg!=NULL) {
+      // delete the background of the note
+      gtk_object_destroy(GTK_OBJECT(item->textBg));
+      item->textBg = NULL;
+    }
     erasure = g_new(struct UndoErasureData, 1);
     erasure->item = item;
     erasure->npos = g_list_index(ui.selection->layer->items, item);
@@ -1100,7 +1119,7 @@ void clipboard_paste(void)
   make_dashed(ui.selection->canvas_item);
 
   while (nitems-- > 0) {
-    item = g_new(struct Item, 1);
+    item = g_new0(struct Item, 1);
     ui.selection->items = g_list_append(ui.selection->items, item);
     ui.cur_layer->items = g_list_append(ui.cur_layer->items, item);
     ui.cur_layer->nitems++;
@@ -1289,6 +1308,7 @@ void start_text(GdkEvent *event, struct Item *item)
   if (item==NULL) {
     item = g_new(struct Item, 1);
     item->text = NULL;
+    item->textBg = NULL;
     item->canvas_item = NULL;
     item->bbox.left = pt[0];
     item->bbox.top = pt[1];
@@ -1342,6 +1362,34 @@ void start_text(GdkEvent *event, struct Item *item)
   gtk_widget_set_sensitive(GET_COMPONENT("buttonPaste"), FALSE);
   gtk_widget_grab_focus(item->widget); 
 }
+
+// Create the background of a text annotation is required
+void create_text_background(GnomeCanvasGroup *group, struct Item *item)
+{
+  if (item->type != ITEM_TEXT)  {
+    printf("This is something it should not be executed\n");
+    // at some point we'll remove the assertion, but for now
+    // it helps debug
+    assert(0);
+    return;
+  }
+  if (item->textBg != NULL) {
+    gtk_object_destroy(GTK_OBJECT(item->textBg));
+  }
+  // don't continue if not note mode
+  if (! ui.textNoteMode) return;
+  item->textBg = gnome_canvas_item_new(group,
+                                       gnome_canvas_rect_get_type(),
+                                       "fill-color-rgba", NOTE_BACKGROUND_COLOR,
+                                       "outline-color-rgba", NOTE_BORDER_COLOR,
+                                       "width-units", NOTE_BORDER_WIDTH, 
+                                       "x1", item->bbox.left - NOTE_MARGIN,
+                                       "y1", item->bbox.top - NOTE_MARGIN,
+                                       "x2", item->bbox.right + NOTE_MARGIN,
+                                       "y2", item->bbox.bottom + NOTE_MARGIN,
+                                       NULL);
+  lower_canvas_item_to(group,  item->canvas_item, item->textBg); //, item->canvas_item);
+}    
 
 void end_text(void)
 {
@@ -1405,6 +1453,11 @@ void end_text(void)
   update_item_bbox(ui.cur_item);
   lower_canvas_item_to(ui.cur_layer->group, ui.cur_item->canvas_item, tmpitem);
   gtk_object_destroy(GTK_OBJECT(tmpitem));
+
+  if (ui.textNoteMode) {
+    // we need to create the background for the text item
+    create_text_background(ui.cur_layer->group, ui.cur_item);
+  }
 }
 
 /* update the items in the canvas so they're of the right font size */

@@ -44,11 +44,16 @@ double predef_thickness[NUM_STROKE_TOOLS][THICKNESS_MAX] =
 guint RULING_COLOR       = 0xff0080ff;
 guint RULING_MARGIN_COLOR = 0xff0080ff;
 guint RULING_MARGIN_INTERSECT_COLOR = 0xff0080ff;
-double RULING_THICKNESS = 0.5;
-double RULING_LEFTMARGIN = 72.0;
-double RULING_TOPMARGIN =80.0;
-double RULING_SPACING = 24.0;
-double RULING_BOTTOMMARGIN =  24.0;
+gdouble RULING_THICKNESS = 0.5;
+gdouble RULING_LEFTMARGIN = 72.0;
+gdouble RULING_TOPMARGIN =80.0;
+gdouble RULING_SPACING = 24.0;
+gdouble RULING_BOTTOMMARGIN =  24.0;
+
+guint  NOTE_BACKGROUND_COLOR = 0xfffd3aE0;
+guint  NOTE_BORDER_COLOR     = 0x000000ff;
+gdouble NOTE_BORDER_WIDTH      = 1.0;
+gdouble NOTE_MARGIN            = 3.0;
 
 guint SEARCH_RESULTS_COLOR = 0xffff0080;
 
@@ -619,6 +624,7 @@ void make_canvas_item_one(GnomeCanvasGroup *group, struct Item *item)
           "font-desc", font_desc, "fill-color-rgba", item->brush.color_rgba,
           "text", item->text, NULL);
     update_item_bbox(item);
+    create_text_background(group, item);
   }
   if (item->type == ITEM_IMAGE) {
 	  #ifdef IMAGE_DEBUG
@@ -1902,6 +1908,12 @@ void move_journal_items_by(GList *itemlist, double dx, double dy,
       item->bbox.top += dy;
       item->bbox.bottom += dy;
     }
+    if (item->type == ITEM_TEXT &&
+        ui.textNoteMode) {
+      // we update the background here
+      // we delete and then we recreate it
+      create_text_background(l2->group, item);
+    }
     if (l1 != l2) {
       // find out where to insert
       if (depths != NULL) {
@@ -1923,6 +1935,9 @@ void move_journal_items_by(GList *itemlist, double dx, double dy,
         if (link != NULL) refitem = ((struct Item *)(link->data))->canvas_item;
         else refitem = NULL;
         lower_canvas_item_to(l2->group, item->canvas_item, refitem);
+        if (item->textBg != NULL) {
+          lower_canvas_item_to(l2->group, item->canvas_item, item->textBg);
+        }
       }
       depths = depths->next;
     }
@@ -2001,6 +2016,8 @@ void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y
       gtk_object_destroy(GTK_OBJECT(item->canvas_item));
       make_canvas_item_one(group, item);
     }
+    if (item->type == ITEM_TEXT)
+      create_text_background(group, item);
   }
 }
 

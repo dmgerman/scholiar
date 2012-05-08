@@ -45,3 +45,4 @@ void process_font_sel(gchar *str);
 /* image functions */
 
 void insert_image(GdkEvent *event, struct Item *item);
+void create_text_background(GnomeCanvasGroup *group, struct Item *item);

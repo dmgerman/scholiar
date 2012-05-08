@@ -466,6 +466,11 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
     // we're keeping the stroke info, but deleting the canvas item
     gtk_object_destroy(GTK_OBJECT(undo->item->canvas_item));
     undo->item->canvas_item = NULL;
+    if (undo->type == ITEM_TEXT && undo->item->textBg != NULL) {
+      gtk_object_destroy(GTK_OBJECT(undo->item->textBg));
+      undo->item->textBg = NULL;
+    }
+
     // we also remove the object from its layer!
     undo->layer->items = g_list_remove(undo->layer->items, undo->item);
     undo->layer->nitems--;
@@ -635,6 +640,7 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
     undo->item->text = tmpstr;
     gnome_canvas_item_set(undo->item->canvas_item, "text", tmpstr, NULL);
     update_item_bbox(undo->item);
+    create_text_background(undo->layer->group, undo->item);
   }
   else if (undo->type == ITEM_TEXT_ATTRIB) {
     tmpstr = undo->str;
@@ -650,6 +656,7 @@ on_editUndo_activate                   (GtkMenuItem     *menuitem,
       "fill-color-rgba", undo->item->brush.color_rgba, NULL);
     update_text_item_displayfont(undo->item);
     update_item_bbox(undo->item);
+    //    create_text_background(undo->layer->group, undo->item);
   }
   else if (undo->type == ITEM_MOVE_PAGE) {
     do_switch_page(undo->val, TRUE, TRUE);
@@ -858,6 +865,7 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
     redo->item->text = tmpstr;
     gnome_canvas_item_set(redo->item->canvas_item, "text", tmpstr, NULL);
     update_item_bbox(redo->item);
+    create_text_background(redo->layer->group, redo->item);
   }
   else if (redo->type == ITEM_TEXT_ATTRIB) {
     tmpstr = redo->str;
@@ -866,6 +874,7 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
     tmp_x = redo->val_x;
     redo->val_x = redo->item->font_size;
     redo->item->font_size = tmp_x;
+
     g_memmove(&tmp_brush, redo->brush, sizeof(struct Brush));
     g_memmove(redo->brush, &(redo->item->brush), sizeof(struct Brush));
     g_memmove(&(redo->item->brush), &tmp_brush, sizeof(struct Brush));
@@ -873,6 +882,7 @@ on_editRedo_activate                   (GtkMenuItem     *menuitem,
       "fill-color-rgba", redo->item->brush.color_rgba, NULL);
     update_text_item_displayfont(redo->item);
     update_item_bbox(redo->item);
+    //    create_text_background(redo->layer->group, redo->item);
   }
   else if (redo->type == ITEM_MOVE_PAGE) {
     do_switch_page(redo->val, TRUE, TRUE);
@@ -4575,3 +4585,14 @@ gboolean on_text_keypress_event(GtkWidget   *widget,
   return stop_processing;
 }
 
+
+
+void 
+on_optionsTextAsNote_activate          (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  gboolean active;
+
+  active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+  ui.textNoteMode = active;
+}

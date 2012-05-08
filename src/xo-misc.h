@@ -124,12 +124,17 @@ wrapper_poppler_page_render_to_pixbuf (PopplerPage *page,
 extern double RULING_GRAPHSPACING;
 extern guint  RULING_COLOR;
 extern guint RULING_MARGIN_COLOR;
-extern double RULING_THICKNESS;
-extern double RULING_LEFTMARGIN;
-extern double RULING_TOPMARGIN;
-extern double RULING_SPACING;
-extern double RULING_BOTTOMMARGIN;
+extern gdouble RULING_THICKNESS;
+extern gdouble RULING_LEFTMARGIN;
+extern gdouble RULING_TOPMARGIN;
+extern gdouble RULING_SPACING;
+extern gdouble RULING_BOTTOMMARGIN;
 extern guint SEARCH_RESULTS_COLOR;
+
+extern guint  NOTE_BACKGROUND_COLOR;
+extern guint  NOTE_BORDER_COLOR;
+extern gdouble NOTE_BORDER_WIDTH;
+extern gdouble NOTE_MARGIN;
 
 /*
 static void       draw_rubberband                            (GtkWidget          *widget,

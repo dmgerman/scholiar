@@ -268,6 +268,7 @@ create_winMain (void)
   GtkWidget *optionsLeftHanded;
   GtkWidget *optionsShortenMenus;
   GtkWidget *separator21;
+  GtkWidget *optionsTextAsNote;
   GtkWidget *optionsAutoSavePrefs;
   GtkWidget *optionsSavePreferences;
   GtkWidget *menuHelp;
@@ -1448,6 +1449,10 @@ create_winMain (void)
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), separator18);
   gtk_widget_set_sensitive (separator18, FALSE);
 
+  optionsTextAsNote = gtk_check_menu_item_new_with_mnemonic (_("_Background for Text Annotations"));
+  gtk_widget_show (optionsTextAsNote);
+  gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsTextAsNote);
+
   optionsProgressiveBG = gtk_check_menu_item_new_with_mnemonic (_("_Progressive Backgrounds"));
   gtk_widget_show (optionsProgressiveBG);
   gtk_container_add (GTK_CONTAINER (menuOptions_menu), optionsProgressiveBG);
@@ -2546,7 +2551,9 @@ create_winMain (void)
   g_signal_connect ((gpointer) optionsTouchAsHandTool, "activate",
                     G_CALLBACK (on_optionsTouchAsHandTool_activate),
                     NULL);
-
+  g_signal_connect ((gpointer) optionsTextAsNote, "toggled",
+                    G_CALLBACK (on_optionsTextAsNote_activate),
+                    NULL);
   g_signal_connect ((gpointer) optionsLeftHanded, "toggled",
                     G_CALLBACK (on_optionsLeftHanded_activate),
                     NULL);
@@ -2945,6 +2952,7 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, optionsLeftHanded, "optionsLeftHanded");
   GLADE_HOOKUP_OBJECT (winMain, optionsShortenMenus, "optionsShortenMenus");
   GLADE_HOOKUP_OBJECT (winMain, separator21, "separator21");
+  GLADE_HOOKUP_OBJECT (winMain, optionsTextAsNote, "optionsTextAsNote");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoSavePrefs, "optionsAutoSavePrefs");
   GLADE_HOOKUP_OBJECT (winMain, optionsAutoExportPdf, "optionsAutoExportPdf");
   GLADE_HOOKUP_OBJECT (winMain, optionsShowInterface, "optionsShowInterface");
