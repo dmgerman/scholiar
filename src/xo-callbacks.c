@@ -1092,7 +1092,7 @@ on_viewPageWidth_activate              (GtkMenuItem     *menuitem,
   // the document. This means that the toggle is really a 3 steps one:
   // Full width (no scrollbar) -> full height (no scrollbar) -> full with (with scrollbar)->...
 
-  if (ui.zoom != byWidth) {
+  if (fabs(ui.zoom - byWidth) > 0.001) {
     ui.zoom = byWidth;
   } else {
     ui.zoom = byHeight;
