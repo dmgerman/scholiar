@@ -1,8 +1,37 @@
-* My branch of xournal
+* My "development branch" of xournal
 
-This is my branch of [[http://xournal.sourceforge.net][xournal]]. It contains several additions to
+This is my development branch of [[http://xournal.sourceforge.net][xournal]]. It contains several additions to
 it. They are mainly intended for people who use a tablet, and
 regularly annotate pdfs.
+
+* Notes branch
+
+This branch implements a coloured background for text annotations.
+
+Currently there is one option under Options "Background For Text Annotations". If enabled, text annotations have
+a background drawn (configurable via config variables). 
+
+This is what I did:
+
+* added a field to item called textBg (a canvas item). If not NUL, the annotation has a brackground
+* added a field to UI called ui.textNoteMode. If true, annotations are drawn with a background.
+
+Currently all annotations have or don't have a background, but it is possible, by adding a new tool (like "note") to have
+some annotations using this. I am not sure how to do it yet.
+
+What works:
+* Resizing
+* Cut and paste
+* Undo/redo
+* Moving (even to other pages)
+
+What does not work yet:
+
+* The text annotations do not have any information in the xournal file to indicate they were created with a background (it is actually
+a feature too, because you can enable/disable them easily ;)
+* It does not print or export them to PDF
+* It does not properly resize the background when the font changes (probably easy to fix)
+
 
 * Summary of features
 
