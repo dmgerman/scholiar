@@ -9,12 +9,14 @@
 #include <zlib.h>
 #include <string.h>
 #include <locale.h>
+#include <assert.h>
 #include <pango/pango.h>
 #include <pango/pangofc-font.h>
 #include <pango/pangoft2.h>
 #include <fontconfig/fontconfig.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+
 
 #define NO_MAPPERS
 #define NO_TYPE3
@@ -1010,6 +1012,18 @@ void embed_pdffont(GString *pdfbuf, struct XrefTable *xref, struct PdfFont *font
 
 // draw a page's graphics
 
+void pdf_set_color_if_needed(GString *str, guint *old_rgb, guint new_rgba, char *type)
+{
+  assert(strcmp(type, "RG") == 0 ||
+         strcmp(type, "rg") == 0);
+  if ((new_rgba & ~ 0xff) != *old_rgb) {
+    g_string_append_printf(str, "%.2f %.2f %.2f %s\n",
+                           RGBA_RGB(new_rgba), type);
+    *old_rgb = new_rgba & ~ 0xff;
+  }
+}
+
+
 void pdf_draw_page(struct Page *pg, GString *str, gboolean *use_hiliter, 
                   struct XrefTable *xref, GList **pdffonts)
 {
@@ -1078,6 +1092,21 @@ void pdf_draw_page(struct Page *pg, GString *str, gboolean *use_hiliter,
           g_string_append(str, "Q ");
       }
       else if (item->type == ITEM_TEXT) {
+        /// if there is a background... let us print it first
+        if (item->textBg != NULL) {
+          // first the width of the stroke
+          g_string_append_printf(str, "%.2f w\n", NOTE_BORDER_WIDTH);
+          // then the coordinates
+          g_string_append_printf(str, "%.2f %.2f %.2f %.2f re\n",
+                                 item->bbox.left - NOTE_MARGIN,
+                                 item->bbox.top - NOTE_MARGIN,
+                                 item->bbox.right - item->bbox.left + 2 * NOTE_MARGIN,
+                                 item->bbox.bottom - item->bbox.top + 2 * NOTE_MARGIN);
+          pdf_set_color_if_needed(str, &old_text_rgba, NOTE_BACKGROUND_COLOR, "rg");
+          pdf_set_color_if_needed(str, &old_rgba, NOTE_BORDER_COLOR, "RG");
+          g_string_append(str, "B\n");
+        }
+
         if ((item->brush.color_rgba & ~0xff) != old_text_rgba)
           g_string_append_printf(str, "%.2f %.2f %.2f rg ",
             RGBA_RGB(item->brush.color_rgba));
@@ -1269,6 +1298,17 @@ gboolean print_to_pdf(char *filename)
     }
     else if (pg->bg->type == BG_PIXMAP || pg->bg->type == BG_PDF)
       n_obj_bgpix = pdf_draw_bitmap_background(pg, pgstrm, &xref, pdfbuf);
+
+#ifndef IGNORE
+    //    This is the basic form of text annotations, they have to be
+    //    dictionary objects
+    //    but  I have no idea how to implement them
+    //   see page 500 of the reference
+    g_string_append_printf(pdfbuf,"%d 0 obj\n<< /Type /Annot\n/Subtype /Text\n/Rect [266 116 430 204]\n\
+/Contents (The quick brown fox ate the lazy mouse.)\n>>\nendobj\n", 10001);
+#endif
+
+
     // draw the page contents
     use_hiliter = FALSE;
     pdf_draw_page(pg, pgstrm, &use_hiliter, &xref, &pdffonts);

@@ -946,7 +946,7 @@ void selection_delete(void)
     item = (struct Item *)itemlist->data;
     if (item->canvas_item!=NULL)
       gtk_object_destroy(GTK_OBJECT(item->canvas_item));
-    if (item->textBg!=NULL) {
+    if (item->type == ITEM_TEXT && item->textBg!=NULL) {
       // delete the background of the note
       gtk_object_destroy(GTK_OBJECT(item->textBg));
       item->textBg = NULL;
