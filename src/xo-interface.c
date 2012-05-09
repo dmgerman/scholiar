@@ -3207,7 +3207,7 @@ create_aboutDialog (void)
   gtk_widget_show (labelTitle);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), labelTitle, FALSE, FALSE, 3);
 
-  labelInfo = gtk_label_new (_("Written by Denis Auroux\nand other contributors\n       http://xournal.sourceforge.net/       "));
+  labelInfo = gtk_label_new (_("Written by Denis Auroux\nand other contributors\n       http://xournal.sourceforge.net/  \nThis version is not official.\nIt contains a set of patches maintained by Daniel M. German\n it is fairly stable but it might contain bugs. Use at your own risk\n (see http://github.com/dmgerman/xournal)      "));
   gtk_widget_show (labelInfo);
   gtk_box_pack_start (GTK_BOX (dialog_vbox2), labelInfo, FALSE, FALSE, 0);
   gtk_misc_set_padding (GTK_MISC (labelInfo), 20, 10);

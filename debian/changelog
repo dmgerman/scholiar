@@ -1,3 +1,11 @@
+xournal (0.4.5-dmg-1) unstable; urgency=low
+  * New beta release:
+	- Adds moving pages 
+	- Adds optional display of background in text annotations
+	- Add search in pdfs
+
+ -- Daniel German <dmg@uvic.ca>  Wed, 09 May 2012 10:00:33 -0700
+
 xournal (0.4.5-3) unstable; urgency=low
 
   * Add -lz and -X11 to link flags (Closes: #617637, #556718)
