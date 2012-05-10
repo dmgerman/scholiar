@@ -1740,11 +1740,7 @@ void init_config_default(void)
   ui.default_page.bg->color_no = COLOR_WHITE;
   ui.default_page.bg->color_rgba = predef_bgcolors_rgba[COLOR_WHITE];
   ui.default_page.bg->ruling = RULING_LINED;
-#ifdef ENABLE_IMAGE_EMBEDDING
-  ui.embed_images = TRUE;
-#else
   ui.embed_images = FALSE;
-#endif
   ui.view_continuous = TRUE;
   ui.allow_xinput = TRUE;
   ui.discard_corepointer = FALSE;
@@ -1922,6 +1918,12 @@ void save_config_to_file(void)
   update_keyval("general", "autoexport_pdf",
     _(" automatically export filename.pdf.xoj.pdf when saving the .xoj file (true/false)"),
     g_strdup(ui.autoexport_pdf?"true":"false"));
+
+  update_keyval("general", "embed_images",
+    _(" If true, embed the images in the .xoj file. If false, the images are always saved in external files\n"
+      "BIG warning. This option is experimental, using it will break compatibility with previous versions of xournal. \n"
+      "I reiterate: Embedding images do not work with previous versions of xournal"),
+    g_strdup(ui.embed_images?"true":"false"));
 
   update_keyval("general", "default_path",
     _(" default path for open/save (leave blank for current directory)"),
@@ -2409,6 +2411,7 @@ void load_config_from_file(void)
   parse_keyval_boolean("general", "autoload_pdf_xoj", &ui.autoload_pdf_xoj);
 
   parse_keyval_boolean("general", "autoexport_pdf", &ui.autoexport_pdf);
+  parse_keyval_boolean("general", "embed_images", &ui.embed_images);
 
   parse_keyval_string("general", "default_path", &ui.default_path);
   parse_keyval_boolean("general", "pressure_sensitivity", &ui.pressure_sensitivity);
