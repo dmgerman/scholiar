@@ -2,6 +2,9 @@
 #  include <config.h>
 #endif
 
+#define IMAGE_DEBUG
+
+
 #include <assert.h>
 
 #include <signal.h>
@@ -12,6 +15,7 @@
 #include <errno.h>
 #include <error.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
@@ -116,15 +120,12 @@ gboolean save_journal(const char *filename)
   struct Layer *layer;
   struct Item *item;
   int i, is_clone;
-  char *tmpfn, *tmpstr, *tmpfn_img_path, *tmpfn_img_dir, *tmpfn_img_file;
-  char dbg_buffer[1000];
-  char *tmpfn_full_path, *tmpfn_full_path2, *tmpfn_full_path3, *tmpstr_write;
-  guint buflen, imgdatalen, pixdata_stream_len;
+  char *tmpfn, *tmpstr, *tmpfn_img_path;
+  char *tmpfn_img_basename;
+  char *tmpfn_full_path;
   char *img_extension;
   gboolean success, img_success;
   FILE *tmpf;
-  GdkPixdata pixdata;
-  guint8 *pixdata_stream;
   GList *pagelist, *layerlist, *itemlist, *list;
   GtkWidget *dialog;
   GError *error = NULL;
@@ -139,8 +140,7 @@ gboolean save_journal(const char *filename)
 
   setlocale(LC_NUMERIC, "C");
 
-
-
+  // TODO this function needs to check if the files can be created...
   
   gzprintf(f, "<?xml version=\"1.0\" standalone=\"no\"?>\n"
      "<xournal version=\"" VERSION "\">\n"
@@ -260,42 +260,41 @@ gboolean save_journal(const char *filename)
           g_free(tmpstr);
         }
 	if (item->type == ITEM_IMAGE) { 
+          tmpstr = NULL; // make sure we initialize. this will contain whatever the element contains
+          // if embedded, it contains the data of the images
+          // otherwise it contains the filename written
 	  if (! ui.embed_images) { // this is disabled on autosave, since
 	    // autosave functions don't know about the separate image directory, etc.
 	    img_extension = "png";	
 	    tmpfn_img_path = g_path_get_dirname(filename);
-	    tmpfn_img_dir = g_path_get_basename(filename);
-	    buflen = strlen(tmpfn_img_path) + strlen(tmpfn_img_dir) + strlen(item->image_path) + strlen(img_extension) + 6;
-	    tmpfn_full_path = g_malloc(buflen);
-	    g_snprintf(tmpfn_full_path, buflen, "%s/.%s/%s.%s", tmpfn_img_path, tmpfn_img_dir, item->image_path, img_extension);
-	    tmpfn_full_path2 = g_strdup(tmpfn_full_path);
-	    tmpfn_full_path3 = strrchr(tmpfn_full_path2, '/');
-	    *tmpfn_full_path3 = '\0';
+	    tmpfn_img_basename = g_path_get_basename(filename);
+            tmpfn_full_path = g_strdup_printf("%s/%s.dir", tmpfn_img_path, tmpfn_img_basename);
+            tmpstr = g_strdup_printf("%s/image%05d.%s", tmpfn_full_path, item->image_id, img_extension);
 
-	    /* tmpfn_full_path="/tmp/fixedpath.png"; */
-	    /* tmpfn_full_path2="/tmp/"; */
-	    img_success = gdk_pixbuf_save(item->image,tmpfn_full_path,img_extension, &error, NULL);
-	    tmpstr = g_markup_escape_text(tmpfn_full_path, -1);
-	    if (error) {
-	      if (!g_file_test(tmpfn_full_path2, G_FILE_TEST_EXISTS)) {
-		g_print ("Creating %s directory. \n", tmpfn_full_path2);
-		g_mkdir(tmpfn_full_path2, 0755);
-	      } 
-	      g_clear_error(&error);
-	      img_success = gdk_pixbuf_save(item->image,tmpfn_full_path,img_extension, &error, NULL);
-	    }
+            if (!g_file_test(tmpfn_full_path, G_FILE_TEST_IS_DIR )) {
+              g_print ("Creating %s directory.\n", tmpfn_full_path);
+              g_mkdir(tmpfn_full_path, 0755);
+            }
+	    img_success = gdk_pixbuf_save(item->image, tmpstr, img_extension, &error, NULL);
 
-	    /* img_success = gdk_pixbuf_save(item->image,"/tmp/test.png","png", &error, NULL); */
-#ifdef IMAGE_DEBUG
-	    printf("saved image '%s'  image_path: '%s'\n",tmpstr,item->image_path);
-	    printf("WRITING IMAGE '%d' TO: path '%s',  dir '%s'\n",item->image_id,tmpfn_img_path,tmpfn_img_dir);
-	    printf("DIRECTORY '%s'\n", tmpfn_full_path2);
-	    printf("WRITING IMAGE TO: path '%s'\n",tmpfn_full_path);
-#endif
+            //#ifdef IMAGE_DEBUG
+	    printf("WRITING  [%d] path [%s] filename [%s] success? [%d]\n",item->image_id, tmpfn_full_path, tmpstr, success);
+            //#endif
+            
+            if (!img_success) {
+              dialog = gtk_message_dialog_new(GTK_WINDOW(winMain), GTK_DIALOG_MODAL,
+                                              GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, 
+                                              _("Could not write image '%d' in location '%s'. Reason: %s Continuing anyway."), 
+                                              item->image_id, tmpstr,
+                                              error->message);
+              gtk_dialog_run(GTK_DIALOG(dialog));
+              gtk_widget_destroy(dialog);
+              g_error_free(error);
+            }
 	    g_free(tmpfn_img_path);
-	    g_free(tmpfn_img_dir);
+	    g_free(tmpfn_img_basename);
 	    g_free(tmpfn_full_path);
-	    g_free(tmpfn_full_path2);
+
 	  } else { // image embedding
 	    tmpstr = encode_embedded_image(item->image, &shaImage);
             // we have to free shaImage
@@ -306,6 +305,7 @@ gboolean save_journal(const char *filename)
 	  if (ui.embed_images)  {
             // is is already output?
             GList *foundSha = g_list_find_custom (writenListImagesShas, shaImage, (GCompareFunc)strcmp);
+            // if we found the sha, we don't embed the actual data
             if (foundSha) {
 #ifdef IMAGE_DEBUG
               printf("Foundndddd previously written image [%s]\n", (char*) foundSha->data);
@@ -321,7 +321,8 @@ gboolean save_journal(const char *filename)
               // we must output the data in this case
               gzputs(f, tmpstr);
               gzprintf(f, "</image>\n");
-            }
+            } // end of if
+
           } else {
             gzprintf(f, ">"); 
             gzputs(f, tmpstr);
@@ -346,7 +347,6 @@ gboolean save_journal(const char *filename)
     sprintf(pdfName, "%s.pdf", filename);
     print_to_pdf(pdfName);
   }
-
 
   return TRUE;
 }
@@ -391,9 +391,24 @@ char *tmpFilename;
 struct Background *tmpBg_pdf;
 int page_to_load; //NIKO
 
-GError *xoj_invalid(void)
+
+
+
+GError *xoj_invalid(char *msg, ...)
 {
-  return g_error_new(G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT, _("Invalid file contents"));
+  va_list ap;
+  char *tmp;
+  GError *err;
+
+  if (msg != NULL) {
+    va_start(ap, msg);
+    tmp = g_strdup_vprintf (msg, ap);
+    err =  g_error_new(G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT, _("Invalid file contents: %s"), tmp);
+    g_free(tmp);
+  } else {
+    err = g_error_new(G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT, _("Invalid file contents"));
+  }
+  return err;
 }
 
 void xoj_parser_start_element(GMarkupParseContext *context,
@@ -404,12 +419,11 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   char *ptr, *tmpptr;
   struct Background *tmpbg;
   char *tmpbg_filename;
-  gdouble val;
   GtkWidget *dialog;
 
   if (!strcmp(element_name, "title") || !strcmp(element_name, "xournal") || !strcmp(element_name, "imageIdCount")) {
     if (tmpPage != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid("found %d but not inside a page", element_name);
       return;
     }
     // nothing special to do
@@ -423,14 +437,14 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   			//load number from pageno attribute
   			page_to_load = atoi(*attribute_values);
  		}
- 		//else *error = xoj_invalid();
+ 		//else *error = xoj_invalid(NULL);
  		attribute_names++;
   		attribute_values++;
  	}
   }	
   else if (!strcmp(element_name, "page")) { // start of a page
     if (tmpPage != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid("page element found while in page");
       return;
     }
     tmpPage = (struct Page *)g_malloc(sizeof(struct Page));
@@ -451,38 +465,38 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     has_attr = 0;
     while (*attribute_names!=NULL) {
       if (!strcmp(*attribute_names, "width")) {
-        if (has_attr & 1) *error = xoj_invalid();
+        if (has_attr & 1) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpPage->width = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 1;
       }
       else if (!strcmp(*attribute_names, "height")) {
-        if (has_attr & 2) *error = xoj_invalid();
+        if (has_attr & 2) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpPage->height = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 2;
       }
-      else *error = xoj_invalid();
+      else *error = xoj_invalid(NULL);
       attribute_names++;
       attribute_values++;
     }
-    if (has_attr!=3) *error = xoj_invalid();
+    if (has_attr!=3) *error = xoj_invalid(NULL);
   }
   else if (!strcmp(element_name, "background")) {
     if (tmpPage == NULL || tmpLayer !=NULL || tmpPage->bg->type >= 0) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     has_attr = 0;
     while (*attribute_names!=NULL) {
       if (!strcmp(*attribute_names, "type")) {
-        if (has_attr) *error = xoj_invalid();
+        if (has_attr) *error = xoj_invalid(NULL);
         for (i=0; i<3; i++)
           if (!strcmp(*attribute_values, bgtype_names[i]))
             tmpPage->bg->type = i;
-        if (tmpPage->bg->type < 0) *error = xoj_invalid();
+        if (tmpPage->bg->type < 0) *error = xoj_invalid(NULL);
         has_attr |= 1;
         if (tmpPage->bg->type == BG_PDF) {
           if (tmpBg_pdf == NULL) tmpBg_pdf = tmpPage->bg;
@@ -494,8 +508,8 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         }
       }
       else if (!strcmp(*attribute_names, "color")) {
-        if (tmpPage->bg->type != BG_SOLID) *error = xoj_invalid();
-        if (has_attr & 2) *error = xoj_invalid();
+        if (tmpPage->bg->type != BG_SOLID) *error = xoj_invalid(NULL);
+        if (has_attr & 2) *error = xoj_invalid(NULL);
         tmpPage->bg->color_no = COLOR_OTHER;
         for (i=0; i<COLOR_MAX; i++)
           if (!strcmp(*attribute_values, bgcolor_names[i])) {
@@ -505,42 +519,42 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         // there's also the case of hex (#rrggbbaa) colors
         if (tmpPage->bg->color_no == COLOR_OTHER && **attribute_values == '#') {
           tmpPage->bg->color_rgba = strtoul(*attribute_values + 1, &ptr, 16);
-          if (*ptr!=0) *error = xoj_invalid();
+          if (*ptr!=0) *error = xoj_invalid(NULL);
         }
         has_attr |= 2;
       }
       else if (!strcmp(*attribute_names, "style")) {
-        if (tmpPage->bg->type != BG_SOLID) *error = xoj_invalid();
-        if (has_attr & 4) *error = xoj_invalid();
+        if (tmpPage->bg->type != BG_SOLID) *error = xoj_invalid(NULL);
+        if (has_attr & 4) *error = xoj_invalid(NULL);
         tmpPage->bg->ruling = -1;
         for (i=0; i<4; i++)
           if (!strcmp(*attribute_values, bgstyle_names[i]))
             tmpPage->bg->ruling = i;
-        if (tmpPage->bg->ruling < 0) *error = xoj_invalid();
+        if (tmpPage->bg->ruling < 0) *error = xoj_invalid(NULL);
         has_attr |= 4;
       }
       else if (!strcmp(*attribute_names, "domain")) {
         if (tmpPage->bg->type <= BG_SOLID || (has_attr & 8))
-          { *error = xoj_invalid(); return; }
+          { *error = xoj_invalid(NULL); return; }
         tmpPage->bg->file_domain = -1;
         for (i=0; i<3; i++)
           if (!strcmp(*attribute_values, file_domain_names[i]))
             tmpPage->bg->file_domain = i;
         if (tmpPage->bg->file_domain < 0)
-          { *error = xoj_invalid(); return; }
+          { *error = xoj_invalid(NULL); return; }
         has_attr |= 8;
       }
       else if (!strcmp(*attribute_names, "filename")) {
         if (tmpPage->bg->type <= BG_SOLID || (has_attr != 9)) 
-          { *error = xoj_invalid(); return; }
+          { *error = xoj_invalid(NULL); return; }
         if (tmpPage->bg->file_domain == DOMAIN_CLONE) {
           // filename is a page number
           i = strtol(*attribute_values, &ptr, 10);
           if (ptr == *attribute_values || i < 0 || i > tmpJournal.npages-2)
-            { *error = xoj_invalid(); return; }
+            { *error = xoj_invalid(NULL); return; }
           tmpbg = ((struct Page *)g_list_nth_data(tmpJournal.pages, i))->bg;
           if (tmpbg->type != tmpPage->bg->type)
-            { *error = xoj_invalid(); return; }
+            { *error = xoj_invalid(NULL); return; }
           tmpPage->bg->filename = refstring_ref(tmpbg->filename);
           tmpPage->bg->pixbuf = tmpbg->pixbuf;
           if (tmpbg->pixbuf!=NULL) gdk_pixbuf_ref(tmpbg->pixbuf);
@@ -574,23 +588,23 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       }
       else if (!strcmp(*attribute_names, "pageno")) {
         if (tmpPage->bg->type != BG_PDF || (has_attr & 32))
-          { *error = xoj_invalid(); return; }
+          { *error = xoj_invalid(NULL); return; }
         tmpPage->bg->file_page_seq = strtol(*attribute_values, &ptr, 10);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 32;
       }
-      else *error = xoj_invalid();
+      else *error = xoj_invalid(NULL);
       attribute_names++;
       attribute_values++;
     }
-    if (tmpPage->bg->type < 0) *error = xoj_invalid();
-    if (tmpPage->bg->type == BG_SOLID && has_attr != 7) *error = xoj_invalid();
-    if (tmpPage->bg->type == BG_PIXMAP && has_attr != 25) *error = xoj_invalid();
-    if (tmpPage->bg->type == BG_PDF && has_attr != 57) *error = xoj_invalid();
+    if (tmpPage->bg->type < 0) *error = xoj_invalid(NULL);
+    if (tmpPage->bg->type == BG_SOLID && has_attr != 7) *error = xoj_invalid(NULL);
+    if (tmpPage->bg->type == BG_PIXMAP && has_attr != 25) *error = xoj_invalid(NULL);
+    if (tmpPage->bg->type == BG_PDF && has_attr != 57) *error = xoj_invalid(NULL);
   }
   else if (!strcmp(element_name, "layer")) { // start of a layer
     if (tmpPage == NULL || tmpLayer != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     tmpLayer = (struct Layer *)g_malloc(sizeof(struct Layer));
@@ -604,7 +618,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   }
   else if (!strcmp(element_name, "stroke")) { // start of a stroke
     if (tmpLayer == NULL || tmpItem != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     tmpItem = g_new0(struct Item, 1);
@@ -618,10 +632,10 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     has_attr = 0;
     while (*attribute_names!=NULL) {
       if (!strcmp(*attribute_names, "width")) {
-        if (has_attr & 1) *error = xoj_invalid();
+        if (has_attr & 1) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->brush.thickness = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         i = 0;
         while (*ptr!=0) {
           realloc_cur_widths(i+1);
@@ -639,7 +653,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         has_attr |= 1;
       }
       else if (!strcmp(*attribute_names, "color")) {
-        if (has_attr & 2) *error = xoj_invalid();
+        if (has_attr & 2) *error = xoj_invalid(NULL);
         tmpItem->brush.color_no = COLOR_OTHER;
         for (i=0; i<COLOR_MAX; i++)
           if (!strcmp(*attribute_values, color_names[i])) {
@@ -649,25 +663,25 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         // there's also the case of hex (#rrggbbaa) colors
         if (tmpItem->brush.color_no == COLOR_OTHER && **attribute_values == '#') {
           tmpItem->brush.color_rgba = strtoul(*attribute_values + 1, &ptr, 16);
-          if (*ptr!=0) *error = xoj_invalid();
+          if (*ptr!=0) *error = xoj_invalid(NULL);
         }
         has_attr |= 2;
       }
       else if (!strcmp(*attribute_names, "tool")) {
-        if (has_attr & 4) *error = xoj_invalid();
+        if (has_attr & 4) *error = xoj_invalid(NULL);
         tmpItem->brush.tool_type = -1;
         for (i=0; i<NUM_STROKE_TOOLS; i++)
           if (!strcmp(*attribute_values, tool_names[i])) {
             tmpItem->brush.tool_type = i;
           }
-        if (tmpItem->brush.tool_type == -1) *error = xoj_invalid();
+        if (tmpItem->brush.tool_type == -1) *error = xoj_invalid(NULL);
         has_attr |= 4;
       }
-      else *error = xoj_invalid();
+      else *error = xoj_invalid(NULL);
       attribute_names++;
       attribute_values++;
     }
-    if (has_attr!=7) *error = xoj_invalid();
+    if (has_attr!=7) *error = xoj_invalid(NULL);
     // finish filling the brush info
     tmpItem->brush.thickness_no = 0;  // who cares ?
     tmpItem->brush.tool_options = 0;  // who cares ?
@@ -680,7 +694,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
   }
   else if (!strcmp(element_name, "text")) { // start of a text item
     if (tmpLayer == NULL || tmpItem != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     tmpItem = (struct Item *)g_malloc0(sizeof(struct Item));
@@ -692,33 +706,33 @@ void xoj_parser_start_element(GMarkupParseContext *context,
     has_attr = 0;
     while (*attribute_names!=NULL) {
       if (!strcmp(*attribute_names, "font")) {
-        if (has_attr & 1) *error = xoj_invalid();
+        if (has_attr & 1) *error = xoj_invalid(NULL);
         tmpItem->font_name = g_strdup(*attribute_values);
         has_attr |= 1;
       }
       else if (!strcmp(*attribute_names, "size")) {
-        if (has_attr & 2) *error = xoj_invalid();
+        if (has_attr & 2) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->font_size = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 2;
       }
       else if (!strcmp(*attribute_names, "x")) {
-        if (has_attr & 4) *error = xoj_invalid();
+        if (has_attr & 4) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->bbox.left = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 4;
       }
       else if (!strcmp(*attribute_names, "y")) {
-        if (has_attr & 8) *error = xoj_invalid();
+        if (has_attr & 8) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->bbox.top = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 8;
       }
       else if (!strcmp(*attribute_names, "color")) {
-        if (has_attr & 16) *error = xoj_invalid();
+        if (has_attr & 16) *error = xoj_invalid(NULL);
         tmpItem->brush.color_no = COLOR_OTHER;
         for (i=0; i<COLOR_MAX; i++)
           if (!strcmp(*attribute_values, color_names[i])) {
@@ -728,22 +742,26 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         // there's also the case of hex (#rrggbbaa) colors
         if (tmpItem->brush.color_no == COLOR_OTHER && **attribute_values == '#') {
           tmpItem->brush.color_rgba = strtoul(*attribute_values + 1, &ptr, 16);
-          if (*ptr!=0) *error = xoj_invalid();
+          if (*ptr!=0) *error = xoj_invalid(NULL);
         }
         has_attr |= 16;
       }
-      else *error = xoj_invalid();
+      else *error = xoj_invalid(NULL);
       attribute_names++;
       attribute_values++;
     }
-    if (has_attr!=31) *error = xoj_invalid();
+    if (has_attr!=31) *error = xoj_invalid(NULL);
   }
   else if (!strcmp(element_name, "image")) { // start of a image item
 #ifdef IMAGE_DEBUG
     printf("found image tag\n");
 #endif
-    if (tmpLayer == NULL || tmpItem != NULL) {
-      *error = xoj_invalid();
+    if (tmpLayer == NULL) {
+      *error = xoj_invalid("image found, but not in a layer ");
+      return;
+    }
+    if (tmpItem != NULL) {
+      *error = xoj_invalid("image found, but we are inside an item" );
       return;
     }
     tmpItem = g_new0(struct Item, 1);
@@ -763,31 +781,31 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       printf("attributes image [%s]\n", attribute_names[0]);
 #endif
       if (!strcmp(*attribute_names, "left")) {
-        if (has_attr & 1) *error = xoj_invalid();
+        if (has_attr & 1) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->bbox.left = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 1;
       }
       else if (!strcmp(*attribute_names, "top")) {
-        if (has_attr & 2) *error = xoj_invalid();
+        if (has_attr & 2) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->bbox.top = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 2;
       }
       else if (!strcmp(*attribute_names, "right")) {
-        if (has_attr & 4) *error = xoj_invalid();
+        if (has_attr & 4) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->bbox.right = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 4;
       }
       else if (!strcmp(*attribute_names, "bottom")) {
-        if (has_attr & 8) *error = xoj_invalid();
+        if (has_attr & 8) *error = xoj_invalid(NULL);
         cleanup_numeric((gchar *)*attribute_values);
         tmpItem->bbox.bottom = g_ascii_strtod(*attribute_values, &ptr);
-        if (ptr == *attribute_values) *error = xoj_invalid();
+        if (ptr == *attribute_values) *error = xoj_invalid(NULL);
         has_attr |= 8;
       }
       else if (!strcmp(*attribute_names, "embedded")) {
@@ -803,7 +821,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         // previously written images
 
         // check that we have not seen it
-        if (has_attr & 16) *error = xoj_invalid();
+        if (has_attr & 16) *error = xoj_invalid(NULL);
         isImageRefId = 1;
 #ifdef IMAGE_DEBUG
         printf("REFID Attribute value [%s]\n", attribute_values[0]);
@@ -812,28 +830,28 @@ void xoj_parser_start_element(GMarkupParseContext *context,
         has_attr |= 16;
         ;
       } else if (!strcmp(*attribute_names, "id")) {
-        if (has_attr & 16) *error = xoj_invalid();
+        if (has_attr & 16) *error = xoj_invalid(NULL);
 #ifdef IMAGE_DEBUG
         printf("ID: Attribute value [%s]\n", attribute_values[0]);
 #endif
         tmpItem->imageSha = g_strdup(attribute_values[0]);
         has_attr |= 16;
       }
-      else *error = xoj_invalid();
+      else *error = xoj_invalid("invalid attribute in image");
       attribute_names++;
       attribute_values++;
-    }
+    } // end of while loop
+
     // if it is refid it has to have all parms
     // but for backwards compatibility we allow not having the id
     if (isImageRefId && has_attr!=31) {
       fprintf(stderr, "Image element did not have all the expected parameters\n");
-      *error = xoj_invalid();
+      *error = xoj_invalid("Image element did not have all the expected parameters [0x%x]", has_attr);
     }
-    if (!isImageRefId && (has_attr & 15 != 15)) {
+    if ((!isImageRefId) && ((has_attr & 15) != 15)) {
       fprintf(stderr, "Image element did not have all the expected parameters\n");
-      *error = xoj_invalid();
+      *error = xoj_invalid("Image element did not have all the expected parameters [0x%x]", has_attr);
     }
-
   }
 }
 
@@ -842,22 +860,22 @@ void xoj_parser_end_element(GMarkupParseContext *context,
 {
   if (!strcmp(element_name, "page")) {
     if (tmpPage == NULL || tmpLayer != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
-    if (tmpPage->nlayers == 0 || tmpPage->bg->type < 0) *error = xoj_invalid();
+    if (tmpPage->nlayers == 0 || tmpPage->bg->type < 0) *error = xoj_invalid(NULL);
     tmpPage = NULL;
   }
   if (!strcmp(element_name, "layer")) {
     if (tmpLayer == NULL || tmpItem != NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     tmpLayer = NULL;
   }
   if (!strcmp(element_name, "stroke")) {
     if (tmpItem == NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     update_item_bbox(tmpItem);
@@ -865,55 +883,70 @@ void xoj_parser_end_element(GMarkupParseContext *context,
   }
   if (!strcmp(element_name, "text")) {
     if (tmpItem == NULL) {
-      *error = xoj_invalid();
+      *error = xoj_invalid(NULL);
       return;
     }
     tmpItem = NULL;
   }
   if (!strcmp(element_name, "image")) {
-
-#ifdef IMAGE_DEBUG
-    printf("Scanning the end of the image tag [%s]\n",  tmpItem->imageSha);
-#endif
-    // find the sha in the list of 
-
-    if (tmpItem == NULL || tmpItem->imageSha == NULL) {
-      *error = xoj_invalid();
-      return;
-    }
-
-
-    // this is an image with id
-    //put in the list
-    if (isImageRefId) {
-      
-      GList *foundSha = g_list_find_custom (listImagesShas, tmpItem, (GCompareFunc)image_match_sha);
-      if (foundSha == NULL) {
-        fprintf(stderr, "Reference to image id [%s] cannot be resolved\n", tmpItem->imageSha);
-        *error = xoj_invalid();
+    if (!tmpItem->image_embedded) {
+      // we have read the image from filename already, do nothing
+      if (tmpItem == NULL ) {
+        *error = xoj_invalid("Unexpected end of image element");
         return;
-      } 
-      struct Item *foundItem = (struct Item*) foundSha->data;
+      }
+      if (tmpItem->image_path == NULL ) {
+        *error = xoj_invalid("image didn't contain a path");
+        return;
+      }
 #ifdef IMAGE_DEBUG
-      printf("Found image %s", foundItem->imageSha);
+      printf("Scanning the end of the image path [%s]\n",  tmpItem->image_path);
 #endif
-      // now allocate the iamge
-      assert(tmpItem->image_path == NULL);
-      tmpItem->image_path = g_strndup("",0);
-      assert(tmpItem->image == NULL);
-      tmpItem->image = gdk_pixbuf_copy(foundItem->image);
-#ifdef IMAGE_DEBUG
-      printf("Allocated\n");
-#endif
+      tmpItem = NULL;
     } else {
-      listImagesShas = g_list_append(listImagesShas, tmpItem);
-    }
-    
+      // in this case the image is embedded
+
+      /// there are 2 alternatives here...
+      if (tmpItem == NULL || tmpItem->imageSha == NULL) {
+        *error = xoj_invalid("Unexpected End of image tag");
+        return;
+      }
+      // we are in embedded mode
+      assert(tmpItem->image_embedded);
 #ifdef IMAGE_DEBUG
-    printf("finished loading image tag\n");
+      printf("Scanning the end of the image tag [%s]\n",  tmpItem->imageSha);
 #endif
-    tmpItem = NULL;
-  }
+      // This is a reference to a previously seen image
+      if (isImageRefId) {
+      
+        GList *foundSha = g_list_find_custom (listImagesShas, tmpItem, (GCompareFunc)image_match_sha);
+        if (foundSha == NULL) {
+          fprintf(stderr, "Reference to image id [%s] cannot be resolved\n", tmpItem->imageSha);
+          *error = xoj_invalid("Reference to image id [%s] cannot be resolved\n", tmpItem->imageSha);
+          return;
+        } 
+        struct Item *foundItem = (struct Item*) foundSha->data;
+#ifdef IMAGE_DEBUG
+        printf("Found image %s", foundItem->imageSha);
+#endif
+        // now allocate the iamge
+        assert(tmpItem->image_path == NULL);
+        tmpItem->image_path = g_strndup("",0);
+        assert(tmpItem->image == NULL);
+        tmpItem->image = gdk_pixbuf_copy(foundItem->image);
+#ifdef IMAGE_DEBUG
+        printf("Allocated\n");
+#endif
+      } else {
+        // otherwise just add it to the list
+        listImagesShas = g_list_append(listImagesShas, tmpItem);
+      }
+#ifdef IMAGE_DEBUG
+      printf("finished loading embedded image tag\n");
+#endif
+      tmpItem = NULL;
+    }
+  } // end of image
 }
 
 
@@ -922,7 +955,7 @@ void xoj_parser_text(GMarkupParseContext *context,
 {
   const gchar *element_name, *ptr;
   int n;
-  char *buf; int i;
+  char *buf; 
   gchar *sha;
 
   element_name = g_markup_parse_context_get_element(context);
@@ -952,7 +985,7 @@ void xoj_parser_text(GMarkupParseContext *context,
     }
     if (n<4 || n&1 || 
         (tmpItem->brush.variable_width && (n!=2*ui.cur_path.num_points))) 
-      { *error = xoj_invalid(); return; } // wrong number of points
+      { *error = xoj_invalid(NULL); return; } // wrong number of points
     tmpItem->path = gnome_canvas_points_new(n/2);
     g_memmove(tmpItem->path->coords, ui.cur_path.coords, n*sizeof(double));
   }
@@ -976,7 +1009,7 @@ void xoj_parser_text(GMarkupParseContext *context,
 #endif
       } else if (strcmp(tmpItem->imageSha, sha) != 0) {
         fprintf(stderr, "Sha of image id [%s] does not match its contents sha [%s]\n", tmpItem->imageSha, sha);
-        *error = xoj_invalid(); 
+        *error = xoj_invalid(NULL); 
         return;
       }
       g_free(sha);
@@ -987,6 +1020,15 @@ void xoj_parser_text(GMarkupParseContext *context,
       tmpItem->image_path[text_len]=0;
 #ifdef IMAGE_DEBUG
       printf("found image with path '%s' and length %i \n",tmpItem->image_path,(int)text_len);
+#endif
+      tmpItem->image=gdk_pixbuf_new_from_file(tmpItem->image_path, NULL);
+      if (tmpItem->image == NULL) {
+        fprintf(stderr, "File cannot be loaded [%s]... continuing\n", tmpItem->image_path);
+        
+      }
+#ifdef IMAGE_DEBUG
+      if (tmpItem->image != NULL)
+        printf("Loaded image with path [%s]\n",tmpItem->image_path);
 #endif
     }
   }
@@ -1126,6 +1168,7 @@ gboolean open_journal(char *filename)
 	  valid = FALSE;
   }
   g_markup_parse_context_free(context);
+  // TODO check if we have to free its contents
   g_list_free(listImagesShas);
   listImagesShas = NULL;
   
@@ -1740,7 +1783,7 @@ void init_config_default(void)
   ui.default_page.bg->color_no = COLOR_WHITE;
   ui.default_page.bg->color_rgba = predef_bgcolors_rgba[COLOR_WHITE];
   ui.default_page.bg->ruling = RULING_LINED;
-  ui.embed_images = FALSE;
+  ui.embed_images = TRUE;
   ui.view_continuous = TRUE;
   ui.allow_xinput = TRUE;
   ui.discard_corepointer = FALSE;
@@ -2177,7 +2220,7 @@ gboolean parse_keyval_color(const gchar *group, const gchar *key, guint *val_rgb
   char *endptr;
   unsigned long val;
   gchar *str = NULL;
-  gboolean  withAlpha  = FALSE;
+
   // Let us make it simple to us... if it is not hex, and it is not lenght 10 (0x12345678) then 
   // we reject it
 

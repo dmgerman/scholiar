@@ -1,3 +1,26 @@
+* Warning
+
+- This is work in progress. You should not use it for production work
+  yet.
+
+- What works:
+  1. Loading images, resizing them
+  2. Config variable: embed_images. If true, images are placed in the
+     xournal file, otherwise exported to a directory with name
+     "name.xoj.dir".
+  3. Embedding the images works well.
+  4. Exporting the images to disk is buggy. It needs more work
+     - Make sure the directory name suffix is .xoj.dir 
+     - Load the absolute file name, but if it does not exist, load the
+       relative filename
+     - testing
+
+Embedded images work decently well (no crashes while using it) but
+it might still have bugs. Default is "embedded images on". 
+
+Please note that if you use images the upstream xournal won't be able
+to read the file.
+
 * Project information
 
 This is a fork of Xournal, the inking / PDF markup application written by
