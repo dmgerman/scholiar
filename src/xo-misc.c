@@ -191,7 +191,7 @@ void prepare_new_undo(void)
 {
   struct UndoItem *u;
   // add a new UndoItem on the stack  
-  u = (struct UndoItem *)g_malloc(sizeof(struct UndoItem));
+  u = (struct UndoItem *)g_malloc0(sizeof(struct UndoItem));
   u->next = undo;
   u->multiop = 0;
   undo = u;
@@ -1952,7 +1952,7 @@ void resize_journal_items_by(GList *itemlist, double scaling_x, double scaling_y
   GList *list;
   double mean_scaling, temp;
   double *pt, *wid;
-  GnomeCanvasGroup *group;
+  GnomeCanvasGroup *group = NULL;
   int i; 
   
   /* geometric mean of x and y scalings = rescaling for stroke widths
@@ -2628,7 +2628,7 @@ void page_search_draw_match(Page *pg, PopplerRectangle * rect)
   //gnome_canvas_item_new(ui.cur_layer->group,
   Layer *searchLayer = pg->searchLayer;
 
-  struct Item * searchItem = (struct Item *)g_malloc(sizeof(*searchItem));
+  struct Item * searchItem = (struct Item *)g_malloc0(sizeof(*searchItem));
 
   assert(searchLayer != NULL);
 

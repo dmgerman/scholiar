@@ -330,7 +330,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       *error = xoj_invalid();
       return;
     }
-    tmpPage = (struct Page *)g_malloc(sizeof(struct Page));
+    tmpPage = (struct Page *)g_malloc0(sizeof(struct Page));
     tmpPage->layers = NULL;
     tmpPage->nlayers = 0;
     tmpPage->group = NULL;
@@ -490,7 +490,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       *error = xoj_invalid();
       return;
     }
-    tmpLayer = (struct Layer *)g_malloc(sizeof(struct Layer));
+    tmpLayer = (struct Layer *)g_malloc0(sizeof(struct Layer));
 
     init_layer(tmpLayer);
     //    tmpLayer->items = NULL;
@@ -504,7 +504,7 @@ void xoj_parser_start_element(GMarkupParseContext *context,
       *error = xoj_invalid();
       return;
     }
-    tmpItem = (struct Item *)g_malloc(sizeof(struct Item));
+    tmpItem = (struct Item *)g_malloc0(sizeof(struct Item));
     tmpItem->type = ITEM_STROKE;
     tmpItem->path = NULL;
     tmpItem->canvas_item = NULL;
@@ -765,12 +765,12 @@ void xoj_parser_text(GMarkupParseContext *context,
     g_memmove(tmpItem->path->coords, ui.cur_path.coords, n*sizeof(double));
   }
   if (!strcmp(element_name, "text")) {
-    tmpItem->text = g_malloc(text_len+1);
+    tmpItem->text = g_malloc0(text_len+1);
     g_memmove(tmpItem->text, text, text_len);
     tmpItem->text[text_len]=0;
   }
   if (!strcmp(element_name, "image")) {
-    tmpItem->image_path = g_malloc(text_len+1);
+    tmpItem->image_path = g_malloc0(text_len+1);
     g_memmove(tmpItem->image_path, text, text_len);
     tmpItem->image_path[text_len]=0;
 	  #ifdef IMAGE_DEBUG
@@ -1035,7 +1035,7 @@ GList *attempt_load_gv_bg(char *filename)
   
   f = fopen(filename, "rb");
   if (f == NULL) return NULL;
-  buf = g_malloc(BUFSIZE); // a reasonable buffer size
+  buf = g_malloc0(BUFSIZE); // a reasonable buffer size
   if (fread(buf, 1, 4, f) !=4 ||
         (strncmp((char *)buf, "%!PS", 4) && strncmp((char *)buf, "%PDF", 4))) {
     fclose(f);

@@ -179,7 +179,7 @@ void update_cursor(void)
 
 void update_cursor_for_resize(double *pt)
 {
-  gboolean in_range_x, in_range_y;
+  //  gboolean in_range_x, in_range_y;
   gboolean can_resize_left, can_resize_right, can_resize_bottom, can_resize_top;
   gdouble resize_margin;
   GdkCursorType newcursor;
@@ -252,7 +252,7 @@ void subdivide_cur_path(null)
 void create_new_stroke(GdkEvent *event)
 {
   ui.cur_item_type = ITEM_STROKE;
-  ui.cur_item = g_new(struct Item, 1);
+  ui.cur_item = g_new0(struct Item, 1);
   ui.cur_item->type = ITEM_STROKE;
   g_memmove(&(ui.cur_item->brush), ui.cur_brush, sizeof(struct Brush));
   ui.cur_item->path = &ui.cur_path;
@@ -379,7 +379,7 @@ void erase_stroke_portions(struct Item *item, double x, double y, double radius,
         item->type = ITEM_TEMP_STROKE;
         gnome_canvas_item_hide(item->canvas_item);  
             /*  we'll use this hidden item as an insertion point later */
-        erasure = (struct UndoErasureData *)g_malloc(sizeof(struct UndoErasureData));
+        erasure = (struct UndoErasureData *)g_malloc0(sizeof(struct UndoErasureData));
         item->erasure = erasure;
         erasure->item = item;
         erasure->npos = g_list_index(ui.cur_layer->items, item);
@@ -390,7 +390,7 @@ void erase_stroke_portions(struct Item *item, double x, double y, double radius,
       newhead = newtail = NULL;
       if (!whole_strokes) {
         if (i>=2) {
-          newhead = (struct Item *)g_malloc(sizeof(struct Item));
+          newhead = (struct Item *)g_malloc0(sizeof(struct Item));
           newhead->type = ITEM_STROKE;
           g_memmove(&newhead->brush, &item->brush, sizeof(struct Brush));
           newhead->path = gnome_canvas_points_new(i);
@@ -404,7 +404,7 @@ void erase_stroke_portions(struct Item *item, double x, double y, double radius,
           if (hypot(pt[0]-x, pt[1]-y) > radius) break;
         }
         if (i<item->path->num_points-1) {
-          newtail = (struct Item *)g_malloc(sizeof(struct Item));
+          newtail = (struct Item *)g_malloc0(sizeof(struct Item));
           newtail->type = ITEM_STROKE;
           g_memmove(&newtail->brush, &item->brush, sizeof(struct Brush));
           newtail->path = gnome_canvas_points_new(item->path->num_points-i);
@@ -881,7 +881,7 @@ void finalize_movesel(void)
 
 void finalize_resizesel(void)
 {
-  struct Item *item;
+  //  struct Item *item;
 
   // build the affine transformation
   double offset_x, offset_y, scaling_x, scaling_y;
@@ -1019,7 +1019,7 @@ void selection_to_clip(void) //TODO clipping for images
     }
     else bufsz+= sizeof(int); // type
   }
-  p = buf = g_malloc(bufsz);
+  p = buf = g_malloc0(bufsz);
   g_memmove(p, &bufsz, sizeof(int)); p+= sizeof(int);
   g_memmove(p, &nitems, sizeof(int)); p+= sizeof(int);
   g_memmove(p, &ui.selection->bbox, sizeof(struct BBox)); p+= sizeof(struct BBox);
@@ -1149,10 +1149,10 @@ void clipboard_paste(void)
       item->bbox.left += hoffset;
       item->bbox.top += voffset;
       g_memmove(&len, p, sizeof(int)); p+= sizeof(int);
-      item->text = g_malloc(len+1);
+      item->text = g_malloc0(len+1);
       g_memmove(item->text, p, len+1); p+= len+1;
       g_memmove(&len, p, sizeof(int)); p+= sizeof(int);
-      item->font_name = g_malloc(len+1);
+      item->font_name = g_malloc0(len+1);
       g_memmove(item->font_name, p, len+1); p+= len+1;
       g_memmove(&item->font_size, p, sizeof(double)); p+= sizeof(double);
       make_canvas_item_one(ui.cur_layer->group, item);
@@ -1193,7 +1193,7 @@ void recolor_selection(int color_no, guint color_rgba)
     if (item->type == ITEM_STROKE && item->brush.tool_type!=TOOL_PEN) continue;
     // store info for undo
     undo->itemlist = g_list_append(undo->itemlist, item);
-    brush = (struct Brush *)g_malloc(sizeof(struct Brush));
+    brush = (struct Brush *)g_malloc0(sizeof(struct Brush));
     g_memmove(brush, &(item->brush), sizeof(struct Brush));
     undo->auxlist = g_list_append(undo->auxlist, brush);
     // repaint the stroke
@@ -1229,7 +1229,7 @@ void rethicken_selection(int val)
     if (item->type != ITEM_STROKE || item->brush.tool_type!=TOOL_PEN) continue;
     // store info for undo
     undo->itemlist = g_list_append(undo->itemlist, item);
-    brush = (struct Brush *)g_malloc(sizeof(struct Brush));
+    brush = (struct Brush *)g_malloc0(sizeof(struct Brush));
     g_memmove(brush, &(item->brush), sizeof(struct Brush));
     undo->auxlist = g_list_append(undo->auxlist, brush);
     // repaint the stroke
@@ -1422,7 +1422,7 @@ void end_text(void)
       prepare_new_undo();
       undo->type = ITEM_ERASURE;
       undo->layer = ui.cur_layer;
-      erasure = (struct UndoErasureData *)g_malloc(sizeof(struct UndoErasureData));
+      erasure = (struct UndoErasureData *)g_malloc0(sizeof(struct UndoErasureData));
       erasure->item = ui.cur_item;
       erasure->npos = g_list_index(ui.cur_layer->items, ui.cur_item);
       erasure->nrepl = 0;
@@ -1567,9 +1567,9 @@ void process_font_sel(gchar *str)
 void insert_image(GdkEvent *event, struct Item *item)
 {
   double pt[2];
-  GtkTextBuffer *buffer;
+  //  GtkTextBuffer *buffer;
   GnomeCanvasItem *canvas_item;
-  GdkColor color;
+  //  GdkColor color;
   GtkWidget *dialog;
   GtkFileFilter *filt_all;
   GtkFileFilter *filt_gdkimage;
@@ -1620,7 +1620,7 @@ void insert_image(GdkEvent *event, struct Item *item)
   }
 	  
   if (item==NULL) {
-    item = g_new(struct Item, 1);
+    item = g_new0(struct Item, 1);
     item->type = ITEM_IMAGE;
     item->image_path = filename;
 	  printf("insert_image: '%s' image_path: '%s'\n",filename,item->image_path);
