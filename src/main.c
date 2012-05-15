@@ -130,7 +130,14 @@ void init_stuff (int argc, char *argv[])
       g_free(tmppath);
     }
 
-    success = open_journal(tmpfn);
+    if (g_file_test(tmpfn, G_FILE_TEST_IS_DIR)) {
+      if (ui.default_path) g_free(ui.default_path);
+      ui.default_path = g_path_get_dirname(tmpfn);
+      success = TRUE;
+    } else {
+      printf("Test2 [%s]\n", tmpfn);
+      success = open_journal(tmpfn);
+    }
     g_free(tmpfn);
   }
   
