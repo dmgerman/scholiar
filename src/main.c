@@ -135,7 +135,6 @@ void init_stuff (int argc, char *argv[])
       ui.default_path = g_path_get_dirname(tmpfn);
       success = TRUE;
     } else {
-      printf("Test2 [%s]\n", tmpfn);
       success = open_journal(tmpfn);
     }
     g_free(tmpfn);
