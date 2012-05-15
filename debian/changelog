@@ -1,5 +1,12 @@
+xournal (0.4.5-dmg-2) unstable; urgency=high
+
+   * Fix Fixed a g_free of a non-allocated pointer
+
+ -- Daniel German <dmg@uvic.ca>  Tue, 15 May 2012 11:12:09 -0700
+
 xournal (0.4.5-dmg-1) unstable; urgency=low
-  * New beta release:
+
+   * New beta release:
 	- Adds moving pages 
 	- Adds optional display of background in text annotations
 	- Add search in pdfs
