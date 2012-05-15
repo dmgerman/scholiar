@@ -507,11 +507,13 @@ void finalize_erasure(void)
       gtk_object_destroy(GTK_OBJECT(item->canvas_item));
       item->canvas_item = NULL;
     }
-    if (item->textBg!=NULL) {
-      // delete the background of the note
-      gtk_object_destroy(GTK_OBJECT(item->textBg));
-      item->textBg = NULL;
-    }
+    // just making sure..
+    assert(item->type != ITEM_TEXT);
+    //    if (item->textBg!=NULL) {
+    //      // delete the background of the note
+    //      gtk_object_destroy(GTK_OBJECT(item->textBg));
+    //      item->textBg = NULL;
+    //    }
 
     undo->erasurelist = g_list_append(undo->erasurelist, item->erasure);
     // add the new strokes into the current layer
